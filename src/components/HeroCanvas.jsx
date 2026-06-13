@@ -276,7 +276,7 @@ export default function HeroCanvas() {
               Experience the new collection. Scroll down to enter.
             </p>
             <div className="mt-8 flex gap-4">
-              <button className="relative overflow-hidden px-8 py-3 bg-white text-black rounded-full font-semibold text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95 pointer-events-auto">
+              <button className="relative overflow-hidden px-8 py-3 bg-white text-black rounded-none font-semibold text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95 pointer-events-auto">
                 <span className="absolute inset-0 bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
                   SHOP COLLECTION

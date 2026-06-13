@@ -88,7 +88,7 @@ export default function Collections() {
             <div
               key={idx}
               ref={(el) => (cardsRef.current[idx] = el)}
-              className="group relative flex flex-col justify-end h-[460px] rounded-3xl overflow-hidden border border-zinc-800/80 bg-zinc-950/20 backdrop-blur-md cursor-pointer transition-all duration-700 hover:border-accent/40 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)]"
+              className="group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-zinc-800/80 bg-zinc-950/20 backdrop-blur-md cursor-pointer transition-all duration-700 hover:border-accent/40 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)]"
             >
               {/* Card Image with Parallax & Hover Zoom */}
               <div className="absolute inset-0 z-0 overflow-hidden">
