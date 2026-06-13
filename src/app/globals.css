@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+html {
+  scrollbar-gutter: stable;
+  scrollbar-width: thin;
+  scrollbar-color: #FF4D4D #000000;
+  overflow-x: hidden;
+  width: 100%;
+}
+
 :root {
   --background: #000000;
   --foreground: #ededed;
@@ -20,6 +28,8 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  overflow-x: hidden;
+  width: 100%;
 }
 
 /* Custom radial gradient helper for dark vignetting */
@@ -48,10 +58,10 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
-/* Custom minimal dark scrollbar */
+/* Custom premium, minimal floating scrollbar */
 ::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+  width: 4px;
+  height: 4px;
 }
 
 ::-webkit-scrollbar-track {
@@ -59,11 +69,11 @@ html.lenis, html.lenis body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #27272a;
-  border-radius: 3px;
+  background-color: #FF4D4D; /* Brand Accent Color */
+  border-radius: 0px; /* Sharp corners */
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #fbbf24;
+  background-color: #E03A3A; /* Slightly darker accent hover */
 }
 

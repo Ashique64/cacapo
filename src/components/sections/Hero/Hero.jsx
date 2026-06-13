@@ -3,8 +3,9 @@
 import { useEffect, useRef, useState } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
+import LoadingScreen from "@/components/ui/LoadingScreen";
 
-export default function HeroCanvas() {
+export default function Hero() {
   const containerRef = useRef(null);
   const canvasRef = useRef(null);
   const preloaderRef = useRef(null);
@@ -35,22 +36,44 @@ export default function HeroCanvas() {
       setLoadingProgress(progress);
 
       if (loadedCount === totalFrames) {
+        // Draw the first frame on the canvas immediately under the preloader
+        if (imagesArray[0]) {
+          drawImage(imagesArray[0]);
+        }
+
         setTimeout(() => {
-          // Fade out preloader
+          // Luxury unmounting sequence
           if (preloaderRef.current) {
-            gsap.to(preloaderRef.current, {
-              opacity: 0,
-              duration: 1,
-              ease: "power2.out",
+            setIsLoaded(true); // Trigger canvas triggers and ScrollTrigger initializations immediately as panels start opening
+
+            const tl = gsap.timeline({
               onComplete: () => {
-                setIsLoaded(true);
                 setIsPreloaderRemoved(true);
                 // Allow scroll on body
                 document.body.style.overflow = "auto";
-              },
+              }
             });
+
+            // 1. Fade/slide out text and UI overlays
+            tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
+              opacity: 0,
+              y: -20,
+              duration: 0.8,
+              ease: "power3.in"
+            })
+            // 2. Split panels slide off screen
+            .to(".preloader-top-panel", {
+              y: "-100%",
+              duration: 1.2,
+              ease: "power4.inOut"
+            }, "-=0.4")
+            .to(".preloader-bottom-panel", {
+              y: "100%",
+              duration: 1.2,
+              ease: "power4.inOut"
+            }, "<"); // Starts at same time
           }
-        }, 500);
+        }, 800);
       }
     };
 
@@ -59,8 +82,10 @@ export default function HeroCanvas() {
       handleImageLoad();
     };
 
-    // Lock scroll during preloading
+    // Lock scroll and reset viewport during preloading
     document.body.style.overflow = "hidden";
+
+    // (Entrance animations now handled internally by <Preloader /> on mount)
 
     for (let i = 1; i <= totalFrames; i++) {
       const img = new Image();
@@ -224,58 +249,58 @@ export default function HeroCanvas() {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 px-6">
           {/* Main Initial Title */}
           <div className="hero-title-main text-center select-none">
-            <h1 className="text-5xl md:text-8xl font-black tracking-[0.2em] text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-8xl font-black tracking-[0.2em] text-white">
               CACAPO
             </h1>
-            <p className="text-xs md:text-sm tracking-[0.6em] text-muted-text mt-4 uppercase">
+            <p className="text-[10px] sm:text-xs md:text-sm tracking-[0.3em] sm:tracking-[0.6em] text-muted-text mt-4 uppercase">
               The Art of Modern Couture
             </p>
           </div>
 
-          {/* Text 1: Clothing - Right Aligned */}
-          <div className="hero-text-1 absolute right-[10%] md:right-[15%] text-right select-none opacity-0 max-w-md">
-            <span className="text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
+          {/* Text 1: Clothing - Right Aligned on desktop, centered on mobile */}
+          <div className="hero-text-1 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-[15%] text-center md:text-right select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
+            <span className="text-[10px] sm:text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               THE TEXTILE REVELATION
             </span>
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               ELEGANCE IN <br />
               <span className="text-accent">
                 EVERY THREAD
               </span>
             </h2>
-            <p className="text-sm md:text-base text-muted-text mt-6 tracking-wide font-light">
+            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
               Fluid drapery meets architecture-inspired tailoring. Silk, cashmere, and structural cotton engineered to contour.
             </p>
           </div>
 
-          {/* Text 2: Footwear & Accessories - Left Aligned */}
-          <div className="hero-text-2 absolute left-[5%] md:left-[8%] text-left select-none opacity-0 max-w-md">
-            <span className="text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
+          {/* Text 2: Footwear & Accessories - Left Aligned on desktop, centered on mobile */}
+          <div className="hero-text-2 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
+            <span className="text-[10px] sm:text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               SCULPTED FOOTWEAR & ACCENTS
             </span>
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               DESIGNED TO <br />
               <span className="text-accent">
                 STEP AHEAD
               </span>
             </h2>
-            <p className="text-sm md:text-base text-muted-text mt-6 tracking-wide font-light">
+            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
               Italian calf leather heels and structural metal clasps designed to contour and seal your aesthetic presence.
             </p>
           </div>
 
-          {/* Text 3: Final Screen - Left Aligned */}
-          <div className="hero-text-final absolute left-[5%] md:left-[8%] text-left select-none opacity-0 flex flex-col items-start max-w-lg">
-            <h2 className="text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+          {/* Text 3: Final Screen - Left Aligned on desktop, centered on mobile */}
+          <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg">
+            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               UNCOMPROMISED <br />
               <span className="text-accent">
                 COUTURE
               </span>
             </h2>
-            <p className="text-sm md:text-base text-muted-text mt-6 tracking-wider font-light">
+            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wider font-light">
               Experience the new collection. Scroll down to enter.
             </p>
-            <div className="mt-8 flex gap-4">
+            <div className="mt-6 md:mt-8 flex gap-4 justify-center md:justify-start">
               <button className="relative overflow-hidden px-8 py-3 bg-white text-black rounded-none font-semibold text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95 pointer-events-auto">
                 <span className="absolute inset-0 bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
@@ -287,35 +312,11 @@ export default function HeroCanvas() {
         </div>
       </div>
 
-      {/* Elegant Typographic Preloader */}
-      {!isPreloaderRemoved && (
-        <div
-          ref={preloaderRef}
-          className="fixed inset-0 bg-black z-50 flex flex-col items-center justify-center select-none"
-        >
-          <div className="text-center relative">
-            <h1 className="text-4xl md:text-6xl font-black tracking-[0.4em] text-white opacity-90">
-              CACAPO
-            </h1>
-            <p className="text-[10px] md:text-xs tracking-[0.6em] text-accent mt-4 uppercase">
-              PRELOADING THE COUTURE EXPERIENCE
-            </p>
-
-            {/* Circular Progress Container */}
-            <div className="relative w-40 h-40 mx-auto mt-12 flex items-center justify-center">
-              {/* Outer Glowing Ring */}
-              <div className="absolute inset-0 rounded-full border border-white/5 shadow-[0_0_20px_rgba(255,77,77,0.05)]" />
-              {/* Progress Text */}
-              <div className="text-center z-10">
-                <span className="text-3xl font-bold font-mono text-white">
-                  {loadingProgress}
-                </span>
-                <span className="text-xs text-muted-text font-mono">%</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <LoadingScreen
+        preloaderRef={preloaderRef}
+        loadingProgress={loadingProgress}
+        isPreloaderRemoved={isPreloaderRemoved}
+      />
     </div>
   );
 }

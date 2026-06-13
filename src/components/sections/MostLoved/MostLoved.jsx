@@ -27,7 +27,7 @@ function ProductCard({ product }) {
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="shrink-0 w-[85vw] sm:w-[50vw] md:w-[32vw] h-[75vh] flex flex-col justify-between p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
+      className="shrink-0 w-[85vw] sm:w-[50vw] md:w-[32vw] h-[60vh] sm:h-[65vh] md:h-[75vh] flex flex-col justify-between p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
     >
       {/* Ambient Background Light */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-[50px] rounded-full pointer-events-none" />

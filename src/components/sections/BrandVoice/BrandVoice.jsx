@@ -110,7 +110,7 @@ export default function BrandEthos() {
         </div>
 
         {/* Visual Parallax Column */}
-        <div className="lg:col-span-5 relative flex justify-center items-center">
+        <div className="lg:col-span-5 relative flex justify-center items-center w-full max-w-md mx-auto lg:max-w-none lg:mx-0">
           {/* Decorative frame elements */}
           <div className="absolute inset-0 border border-zinc-800 rounded-none -m-4 pointer-events-none" />
           <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-accent/20 rounded-none -m-4 pointer-events-none" />
