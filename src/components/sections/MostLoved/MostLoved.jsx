@@ -27,7 +27,7 @@ function ProductCard({ product }) {
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="shrink-0 w-[85vw] sm:w-[50vw] md:w-[32vw] h-[60vh] sm:h-[65vh] md:h-[75vh] flex flex-col justify-between p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
+      className="shrink-0 w-full lg:w-[32vw] h-[42vh] sm:h-[48vh] md:h-[45vh] lg:h-[75vh] flex flex-col justify-between p-4 md:p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
     >
       {/* Ambient Background Light */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-[50px] rounded-full pointer-events-none" />
@@ -58,11 +58,11 @@ function ProductCard({ product }) {
       </div>
 
       {/* Card Info Section */}
-      <div className="flex flex-col grow justify-between mt-6">
+      <div className="flex flex-col grow justify-between mt-4 md:mt-6">
         <div>
           <div className="mb-2">
             <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors block">
-              <h3 className="text-lg md:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors">
+              <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors">
                 {product.name}
               </h3>
             </Link>
@@ -76,16 +76,16 @@ function ProductCard({ product }) {
           </div>
 
           {/* Proportional, aligned Rupee Currency Symbol style */}
-          <div className="text-2xl font-semibold tracking-tight text-accent font-mono mt-3 flex items-baseline gap-0.5">
-            <span className="text-lg font-sans font-normal">₹</span>
+          <div className="text-xl sm:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-3 flex items-baseline gap-0.5">
+            <span className="text-sm sm:text-lg font-sans font-normal">₹</span>
             <span>{product.price.replace("₹", "")}</span>
           </div>
         </div>
 
         {/* Purchase Button Action */}
-        <div className="mt-6">
-          <button className="w-full py-3 bg-zinc-900 border border-zinc-800 text-xs font-semibold tracking-[0.2em] rounded-none text-white hover:bg-white hover:text-black hover:border-transparent transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]">
-            <ShoppingBag className="w-4 h-4" />
+        <div className="mt-4 md:mt-6">
+          <button className="w-full py-2.5 md:py-3 bg-zinc-900 border border-zinc-800 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none text-white hover:bg-white hover:text-black hover:border-transparent transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]">
+            <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
             ADD TO BAG
           </button>
         </div>
@@ -109,30 +109,39 @@ export default function ProductShowcase() {
       return -(scrollSection.scrollWidth - window.innerWidth);
     };
 
-    const pinAnim = gsap.to(scrollSection, {
-      x: getScrollAmount,
-      ease: "none",
-      scrollTrigger: {
-        trigger: triggerSection,
-        start: "top top",
-        end: () => `+=${scrollSection.scrollWidth - window.innerWidth}`,
-        scrub: 0.5,
-        pin: true,
-        pinSpacing: true,
-        anticipatePin: 1,
-        invalidateOnRefresh: true,
-      },
+    const mm = gsap.matchMedia();
+
+    // Enable horizontal scroll trigger ONLY on desktop screens (>= 1024px)
+    mm.add("(min-width: 1024px)", () => {
+      const pinAnim = gsap.to(scrollSection, {
+        x: getScrollAmount,
+        ease: "none",
+        scrollTrigger: {
+          trigger: triggerSection,
+          start: "top top",
+          end: () => `+=${scrollSection.scrollWidth - window.innerWidth}`,
+          scrub: 0.5,
+          pin: true,
+          pinSpacing: true,
+          anticipatePin: 1,
+          invalidateOnRefresh: true,
+        },
+      });
+
+      return () => {
+        pinAnim.scrollTrigger?.kill();
+        pinAnim.kill();
+      };
     });
 
-    // Refresh ScrollTrigger after a short delay to ensure card image heights/widths are fully resolved
+    // Refresh ScrollTrigger after a short delay to ensure card heights/widths are fully resolved
     const refreshTimeout = setTimeout(() => {
       ScrollTrigger.refresh();
     }, 600);
 
     return () => {
       clearTimeout(refreshTimeout);
-      pinAnim.scrollTrigger?.kill();
-      pinAnim.kill();
+      mm.revert();
     };
   }, []);
 
@@ -181,21 +190,28 @@ export default function ProductShowcase() {
 
   return (
     <div ref={triggerRef} className="bg-black select-none w-full relative overflow-hidden">
+      <style dangerouslySetInnerHTML={{ __html: `
+        .no-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}} />
       {/* Scroll timeline height container */}
       <div
         ref={sectionRef}
-        className="h-screen flex items-center justify-start relative px-[10vw] gap-12 w-fit bg-black"
-        style={{ willChange: "transform" }}
+        className="grid grid-cols-2 grid-rows-3 gap-4 px-4 py-16 w-full md:grid-cols-3 md:grid-rows-2 md:gap-8 md:px-8 md:py-24 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
+        style={{
+          willChange: "transform",
+        }}
       >
         {/* Intro Slide */}
-        <div className="shrink-0 w-[80vw] md:w-[45vw] flex flex-col justify-center pr-12">
+        <div className="w-full flex flex-col justify-center pr-4 md:pr-8 lg:shrink-0 lg:w-[45vw] lg:pr-12">
           <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
             NEW ARRIVALS
           </span>
-          <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white uppercase leading-none">
+          <h2 className="text-3xl md:text-4xl lg:text-6xl font-bold tracking-tight text-white uppercase leading-none">
             LATEST <span className="text-accent">RELEASES</span>
           </h2>
-          <p className="text-muted-text text-sm md:text-base tracking-wide mt-6 leading-relaxed font-light max-w-sm">
+          <p className="text-muted-text text-xs sm:text-sm md:text-sm lg:text-base tracking-wide mt-4 md:mt-6 leading-relaxed font-light max-w-sm">
             Explore our newest seasonal drops. A fresh curation of contemporary silhouettes, refined textures, and modern essentials designed to elevate your wardrobe for the season ahead.
           </p>
           <div className="mt-8 flex items-center gap-3 text-xs tracking-widest text-muted-text">
@@ -210,8 +226,8 @@ export default function ProductShowcase() {
         ))}
 
         {/* End Outro Slide */}
-        <div className="shrink-0 w-[50vw] flex flex-col justify-center pl-12">
-          <h2 className="text-3xl md:text-5xl font-bold text-zinc-700 tracking-tight leading-none uppercase">
+        <div className="hidden lg:flex lg:shrink-0 lg:w-[50vw] lg:flex-col lg:justify-center lg:pl-12">
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-700 tracking-tight leading-none uppercase">
             END OF <br />
             <span className="text-muted-text font-light font-serif italic">Edition</span>
           </h2>
