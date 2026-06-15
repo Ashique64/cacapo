@@ -61,7 +61,7 @@ function ProductCard({ product }) {
       <div className="flex flex-col grow justify-between mt-3 md:mt-3 lg:mt-6">
         <div>
           <div className="mb-2">
-            <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors block">
+            <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
               <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors truncate lg:whitespace-normal">
                 {product.name}
               </h3>

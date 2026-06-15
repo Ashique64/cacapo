@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, User, Menu, X } from "lucide-react";
+import Link from "next/link";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -68,21 +69,24 @@ export default function Navbar() {
             : "bg-transparent p-6"
         } flex justify-between items-center`}
       >
-        <span className="text-xl font-extrabold tracking-[0.3em] text-white">CACAPO</span>
+        <Link href="/" className="text-xl font-extrabold tracking-[0.3em] text-white hover:text-accent transition-colors">
+          CACAPO
+        </Link>
         
         {/* Desktop Menu Links */}
         <div className="hidden md:flex gap-8 text-sm font-medium tracking-widest">
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             return (
-              <span
+              <Link
                 key={item.name}
+                href={item.path}
                 className={`transition-colors cursor-pointer ${
                   isActive ? "text-accent font-semibold" : "text-muted-text hover:text-white"
                 }`}
               >
                 {item.name}
-              </span>
+              </Link>
             );
           })}
         </div>
@@ -142,15 +146,16 @@ export default function Navbar() {
           {navItems.map((item) => {
             const isActive = pathname === item.path;
             return (
-              <span
+              <Link
                 key={item.name}
+                href={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`transition-colors cursor-pointer ${
                   isActive ? "text-accent" : "text-muted-text hover:text-white"
                 }`}
               >
                 {item.name}
-              </span>
+              </Link>
             );
           })}
         </div>
