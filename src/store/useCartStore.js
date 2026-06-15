@@ -7,6 +7,8 @@ export const useCartStore = create(
     (set, get) => ({
       items: [], // { id, product_id, variant_id, quantity, product: {...}, variant: {...} }
       loading: false,
+      isCartOpen: false,
+      setCartOpen: (open) => set({ isCartOpen: open }),
 
       // Initialize/fetch cart from Supabase when user is logged in
       fetchCart: async (userId) => {

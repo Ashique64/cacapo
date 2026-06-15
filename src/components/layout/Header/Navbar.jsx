@@ -16,6 +16,7 @@ export default function Navbar() {
 
   const items = useCartStore((state) => state.items);
   const cartCount = mounted ? items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+  const setCartOpen = useCartStore((state) => state.setCartOpen);
 
   const wishlistItems = useWishlistStore((state) => state.items);
   const wishlistCount = mounted ? wishlistItems.length : 0;
@@ -117,30 +118,30 @@ export default function Navbar() {
               </span>
             )}
           </Link>
-          <span className="hover:text-accent transition-colors cursor-pointer p-1 relative">
+          <button 
+            onClick={() => setCartOpen(true)}
+            className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
+          >
             <ShoppingBag className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
               {cartCount}
             </span>
-          </span>
+          </button>
         </div>
 
         {/* Mobile Right Controls */}
         <div className="flex items-center gap-4 md:hidden">
-          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer p-1 relative">
-            <Heart className="w-5 h-5 text-white" />
-            {wishlistCount > 0 && (
+          <button 
+            onClick={() => setCartOpen(true)}
+            className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
+          >
+            <ShoppingBag className="w-5 h-5 text-white" />
+            {cartCount > 0 && (
               <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
-                {wishlistCount}
+                {cartCount}
               </span>
             )}
-          </Link>
-          <span className="hover:text-accent transition-colors cursor-pointer p-1 relative">
-            <ShoppingBag className="w-5 h-5 text-white" />
-            <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
-              {cartCount}
-            </span>
-          </span>
+          </button>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
             className="text-white hover:text-accent transition-colors p-1"
@@ -191,10 +192,16 @@ export default function Navbar() {
 
         {/* Bottom actions */}
         <div className="flex justify-center gap-8 text-white border-t border-zinc-900 pt-8">
-          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer flex items-center gap-2 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
+          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer flex items-center gap-1.5 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
             <Heart className="w-4 h-4" /> WISHLIST ({wishlistCount})
           </Link>
-          <span className="hover:text-accent transition-colors cursor-pointer flex items-center gap-2 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
+          <span 
+            className="hover:text-accent transition-colors cursor-pointer flex items-center gap-1.5 text-xs tracking-widest" 
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              setCartOpen(true);
+            }}
+          >
             <ShoppingBag className="w-4 h-4" /> BAG ({cartCount})
           </span>
         </div>

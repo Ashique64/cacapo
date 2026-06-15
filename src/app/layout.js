@@ -1,5 +1,6 @@
 import { Outfit, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import CartSidebar from "@/components/layout/CartSidebar";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -27,7 +28,10 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${outfit.variable} ${playfair.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <CartSidebar />
+      </body>
     </html>
   );
 }

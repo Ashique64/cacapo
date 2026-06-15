@@ -15,6 +15,7 @@ export default function WishlistPage() {
   const wishlistItems = useWishlistStore((state) => state.items);
   const removeItem = useWishlistStore((state) => state.removeItem);
   const addItem = useCartStore((state) => state.addItem);
+  const setCartOpen = useCartStore((state) => state.setCartOpen);
 
   const [mounted, setMounted] = useState(false);
   const [selectedSizes, setSelectedSizes] = useState({});
@@ -43,6 +44,7 @@ export default function WishlistPage() {
 
     // Add to Zustand Cart Store
     addItem(product, variant, 1, user?.id);
+    setCartOpen(true);
 
     // Show visual check confirmation
     setAddedStates((prev) => ({ ...prev, [product.id]: true }));

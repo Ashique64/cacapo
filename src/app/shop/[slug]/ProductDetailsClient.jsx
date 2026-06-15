@@ -22,6 +22,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 export default function ProductDetailsClient({ product, relatedProducts }) {
   const { user } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
+  const setCartOpen = useCartStore((state) => state.setCartOpen);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const wishlistItems = useWishlistStore((state) => state.items);
 
@@ -139,6 +140,8 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     addItem(product, currentVariant, quantity, user?.id);
     setAddedState(true);
     setTimeout(() => setAddedState(false), 3000);
+    // Slide open cart sidebar
+    setCartOpen(true);
   };
 
   return (
@@ -333,11 +336,8 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
           {/* Sizing Section */}
           {sizes.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs tracking-wider">
+              <div className="text-xs tracking-wider">
                 <span className="font-bold uppercase text-zinc-400">Select Size</span>
-                <button className="text-[10px] tracking-widest text-zinc-500 hover:text-white uppercase flex items-center gap-1">
-                  <Ruler className="w-3 h-3 text-zinc-600" /> Size Guide
-                </button>
               </div>
               
               <div className="flex flex-wrap gap-2.5">
