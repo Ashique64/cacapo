@@ -175,15 +175,19 @@ function ProductCard({ product }) {
   );
 }
 
-export default function ProductShowcase() {
+export default function ProductShowcase({ initialProducts }) {
   const triggerRef = useRef(null);
   const sectionRef = useRef(null);
   const [activeIdx, setActiveIdx] = useState(0);
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [products, setProducts] = useState(initialProducts || []);
+  const [loading, setLoading] = useState(!initialProducts || initialProducts.length === 0);
 
-  // Fetch newest active products from Supabase
+  // Fetch newest active products from Supabase if not provided
   useEffect(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      return;
+    }
+
     async function loadNewArrivals() {
       try {
         const { data, error } = await supabase
@@ -218,7 +222,7 @@ export default function ProductShowcase() {
       }
     }
     loadNewArrivals();
-  }, []);
+  }, [initialProducts]);
 
   const handleScroll = (e) => {
     const scrollLeft = e.currentTarget.scrollLeft;

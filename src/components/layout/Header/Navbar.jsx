@@ -2,14 +2,27 @@
 
 import { useEffect, useState } from "react";
 import { usePathname } from "next/navigation";
-import { ShoppingBag, User, Menu, X } from "lucide-react";
+import { ShoppingBag, Heart, User, Menu, X } from "lucide-react";
 import Link from "next/link";
+import { useCartStore } from "@/store/useCartStore";
+import { useWishlistStore } from "@/store/useWishlistStore";
 
 export default function Navbar() {
   const pathname = usePathname();
   const [isVisible, setIsVisible] = useState(true);
   const [isPastHero, setIsPastHero] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+
+  const items = useCartStore((state) => state.items);
+  const cartCount = mounted ? items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+
+  const wishlistItems = useWishlistStore((state) => state.items);
+  const wishlistCount = mounted ? wishlistItems.length : 0;
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const navItems = [
     { name: "HOME", path: "/" },
@@ -96,20 +109,36 @@ export default function Navbar() {
           <span className="hover:text-accent transition-colors cursor-pointer p-1">
             <User className="w-5 h-5" />
           </span>
+          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer p-1 relative animate-none">
+            <Heart className="w-5 h-5" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           <span className="hover:text-accent transition-colors cursor-pointer p-1 relative">
             <ShoppingBag className="w-5 h-5" />
             <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
-              0
+              {cartCount}
             </span>
           </span>
         </div>
 
         {/* Mobile Right Controls */}
         <div className="flex items-center gap-4 md:hidden">
+          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer p-1 relative">
+            <Heart className="w-5 h-5 text-white" />
+            {wishlistCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
+                {wishlistCount}
+              </span>
+            )}
+          </Link>
           <span className="hover:text-accent transition-colors cursor-pointer p-1 relative">
             <ShoppingBag className="w-5 h-5 text-white" />
             <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
-              0
+              {cartCount}
             </span>
           </span>
           <button
@@ -161,12 +190,12 @@ export default function Navbar() {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex justify-center gap-12 text-white border-t border-zinc-900 pt-8">
+        <div className="flex justify-center gap-8 text-white border-t border-zinc-900 pt-8">
+          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer flex items-center gap-2 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
+            <Heart className="w-4 h-4" /> WISHLIST ({wishlistCount})
+          </Link>
           <span className="hover:text-accent transition-colors cursor-pointer flex items-center gap-2 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
-            <User className="w-4 h-4" /> ACCOUNT
-          </span>
-          <span className="hover:text-accent transition-colors cursor-pointer flex items-center gap-2 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
-            <ShoppingBag className="w-4 h-4" /> BAG (0)
+            <ShoppingBag className="w-4 h-4" /> BAG ({cartCount})
           </span>
         </div>
       </div>

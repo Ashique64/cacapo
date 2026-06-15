@@ -42,14 +42,18 @@ const SLUG_IMAGE_FALLBACK = {
   accessories: "/Images/accessories.jpg",
 };
 
-export default function Collections() {
+export default function Collections({ initialCategories }) {
   const sectionRef = useRef(null);
   const cardsRef = useRef([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [categories, setCategories] = useState(initialCategories || []);
+  const [loading, setLoading] = useState(!initialCategories || initialCategories.length === 0);
 
-  // Fetch categories from Supabase
+  // Fetch categories from Supabase if not provided
   useEffect(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return;
+    }
+
     async function loadCategories() {
       try {
         const { data, error } = await supabase
@@ -77,7 +81,7 @@ export default function Collections() {
       }
     }
     loadCategories();
-  }, []);
+  }, [initialCategories]);
 
   // GSAP stagger animation — re-run whenever categories are populated
   useEffect(() => {

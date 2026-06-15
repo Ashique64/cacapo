@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -208,7 +208,7 @@ function ProductCard({ product }) {
   );
 }
 
-export default function ShopPage() {
+function ShopContent() {
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -773,3 +773,17 @@ export default function ShopPage() {
     </SmoothScroll>
   );
 }
+
+export default function ShopPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex flex-col items-center justify-center min-h-screen bg-black text-zinc-500 gap-3">
+        <Loader2 className="w-8 h-8 animate-spin text-accent" />
+        <span className="text-xs tracking-[0.2em] font-mono">LOADING ARCHIVE...</span>
+      </div>
+    }>
+      <ShopContent />
+    </Suspense>
+  );
+}
+

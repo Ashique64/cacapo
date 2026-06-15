@@ -1,10 +1,9 @@
 @import "tailwindcss";
 
 html {
-  scrollbar-gutter: stable;
-  scrollbar-width: thin;
-  scrollbar-color: #FF4D4D #000000;
-  overflow-x: hidden;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+  overflow-x: hidden !important;
   width: 100%;
 }
 
@@ -28,8 +27,17 @@ body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
-  overflow-x: hidden;
+  overflow-x: hidden !important;
   width: 100%;
+}
+
+/* Global scrollbar hiding helper */
+.no-scrollbar::-webkit-scrollbar {
+  display: none !important;
+}
+.no-scrollbar {
+  -ms-overflow-style: none !important;  /* IE and Edge */
+  scrollbar-width: none !important;  /* Firefox */
 }
 
 /* Custom radial gradient helper for dark vignetting */
@@ -58,23 +66,12 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
-/* Custom premium, minimal floating scrollbar */
+/* Hide scrollbar globally for clean luxury layout */
 ::-webkit-scrollbar {
-  width: 4px;
-  height: 4px;
-}
-
-::-webkit-scrollbar-track {
-  background: #000000;
-}
-
-::-webkit-scrollbar-thumb {
-  background-color: #FF4D4D; /* Brand Accent Color */
-  border-radius: 0px; /* Sharp corners */
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background-color: #E03A3A; /* Slightly darker accent hover */
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+  background: transparent !important;
 }
 
 /* Custom dress swinging animation for mobile hero */
