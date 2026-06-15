@@ -97,6 +97,14 @@ function ProductCard({ product }) {
 export default function ProductShowcase() {
   const triggerRef = useRef(null);
   const sectionRef = useRef(null);
+  const [activeIdx, setActiveIdx] = useState(0);
+
+  const handleScroll = (e) => {
+    const scrollLeft = e.currentTarget.scrollLeft;
+    const cardWidth = e.currentTarget.scrollWidth / products.length;
+    const index = Math.round(scrollLeft / cardWidth);
+    setActiveIdx(Math.min(products.length - 1, Math.max(0, index)));
+  };
 
   useEffect(() => {
     gsap.registerPlugin(ScrollTrigger);
@@ -220,16 +228,48 @@ export default function ProductShowcase() {
         </div>
       </div>
 
-      {/* Scroll timeline height container */}
+      {/* Mobile/Tablet Carousel (lg:hidden) */}
+      <div className="lg:hidden w-full relative">
+        <div
+          onScroll={handleScroll}
+          className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory px-6 pb-6 pt-0 w-full"
+        >
+          {products.map((product, idx) => (
+            <div key={idx} className="snap-center shrink-0 w-[80vw] sm:w-[50vw] md:w-[45vw]">
+              <ProductCard product={product} />
+            </div>
+          ))}
+        </div>
+        
+        {/* Carousel Progress Bar */}
+        <div className="flex flex-col items-center mt-4 mb-12">
+          <div className="w-24 h-px bg-zinc-900 relative">
+            <div
+              className="absolute h-full bg-accent transition-all duration-300 ease-out"
+              style={{
+                width: `${100 / products.length}%`,
+                left: `${(activeIdx / products.length) * 100}%`,
+              }}
+            />
+          </div>
+          <div className="flex gap-2 mt-3 text-[9px] tracking-widest text-zinc-500 font-mono">
+            <span>{(activeIdx + 1).toString().padStart(2, "0")}</span>
+            <span>/</span>
+            <span>{products.length.toString().padStart(2, "0")}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Desktop Container (hidden lg:flex) */}
       <div
         ref={sectionRef}
-        className="grid grid-cols-2 gap-4 px-4 pb-12 pt-0 w-full md:grid-cols-3 md:gap-8 md:px-8 md:pb-16 md:pt-0 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
+        className="hidden lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0 lg:h-screen"
         style={{
           willChange: "transform",
         }}
       >
         {/* Intro Slide (Desktop horizontal layout only) */}
-        <div className="hidden lg:flex lg:shrink-0 lg:w-[45vw] lg:flex-col lg:justify-center lg:pr-12">
+        <div className="lg:shrink-0 lg:w-[45vw] lg:flex lg:flex-col lg:justify-center lg:pr-12">
           <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
             NEW ARRIVALS
           </span>
@@ -247,11 +287,13 @@ export default function ProductShowcase() {
 
         {/* Product Cards */}
         {products.map((product, idx) => (
-          <ProductCard key={idx} product={product} />
+          <div key={idx} className="lg:shrink-0 lg:w-[32vw]">
+            <ProductCard product={product} />
+          </div>
         ))}
 
         {/* End Outro Slide */}
-        <div className="hidden lg:flex lg:shrink-0 lg:w-[50vw] lg:flex-col lg:justify-center lg:pl-12">
+        <div className="lg:shrink-0 lg:w-[50vw] lg:flex lg:flex-col lg:justify-center lg:pl-12">
           <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-zinc-700 tracking-tight leading-none uppercase">
             END OF <br />
             <span className="text-muted-text font-light font-serif italic">Edition</span>
