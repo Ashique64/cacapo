@@ -67,7 +67,7 @@ export default function Footer() {
         </div>
 
         {/* Big Decorative Title */}
-        <div className="border-t border-zinc-900 pt-10 md:pt-16 flex flex-col items-center justify-center relative">
+        <div className="border-t border-zinc-900 pt-10 md:pt-16 flex flex-col items-center justify-center relative overflow-hidden w-full">
           <div className="flex gap-8 mb-8 text-muted-text">
             {/* Instagram */}
             <span className="hover:text-white transition-colors cursor-pointer" aria-label="Instagram">
@@ -84,7 +84,7 @@ export default function Footer() {
           </div>
 
           {/* Big CACAPO Logo with Letter Spacing */}
-          <h1 className="text-[15vw] leading-none font-black tracking-[0.2em] text-zinc-950 font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
+          <h1 className="text-[12vw] lg:text-[11vw] leading-none font-black tracking-[0.2em] -mr-[0.2em] text-zinc-950 font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
             CACAPO
           </h1>
         </div>
