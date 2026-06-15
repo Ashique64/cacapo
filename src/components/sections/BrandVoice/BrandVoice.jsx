@@ -30,7 +30,7 @@ export default function BrandEthos() {
         scrollTrigger: {
           trigger: triggerRef.current,
           start: "top 75%",
-          end: "bottom 60%",
+          end: "bottom 95%",
           scrub: 0.5,
         },
       }
@@ -63,12 +63,12 @@ export default function BrandEthos() {
   return (
     <section
       ref={triggerRef}
-      className="relative bg-black py-24 px-6 overflow-hidden border-t border-zinc-900 select-none"
+      className="relative bg-black py-24 px-6 md:px-12 md:py-24 lg:py-24 lg:px-6 overflow-hidden border-t border-zinc-900 select-none"
       id="brand-ethos"
     >
-      <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-16 items-center">
+      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 md:gap-10 lg:gap-16 items-center">
         {/* Ethos Text Reveal Column */}
-        <div className="lg:col-span-7 flex flex-col justify-center">
+        <div className="md:col-span-1 lg:col-span-7 flex flex-col justify-center">
           <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-6">
             OUR PHILOSOPHY
           </span>
@@ -87,7 +87,7 @@ export default function BrandEthos() {
           </p>
 
           {/* Details below reveal */}
-          <div className="mt-12 flex items-start gap-12 border-t border-zinc-900 pt-10">
+          <div className="mt-10 flex items-start justify-between md:justify-start gap-4 md:gap-8 lg:gap-12 border-t border-zinc-900 pt-8">
             <div>
               <span className="text-2xl font-bold font-mono text-zinc-100 block">GLOBAL</span>
               <span className="text-[10px] text-muted-text tracking-widest uppercase mt-1 block">
@@ -110,7 +110,7 @@ export default function BrandEthos() {
         </div>
 
         {/* Visual Parallax Column */}
-        <div className="lg:col-span-5 relative flex justify-center items-center w-full max-w-md mx-auto lg:max-w-none lg:mx-0">
+        <div className="md:col-span-1 lg:col-span-5 relative flex justify-center items-center w-full max-w-md mx-auto lg:max-w-none lg:mx-0">
           {/* Decorative frame elements */}
           <div className="absolute inset-0 border border-zinc-800 rounded-none -m-4 pointer-events-none" />
           <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-accent/20 rounded-none -m-4 pointer-events-none" />
