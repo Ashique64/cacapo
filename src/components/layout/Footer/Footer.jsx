@@ -9,13 +9,13 @@ export default function Footer() {
       <div className="absolute bottom-0 left-1/3 -translate-x-1/2 w-[600px] h-[300px] bg-accent/3 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-10 lg:mb-20">
-          {/* Newsletter Column - Text Only */}
-          <div className="md:col-span-6 flex flex-col justify-start">
+        <div className="grid grid-cols-2 md:grid-cols-12 gap-x-6 gap-y-12 md:gap-12 mb-10 lg:mb-20">
+          {/* Newsletter Column */}
+          <div className="col-span-2 md:col-span-6 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">
               NEWSLETTER
             </span>
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-6 uppercase">
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 uppercase">
               Stay tuned <br />
               <span className="text-accent">
                 to the Atelier
@@ -27,7 +27,7 @@ export default function Footer() {
           </div>
 
           {/* Links Column 1 */}
-          <div className="md:col-span-3 col-span-6 flex flex-col justify-start">
+          <div className="col-span-1 md:col-span-3 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-muted-text uppercase mb-6 block">
               COLLECTIONS
             </span>
@@ -45,7 +45,7 @@ export default function Footer() {
           </div>
 
           {/* Links Column 2 */}
-          <div className="md:col-span-3 col-span-6 flex flex-col justify-start">
+          <div className="col-span-1 md:col-span-3 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-muted-text uppercase mb-6 block">
               COMPANY
             </span>
@@ -67,7 +67,7 @@ export default function Footer() {
         </div>
 
         {/* Big Decorative Title */}
-        <div className="border-t border-zinc-900 pt-16 flex flex-col items-center justify-center relative">
+        <div className="border-t border-zinc-900 pt-10 md:pt-16 flex flex-col items-center justify-center relative">
           <div className="flex gap-8 mb-8 text-muted-text">
             {/* Instagram */}
             <span className="hover:text-white transition-colors cursor-pointer" aria-label="Instagram">
