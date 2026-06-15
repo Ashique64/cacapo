@@ -63,7 +63,7 @@ export default function BrandEthos() {
   return (
     <section
       ref={triggerRef}
-      className="relative bg-black py-12 md:py-16 lg:py-24 px-6 md:px-12 lg:px-6 overflow-hidden border-zinc-900 select-none"
+      className="hidden md:block relative bg-black py-12 md:py-16 lg:py-24 px-6 md:px-12 lg:px-6 overflow-hidden border-zinc-900 select-none"
       id="brand-ethos"
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 md:gap-10 lg:gap-16 items-center">

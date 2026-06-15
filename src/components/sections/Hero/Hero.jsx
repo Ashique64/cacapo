@@ -369,7 +369,7 @@ export default function Hero() {
           </div>
 
           {/* Text 3: Final Screen - Left Aligned on desktop, centered on mobile */}
-          <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg hidden lg:flex">
+          <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg hidden lg:flex">
             <h2 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               UNCOMPROMISED <br />
               <span className="text-accent">

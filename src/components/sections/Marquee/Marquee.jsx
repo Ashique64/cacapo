@@ -19,8 +19,8 @@ export default function Marquee() {
   return (
     <div className="lg:hidden w-full overflow-hidden bg-zinc-950/40 backdrop-blur-md border-y border-zinc-900/60 py-3.5 sm:py-4 select-none relative z-20">
       {/* Side Vignette Fades */}
-      <div className="absolute inset-y-0 left-0 w-12 bg-gradient-to-r from-black to-transparent pointer-events-none z-10" />
-      <div className="absolute inset-y-0 right-0 w-12 bg-gradient-to-l from-black to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-y-0 left-0 w-12 bg-linear-to-r from-black to-transparent pointer-events-none z-10" />
+      <div className="absolute inset-y-0 right-0 w-12 bg-linear-to-l from-black to-transparent pointer-events-none z-10" />
       
       <div className="animate-marquee flex items-center gap-12 whitespace-nowrap">
         {listItems.map((item, index) => (
