@@ -127,8 +127,7 @@ export default function Navbar() {
         }`}
       >
         {/* Header inside mobile menu */}
-        <div className="flex justify-between items-center">
-          <span className="text-xl font-extrabold tracking-[0.3em] text-white">CACAPO</span>
+        <div className="flex justify-end items-center">
           <button
             onClick={() => setIsMobileMenuOpen(false)}
             className="text-white hover:text-accent transition-colors p-1"

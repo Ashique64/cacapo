@@ -14,6 +14,7 @@ export default function Hero() {
   const [loadingProgress, setLoadingProgress] = useState(0);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isPreloaderRemoved, setIsPreloaderRemoved] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   const totalFrames = 180;
 
@@ -27,6 +28,54 @@ export default function Hero() {
 
   // Preload Images
   useEffect(() => {
+    const isMobileDevice = window.innerWidth < 1024;
+    setIsMobile(isMobileDevice);
+
+    if (isMobileDevice) {
+      // Skip frames load on mobile/tablet for instant speed
+      setLoadingProgress(100);
+      setIsLoaded(true);
+
+      const timer = setTimeout(() => {
+        if (preloaderRef.current) {
+          const tl = gsap.timeline({
+            onComplete: () => {
+              setIsPreloaderRemoved(true);
+              // Allow scroll on body
+              document.body.style.overflow = "auto";
+            }
+          });
+
+          // 1. Fade/slide out text and UI overlays
+          tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
+            opacity: 0,
+            y: -20,
+            duration: 0.8,
+            ease: "power3.in"
+          })
+          // 2. Split panels slide off screen
+          .to(".preloader-top-panel", {
+            y: "-100%",
+            duration: 1.2,
+            ease: "power4.inOut"
+          }, "-=0.4")
+          .to(".preloader-bottom-panel", {
+            y: "100%",
+            duration: 1.2,
+            ease: "power4.inOut"
+          }, "<"); // Starts at same time
+        } else {
+          setIsPreloaderRemoved(true);
+          document.body.style.overflow = "auto";
+        }
+      }, 800);
+
+      return () => {
+        clearTimeout(timer);
+        document.body.style.overflow = "auto";
+      };
+    }
+
     let loadedCount = 0;
     const imagesArray = [];
 
@@ -147,6 +196,7 @@ export default function Hero() {
   // Resize handler
   useEffect(() => {
     const handleResize = () => {
+      setIsMobile(window.innerWidth < 1024);
       if (imagesRef.current[currentFrameIndexRef.current]) {
         drawImage(imagesRef.current[currentFrameIndexRef.current]);
       }
@@ -158,7 +208,7 @@ export default function Hero() {
 
   // GSAP ScrollTrigger Animation
   useEffect(() => {
-    if (!isLoaded) return;
+    if (!isLoaded || isMobile) return;
 
     gsap.registerPlugin(ScrollTrigger);
 
@@ -226,20 +276,30 @@ export default function Hero() {
       trigger.kill();
       textTl.kill();
     };
-  }, [isLoaded]);
+  }, [isLoaded, isMobile]);
 
   return (
     <div
       ref={containerRef}
       id="hero"
-      className="relative w-full bg-black h-[160vh] md:h-[200vh] lg:h-[240vh]"
+      className="relative w-full bg-black h-screen lg:h-[240vh]"
     >
       {/* Canvas Sticky Layer */}
       <div className="hero-sticky-layer w-full h-screen overflow-hidden z-10 relative">
-        <canvas
-          ref={canvasRef}
-          className="w-full h-full block object-cover"
-        />
+        {isMobile ? (
+          <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden">
+            <img
+              src="/Images/mobile_hero_bg.png"
+              alt="CACAPO Couture Streetwear"
+              className="w-full h-full object-cover opacity-60 scale-110 animate-swing"
+            />
+          </div>
+        ) : (
+          <canvas
+            ref={canvasRef}
+            className="w-full h-full block object-cover"
+          />
+        )}
 
         {/* Cinematic Vignette Overlay */}
         <div className="absolute inset-0 bg-linear-to-t from-black via-transparent to-black/80 pointer-events-none z-15" />
@@ -248,17 +308,30 @@ export default function Hero() {
         {/* Scrolling Text Overlays */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 px-6">
           {/* Main Initial Title */}
-          <div className="hero-title-main text-center select-none">
+          <div className="hero-title-main text-center select-none flex flex-col items-center justify-center translate-y-48 lg:translate-y-0">
             <h1 className="text-5xl sm:text-6xl md:text-7xl lg:text-8xl font-black tracking-[0.2em] text-white">
               CACAPO
             </h1>
             <p className="text-xs sm:text-sm md:text-sm lg:text-sm tracking-[0.3em] sm:tracking-[0.6em] text-muted-text mt-4 uppercase">
               The Art of Modern Couture
             </p>
+            <div className="mt-8 flex justify-center lg:hidden pointer-events-auto">
+              <button
+                onClick={() => {
+                  document.getElementById("collections")?.scrollIntoView({ behavior: "smooth" });
+                }}
+                className="relative overflow-hidden px-8 py-3 bg-transparent border border-white text-white rounded-none font-semibold text-[10px] sm:text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95"
+              >
+                <span className="absolute inset-0 bg-white transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+                <span className="relative z-10 transition-colors duration-500 group-hover:text-black">
+                  SHOP COLLECTION
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* Text 1: Clothing - Right Aligned on desktop, centered on mobile */}
-          <div className="hero-text-1 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-[15%] text-center md:text-right select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
+          <div className="hero-text-1 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-[15%] text-center md:text-right select-none opacity-0 w-full max-w-[90vw] md:max-w-md hidden lg:block">
             <span className="text-xs sm:text-sm md:text-sm lg:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               THE TEXTILE REVELATION
             </span>
@@ -274,7 +347,7 @@ export default function Hero() {
           </div>
 
           {/* Text 2: Footwear & Accessories - Left Aligned on desktop, centered on mobile */}
-          <div className="hero-text-2 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
+          <div className="hero-text-2 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 w-full max-w-[90vw] md:max-w-md hidden lg:block">
             <span className="text-xs sm:text-sm md:text-sm lg:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               SCULPTED FOOTWEAR & ACCENTS
             </span>
@@ -290,7 +363,7 @@ export default function Hero() {
           </div>
 
           {/* Text 3: Final Screen - Left Aligned on desktop, centered on mobile */}
-          <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg">
+          <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg hidden lg:flex">
             <h2 className="text-4xl sm:text-5xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               UNCOMPROMISED <br />
               <span className="text-accent">

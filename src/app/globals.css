@@ -77,3 +77,21 @@ html.lenis, html.lenis body {
   background-color: #E03A3A; /* Slightly darker accent hover */
 }
 
+/* Custom dress swinging animation for mobile hero */
+@keyframes swing {
+  0% {
+    transform: rotate(-3deg);
+  }
+  50% {
+    transform: rotate(3deg);
+  }
+  100% {
+    transform: rotate(-3deg);
+  }
+}
+
+.animate-swing {
+  animation: swing 6s ease-in-out infinite;
+  transform-origin: top center;
+}
+
