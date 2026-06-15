@@ -54,3 +54,9 @@ export const useAuthStore = create((set, get) => ({
     return { error };
   },
 }));
+
+// Auto-initialize on client side
+if (typeof window !== "undefined") {
+  useAuthStore.getState().initialize();
+}
+

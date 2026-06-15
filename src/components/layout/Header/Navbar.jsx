@@ -6,6 +6,7 @@ import { ShoppingBag, Heart, User, Menu, X } from "lucide-react";
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function Navbar() {
   const pathname = usePathname();
@@ -20,6 +21,7 @@ export default function Navbar() {
 
   const wishlistItems = useWishlistStore((state) => state.items);
   const wishlistCount = mounted ? wishlistItems.length : 0;
+  const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     setMounted(true);
@@ -107,9 +109,9 @@ export default function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4 text-white">
-          <span className="hover:text-accent transition-colors cursor-pointer p-1">
+          <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer p-1">
             <User className="w-5 h-5" />
-          </span>
+          </Link>
           <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer p-1 relative animate-none">
             <Heart className="w-5 h-5" />
             {wishlistCount > 0 && (
@@ -131,6 +133,9 @@ export default function Navbar() {
 
         {/* Mobile Right Controls */}
         <div className="flex items-center gap-4 md:hidden">
+          <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer p-1 text-white">
+            <User className="w-5 h-5" />
+          </Link>
           <button 
             onClick={() => setCartOpen(true)}
             className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
@@ -191,7 +196,10 @@ export default function Navbar() {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex justify-center gap-8 text-white border-t border-zinc-900 pt-8">
+        <div className="flex justify-center gap-6 text-white border-t border-zinc-900 pt-8">
+          <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer flex items-center gap-1.5 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
+            <User className="w-4 h-4" /> {user ? "ACCOUNT" : "LOGIN"}
+          </Link>
           <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer flex items-center gap-1.5 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
             <Heart className="w-4 h-4" /> WISHLIST ({wishlistCount})
           </Link>
