@@ -84,7 +84,7 @@ export default function Footer() {
           </div>
 
           {/* Big CACAPO Logo with Letter Spacing */}
-          <h1 className="text-[12vw] lg:text-[11vw] leading-none font-black tracking-[0.2em] -mr-[0.2em] text-zinc-950 font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
+          <h1 className="text-[12vw] lg:text-[11vw] leading-none font-black tracking-[0.2em] mr-[0.2em] text-zinc-950 font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
             CACAPO
           </h1>
         </div>
