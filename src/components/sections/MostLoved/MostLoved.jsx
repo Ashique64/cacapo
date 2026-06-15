@@ -27,13 +27,13 @@ function ProductCard({ product }) {
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="shrink-0 w-full lg:w-[32vw] h-[42vh] sm:h-[48vh] md:h-[45vh] lg:h-[75vh] flex flex-col justify-between p-4 md:p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
+      className="shrink-0 w-full lg:w-[32vw] h-[36vh] sm:h-[42vh] md:h-[35vh] lg:h-[75vh] flex flex-col justify-between p-4 md:p-4 lg:p-6 bg-zinc-950/40 border border-zinc-800/80 rounded-none backdrop-blur-md relative overflow-hidden group hover:border-accent/30 transition-all duration-700 hover:shadow-[0_0_40px_rgba(255,77,77,0.03)]"
     >
       {/* Ambient Background Light */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-[50px] rounded-full pointer-events-none" />
 
       {/* Product Image Panel - rounded-none */}
-      <div className="w-full h-1/2 rounded-none overflow-hidden relative border border-zinc-900">
+      <div className="w-full h-[62%] lg:h-1/2 rounded-none overflow-hidden relative border border-zinc-900">
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/60 z-2 pointer-events-none" />
         
         {/* Sliding Images Container */}
@@ -58,16 +58,16 @@ function ProductCard({ product }) {
       </div>
 
       {/* Card Info Section */}
-      <div className="flex flex-col grow justify-between mt-4 md:mt-6">
+      <div className="flex flex-col grow justify-between mt-3 md:mt-3 lg:mt-6">
         <div>
           <div className="mb-2">
             <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors block">
-              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors">
+              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors truncate lg:whitespace-normal">
                 {product.name}
               </h3>
             </Link>
             {/* Stock Availability status indicator */}
-            <div className="flex items-center gap-1.5 mt-1.5">
+            <div className="hidden lg:flex items-center gap-1.5 mt-1.5">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               <span className="text-[9px] tracking-[0.2em] text-muted-text uppercase font-light font-sans">
                 Atelier Drop
@@ -76,14 +76,14 @@ function ProductCard({ product }) {
           </div>
 
           {/* Proportional, aligned Rupee Currency Symbol style */}
-          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-3 flex items-baseline gap-0.5">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-1 lg:mt-3 flex items-baseline gap-0.5">
             <span className="text-sm sm:text-lg font-sans font-normal">₹</span>
             <span>{product.price.replace("₹", "")}</span>
           </div>
         </div>
 
         {/* Purchase Button Action */}
-        <div className="mt-4 md:mt-6">
+        <div className="mt-3 lg:mt-6">
           <button className="w-full py-2.5 md:py-3 bg-zinc-900 border border-zinc-800 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none text-white hover:bg-white hover:text-black hover:border-transparent transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]">
             <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
             ADD TO BAG
@@ -186,6 +186,14 @@ export default function ProductShowcase() {
       images: ["/Images/footwear.jpg", "/Images/footwear.jpg", "/Images/footwear.jpg"],
       slug: "champagne-strap-heels",
     },
+    {
+      name: "TEXTURED GOLD CHOKER",
+      category: "Accessories",
+      price: "₹1,450",
+      image: "/Images/accessories.jpg",
+      images: ["/Images/accessories.jpg", "/Images/accessories.jpg", "/Images/accessories.jpg"],
+      slug: "textured-gold-choker",
+    },
   ];
 
   return (
@@ -195,16 +203,33 @@ export default function ProductShowcase() {
           display: none;
         }
       `}} />
+      {/* Mobile/Tablet Title Section */}
+      <div className="block lg:hidden px-4 md:px-8 pt-24 max-w-7xl mx-auto relative z-10">
+        <div className="text-center md:text-left mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
+              NEW ARRIVALS
+            </span>
+            <h2 className="text-4xl md:text-4xl lg:text-6xl font-bold tracking-tight text-white uppercase">
+              LATEST <span className="text-accent">RELEASES</span>
+            </h2>
+          </div>
+          <p className="text-muted-text text-sm md:text-sm lg:text-base max-w-sm tracking-wide font-light">
+            Explore our newest seasonal drops. A fresh curation of contemporary silhouettes, refined textures, and modern essentials designed to elevate your wardrobe for the season ahead.
+          </p>
+        </div>
+      </div>
+
       {/* Scroll timeline height container */}
       <div
         ref={sectionRef}
-        className="grid grid-cols-2 grid-rows-3 gap-4 px-4 py-16 w-full md:grid-cols-3 md:grid-rows-2 md:gap-8 md:px-8 md:py-24 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
+        className="grid grid-cols-2 gap-4 px-4 pb-24 pt-0 w-full md:grid-cols-3 md:gap-8 md:px-8 md:pb-32 md:pt-0 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
         style={{
           willChange: "transform",
         }}
       >
-        {/* Intro Slide */}
-        <div className="w-full flex flex-col justify-center pr-4 md:pr-8 lg:shrink-0 lg:w-[45vw] lg:pr-12">
+        {/* Intro Slide (Desktop horizontal layout only) */}
+        <div className="hidden lg:flex lg:shrink-0 lg:w-[45vw] lg:flex-col lg:justify-center lg:pr-12">
           <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
             NEW ARRIVALS
           </span>
