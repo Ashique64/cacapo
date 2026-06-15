@@ -74,7 +74,7 @@ export default function BrandEthos() {
           </span>
           <p
             ref={textRef}
-            className="text-2xl sm:text-3xl md:text-4xl font-light tracking-wide leading-relaxed text-muted-text uppercase"
+            className="text-2xl sm:text-3xl md:text-2xl lg:text-4xl font-light tracking-wide leading-relaxed text-muted-text uppercase"
           >
             {words.map((word, index) => (
               <span

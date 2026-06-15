@@ -62,7 +62,7 @@ function ProductCard({ product }) {
         <div>
           <div className="mb-2">
             <Link href={`/products/${product.slug}`} className="hover:text-accent transition-colors block">
-              <h3 className="text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors">
+              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-zinc-100 group-hover:text-white transition-colors">
                 {product.name}
               </h3>
             </Link>
@@ -76,7 +76,7 @@ function ProductCard({ product }) {
           </div>
 
           {/* Proportional, aligned Rupee Currency Symbol style */}
-          <div className="text-xl sm:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-3 flex items-baseline gap-0.5">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-3 flex items-baseline gap-0.5">
             <span className="text-sm sm:text-lg font-sans font-normal">₹</span>
             <span>{product.price.replace("₹", "")}</span>
           </div>

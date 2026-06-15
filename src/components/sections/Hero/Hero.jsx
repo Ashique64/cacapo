@@ -249,55 +249,55 @@ export default function Hero() {
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20 px-6">
           {/* Main Initial Title */}
           <div className="hero-title-main text-center select-none">
-            <h1 className="text-4xl sm:text-5xl md:text-8xl font-black tracking-[0.2em] text-white">
+            <h1 className="text-4xl sm:text-5xl md:text-6xl lg:text-8xl font-black tracking-[0.2em] text-white">
               CACAPO
             </h1>
-            <p className="text-[10px] sm:text-xs md:text-sm tracking-[0.3em] sm:tracking-[0.6em] text-muted-text mt-4 uppercase">
+            <p className="text-[10px] sm:text-xs md:text-xs lg:text-sm tracking-[0.3em] sm:tracking-[0.6em] text-muted-text mt-4 uppercase">
               The Art of Modern Couture
             </p>
           </div>
 
           {/* Text 1: Clothing - Right Aligned on desktop, centered on mobile */}
           <div className="hero-text-1 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-auto md:right-[15%] text-center md:text-right select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
-            <span className="text-[10px] sm:text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
+            <span className="text-[10px] sm:text-xs md:text-xs lg:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               THE TEXTILE REVELATION
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+            <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               ELEGANCE IN <br />
               <span className="text-accent">
                 EVERY THREAD
               </span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
+            <p className="text-xs sm:text-sm md:text-sm lg:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
               Fluid drapery meets architecture-inspired tailoring. Silk, cashmere, and structural cotton engineered to contour.
             </p>
           </div>
 
           {/* Text 2: Footwear & Accessories - Left Aligned on desktop, centered on mobile */}
           <div className="hero-text-2 absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 w-full max-w-[90vw] md:max-w-md">
-            <span className="text-[10px] sm:text-xs md:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
+            <span className="text-[10px] sm:text-xs md:text-xs lg:text-sm tracking-[0.5em] text-accent uppercase font-semibold block mb-3">
               SCULPTED FOOTWEAR & ACCENTS
             </span>
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+            <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               DESIGNED TO <br />
               <span className="text-accent">
                 STEP AHEAD
               </span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
+            <p className="text-xs sm:text-sm md:text-sm lg:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
               Italian calf leather heels and structural metal clasps designed to contour and seal your aesthetic presence.
             </p>
           </div>
 
           {/* Text 3: Final Screen - Left Aligned on desktop, centered on mobile */}
           <div className="hero-text-final absolute left-1/2 -translate-x-1/2 md:translate-x-0 md:left-[8%] text-center md:text-left select-none opacity-0 flex flex-col items-center md:items-start w-full max-w-[90vw] md:max-w-lg">
-            <h2 className="text-3xl sm:text-4xl md:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
+            <h2 className="text-3xl sm:text-4xl md:text-4xl lg:text-6xl font-extrabold tracking-tight text-white leading-none uppercase">
               UNCOMPROMISED <br />
               <span className="text-accent">
                 COUTURE
               </span>
             </h2>
-            <p className="text-xs sm:text-sm md:text-base text-muted-text mt-4 md:mt-6 tracking-wider font-light">
+            <p className="text-xs sm:text-sm md:text-sm lg:text-base text-muted-text mt-4 md:mt-6 tracking-wider font-light">
               Experience the new collection. Scroll down to enter.
             </p>
             <div className="mt-6 md:mt-8 flex gap-4 justify-center md:justify-start">

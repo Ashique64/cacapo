@@ -73,22 +73,24 @@ export default function Collections() {
             <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
               THE RANGE
             </span>
-            <h2 className="text-4xl md:text-6xl font-bold tracking-tight text-white uppercase">
+            <h2 className="text-4xl md:text-4xl lg:text-6xl font-bold tracking-tight text-white uppercase">
               Curated <span className="text-accent">Couture</span>
             </h2>
           </div>
-          <p className="text-muted-text text-sm md:text-base max-w-sm tracking-wide font-light">
+          <p className="text-muted-text text-sm md:text-sm lg:text-base max-w-sm tracking-wide font-light">
             An uncompromising selection of garments, footwear, and accessories tailored for the modern, design-focused woman.
           </p>
         </div>
 
         {/* Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {collectionItems.map((item, idx) => (
             <div
               key={idx}
               ref={(el) => (cardsRef.current[idx] = el)}
-              className="group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-zinc-800/80 bg-zinc-950/20 backdrop-blur-md cursor-pointer transition-all duration-700 hover:border-accent/40 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)]"
+              className={`group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-zinc-800/80 bg-zinc-950/20 backdrop-blur-md cursor-pointer transition-all duration-700 hover:border-accent/40 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
+                idx === 2 ? "md:col-span-2 lg:col-span-1" : ""
+              }`}
             >
               {/* Card Image with Parallax & Hover Zoom */}
               <div className="absolute inset-0 z-0 overflow-hidden">
@@ -110,7 +112,7 @@ export default function Collections() {
                   {item.tag}
                 </span>
                 
-                <h3 className="text-xl font-bold text-white tracking-wide mb-2 flex items-center justify-between group-hover:text-accent transition-colors">
+                <h3 className="text-xl md:text-lg lg:text-xl font-bold text-white tracking-wide mb-2 flex items-center justify-between group-hover:text-accent transition-colors">
                   {item.title}
                   <span className="opacity-0 -translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-500 text-accent">
                     <ArrowUpRight className="w-4 h-4" />
