@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { useCartStore } from "@/store/useCartStore";
@@ -223,6 +224,10 @@ export default function ShopPage() {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showMobileSort, setShowMobileSort] = useState(false);
 
+  // Read ?category= query param from URL
+  const searchParams = useSearchParams();
+  const categoryParam = searchParams ? searchParams.get("category") : null;
+
   // Pagination
   const ITEMS_PER_PAGE = 12; // desktop: 3cols × 4rows | mobile: 2cols × 6rows
   const [currentPage, setCurrentPage] = useState(1);
@@ -291,6 +296,22 @@ export default function ShopPage() {
     }
     loadData();
   }, []);
+
+  // Pre-filter by ?category= URL query param once categories are loaded
+  useEffect(() => {
+    if (!categoryParam || categories.length === 0) return;
+    // Try exact id match first (e.g. "cat-clothing" or a UUID)
+    const byId = categories.find((c) => c.id === categoryParam);
+    if (byId) {
+      setSelectedCategory(byId.id);
+      return;
+    }
+    // Try matching by slug field (Supabase categories have a slug column)
+    const bySlug = categories.find((c) => c.slug === categoryParam);
+    if (bySlug) {
+      setSelectedCategory(bySlug.id);
+    }
+  }, [categories, categoryParam]);
 
   // Filter & Sort Application
   const filteredProducts = products

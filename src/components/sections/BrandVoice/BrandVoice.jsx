@@ -1,8 +1,6 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import gsap from "gsap";
-import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 export default function BrandEthos() {
   const triggerRef = useRef(null);
@@ -15,48 +13,72 @@ export default function BrandEthos() {
   const words = ethosText.split(" ");
 
   useEffect(() => {
-    gsap.registerPlugin(ScrollTrigger);
+    const section = triggerRef.current;
+    const textEl = textRef.current;
+    const imageEl = imageRef.current;
+    if (!section || !textEl) return;
 
-    // Animating text word reveal
-    const textSpans = textRef.current.querySelectorAll(".ethos-word");
-    const textAnim = gsap.fromTo(
-      textSpans,
-      { opacity: 0.15, color: "#71717a" },
-      {
-        opacity: 1,
-        color: "#ffffff",
-        stagger: 0.1,
-        ease: "none",
-        scrollTrigger: {
-          trigger: triggerRef.current,
-          start: "top 75%",
-          end: "bottom 95%",
-          scrub: 0.5,
-        },
-      }
-    );
+    const wordEls = Array.from(textEl.querySelectorAll(".ethos-word"));
 
-    // Parallax on image
-    const imageAnim = gsap.fromTo(
-      imageRef.current,
-      { y: 40 },
-      {
-        y: -40,
-        ease: "none",
-        scrollTrigger: {
-          trigger: triggerRef.current,
-          start: "top bottom",
-          end: "bottom top",
-          scrub: true,
-        },
+    // Force initial dim state so words start gray before any scroll
+    wordEls.forEach((w) => {
+      w.style.color = "#52525b";   // zinc-600
+      w.style.opacity = "0.2";
+    });
+
+    const onScroll = () => {
+      const rect = section.getBoundingClientRect();
+      const vh = window.innerHeight;
+
+      // ── Word reveal ──────────────────────────────────────────────────────
+      // progress = 0  →  section top is at 85% of the viewport (just entering)
+      // progress = 1  →  section bottom reaches the bottom of the viewport
+      //                  (the full section is visible — no need to scroll further)
+      //
+      // At the end-condition:
+      //   rect.bottom = vh  →  rect.top = vh - rect.height
+      //   revealStart = vh*0.85 - (vh - rect.height) = rect.height - vh*0.15
+      //   so revealTotal must equal that same value.
+      const revealStart = vh * 0.85 - rect.top;
+      const revealTotal = Math.max(50, rect.height - vh * 0.15);
+      const progress = Math.min(1, Math.max(0, revealStart / revealTotal));
+
+      const count = wordEls.length;
+      wordEls.forEach((word, i) => {
+        // Each word gets its own threshold in [0, 1]
+        const threshold = i / count;
+        // Local word progress: goes 0→1 as global progress passes its threshold
+        const wordP = Math.min(1, Math.max(0, (progress - threshold) * count));
+        word.style.opacity = String(0.2 + wordP * 0.8);
+        // Interpolate from zinc-600 (#52525b) to white (#ffffff)
+        const l = Math.round(32 + wordP * 68);   // lightness 32% → 100%
+        word.style.color = `hsl(0,0%,${l}%)`;
+      });
+
+      // ── Image parallax ────────────────────────────────────────────────────
+      if (imageEl) {
+        // section centre relative to viewport centre, normalised to [-1, 1]
+        const sectionCenter = rect.top + rect.height / 2;
+        const t = (sectionCenter - vh / 2) / (vh / 2);   // +1 below fold, -1 above fold
+        const translateY = Math.max(-40, Math.min(40, t * 40));
+        imageEl.style.transform = `translateY(${translateY}px)`;
       }
-    );
+    };
+
+    // Lenis dispatches native scroll events on window — this listener is always reliable
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    // Run once immediately so initial state is correct (handles page-load-with-hash)
+    onScroll();
 
     return () => {
-      textAnim.scrollTrigger?.kill();
-      textAnim.kill();
-      imageAnim.scrollTrigger?.kill();
-      imageAnim.kill();
+      window.removeEventListener("scroll", onScroll);
+      // Clean up inline styles on unmount
+      wordEls.forEach((w) => {
+        w.style.color = "";
+        w.style.opacity = "";
+      });
+      if (imageEl) imageEl.style.transform = "";
     };
   }, []);
 
@@ -74,12 +96,13 @@ export default function BrandEthos() {
           </span>
           <p
             ref={textRef}
-            className="text-2xl sm:text-3xl md:text-2xl lg:text-4xl font-light tracking-wide leading-relaxed text-muted-text uppercase"
+            className="text-2xl sm:text-3xl md:text-2xl lg:text-4xl font-light tracking-wide leading-relaxed uppercase"
           >
             {words.map((word, index) => (
               <span
                 key={index}
-                className="ethos-word inline-block mr-3 transition-colors duration-300 font-sans font-medium"
+                className="ethos-word inline-block mr-3 font-sans font-medium"
+                style={{ color: "#52525b", opacity: 0.2 }}
               >
                 {word}
               </span>
@@ -124,14 +147,15 @@ export default function BrandEthos() {
               src="/Images/ethos.jpg"
               alt="Couture craftsmanship detail"
               className="w-full h-[120%] object-cover absolute top-[-10%] opacity-80"
+              style={{ willChange: "transform" }}
             />
-            {/* Ambient gold glow under layout */}
+            {/* Ambient label */}
             <div className="absolute bottom-6 left-6 z-20">
               <span className="text-[10px] tracking-[0.3em] text-accent uppercase font-semibold">
                 CURATED IMPORT SELECTION
               </span>
               <span className="text-sm font-semibold tracking-wider text-white block mt-1">
-                Sourced from China, Indonesia & Vietnam
+                Sourced from China, Indonesia &amp; Vietnam
               </span>
             </div>
           </div>
