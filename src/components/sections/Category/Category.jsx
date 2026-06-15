@@ -63,7 +63,7 @@ export default function Collections() {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-black py-32 px-6 overflow-hidden border-t border-zinc-900"
+      className="relative bg-black py-16 lg:py-32 px-6 overflow-hidden border-zinc-900"
       id="collections"
     >
       {/* Background radial highlight */}

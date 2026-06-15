@@ -4,12 +4,12 @@ import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa6";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-black border-t border-zinc-900 pt-24 pb-12 px-6 overflow-hidden select-none">
+    <footer className="relative bg-black border-t border-zinc-900 pt-12 pb-8 md:pt-16 md:pb-10 lg:pt-24 lg:pb-12 px-6 overflow-hidden select-none">
       {/* Ambient glowing highlights */}
       <div className="absolute bottom-0 left-1/3 -translate-x-1/2 w-[600px] h-[300px] bg-accent/3 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-20">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-12 mb-10 lg:mb-20">
           {/* Newsletter Column - Text Only */}
           <div className="md:col-span-6 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">

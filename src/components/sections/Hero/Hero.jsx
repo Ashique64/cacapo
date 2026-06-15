@@ -38,6 +38,9 @@ export default function Hero() {
 
       const timer = setTimeout(() => {
         if (preloaderRef.current) {
+          // Kill any running entry animations to prevent conflicts
+          gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui");
+
           const tl = gsap.timeline({
             onComplete: () => {
               setIsPreloaderRemoved(true);
@@ -68,7 +71,7 @@ export default function Hero() {
           setIsPreloaderRemoved(true);
           document.body.style.overflow = "auto";
         }
-      }, 800);
+      }, 1600);
 
       return () => {
         clearTimeout(timer);
@@ -94,6 +97,9 @@ export default function Hero() {
           // Luxury unmounting sequence
           if (preloaderRef.current) {
             setIsLoaded(true); // Trigger canvas triggers and ScrollTrigger initializations immediately as panels start opening
+
+            // Kill any running entry animations to prevent conflicts
+            gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui");
 
             const tl = gsap.timeline({
               onComplete: () => {

@@ -204,8 +204,8 @@ export default function ProductShowcase() {
         }
       `}} />
       {/* Mobile/Tablet Title Section */}
-      <div className="block lg:hidden px-4 md:px-8 pt-24 max-w-7xl mx-auto relative z-10">
-        <div className="text-center md:text-left mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="block lg:hidden px-4 md:px-8 pt-12 md:pt-16 max-w-7xl mx-auto relative z-10">
+        <div className="text-center md:text-left mb-10 lg:mb-16 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
               NEW ARRIVALS
@@ -223,7 +223,7 @@ export default function ProductShowcase() {
       {/* Scroll timeline height container */}
       <div
         ref={sectionRef}
-        className="grid grid-cols-2 gap-4 px-4 pb-24 pt-0 w-full md:grid-cols-3 md:gap-8 md:px-8 md:pb-32 md:pt-0 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
+        className="grid grid-cols-2 gap-4 px-4 pb-12 pt-0 w-full md:grid-cols-3 md:gap-8 md:px-8 md:pb-16 md:pt-0 md:max-w-7xl md:mx-auto lg:h-screen lg:flex lg:flex-row lg:items-center lg:justify-start lg:relative lg:px-[10vw] lg:gap-12 lg:w-fit lg:bg-black lg:py-0 lg:overflow-x-visible lg:max-w-none lg:mx-0"
         style={{
           willChange: "transform",
         }}
