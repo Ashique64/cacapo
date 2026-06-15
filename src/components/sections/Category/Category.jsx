@@ -40,18 +40,21 @@ export default function Collections() {
     {
       title: "ATELIER APPAREL",
       desc: "Architectural lines meets flowing silks. Expertly tailored drapery designed to contour and elevate the feminine form.",
+      shortDesc: "Architectural lines meet flowing silks. Expertly tailored drapery.",
       image: "/Images/clothing.jpg",
       tag: "CLOTHING",
     },
     {
       title: "SCULPTED FOOTWEAR",
       desc: "Crafted in Italy. Striking structural heels and premium buttery leathers that deliver unparalleled elegance with every step.",
+      shortDesc: "Italian crafted heels and premium leathers for unparalleled elegance.",
       image: "/Images/footwear.jpg",
       tag: "FOOTWEAR",
     },
     {
       title: "COUTURE ACCENTS",
       desc: "Statement jewelry, structural bags, and luxury accessories made with high-shine gold accents and clean geometric lines.",
+      shortDesc: "Statement jewelry and bags featuring clean geometric gold lines.",
       image: "/Images/accessories.jpg",
       tag: "ACCESSORIES",
     },
@@ -99,7 +102,7 @@ export default function Collections() {
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="w-full h-full object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-60 group-hover:opacity-85"
+                  className="w-full h-full object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-75 lg:opacity-60 lg:group-hover:opacity-85"
                 />
               </div>
 
@@ -107,26 +110,32 @@ export default function Collections() {
               <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-zinc-700/50 to-transparent group-hover:via-accent/50 transition-all duration-700" />
 
               {/* Card Content */}
-              <div className="relative z-10 p-6 flex flex-col justify-end h-[210px] bg-linear-to-t from-black via-black/95 to-transparent transform translate-y-[90px] group-hover:translate-y-0 transition-transform duration-500 ease-out">
+              <div className="relative z-10 p-6 flex flex-col justify-end h-[210px] bg-linear-to-t from-black via-black/95 to-transparent transform translate-y-0 lg:translate-y-[90px] lg:group-hover:translate-y-0 transition-transform duration-500 ease-out">
                 <span className="text-[9px] tracking-[0.4em] font-semibold text-accent mb-2 block">
                   {item.tag}
                 </span>
                 
                 <h3 className="text-xl md:text-lg lg:text-xl font-bold text-white tracking-wide mb-2 flex items-center justify-between group-hover:text-accent transition-colors">
                   {item.title}
-                  <span className="opacity-0 -translate-x-2 translate-y-2 group-hover:opacity-100 group-hover:translate-x-0 group-hover:translate-y-0 transition-all duration-500 text-accent">
+                  <span className="opacity-100 translate-x-0 translate-y-0 lg:opacity-0 lg:-translate-x-2 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-x-0 lg:group-hover:translate-y-0 transition-all duration-500 text-accent">
                     <ArrowUpRight className="w-4 h-4" />
                   </span>
                 </h3>
 
-                <p className="text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-[60px] overflow-hidden opacity-0 group-hover:opacity-100 transition-opacity duration-500 delay-75">
+                {/* Mobile & Tablet Short Description */}
+                <p className="block lg:hidden text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-[60px] overflow-hidden">
+                  {item.shortDesc}
+                </p>
+
+                {/* Desktop Full Description */}
+                <p className="hidden lg:block text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-[60px] overflow-hidden lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500 lg:delay-75">
                   {item.desc}
                 </p>
 
-                <div className="w-full h-px bg-zinc-900 group-hover:bg-accent/20 mb-4 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-100" />
+                <div className="w-full h-px bg-accent/20 lg:bg-zinc-900 lg:group-hover:bg-accent/20 mb-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-100" />
 
-                <span className="text-[10px] text-white/90 font-medium tracking-[0.2em] uppercase group-hover:translate-x-1 inline-flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-all duration-500 delay-150">
-                  VIEW COLLECTION <span className="text-accent transition-transform duration-500 group-hover:translate-x-1">→</span>
+                <span className="text-[10px] text-white/90 font-medium tracking-[0.2em] uppercase lg:group-hover:translate-x-1 inline-flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-150">
+                  VIEW COLLECTION <span className="text-accent transition-transform duration-500 lg:group-hover:translate-x-1">→</span>
                 </span>
               </div>
             </div>

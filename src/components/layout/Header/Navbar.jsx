@@ -18,17 +18,21 @@ export default function Navbar() {
   ];
 
   useEffect(() => {
+    const getHeroHeight = () => {
+      const heroEl = document.getElementById("hero");
+      return heroEl ? heroEl.offsetHeight : window.innerHeight * 2.4;
+    };
+
     // Check initial scroll on mount to avoid flashes and preserve styling if page was refreshed scrolled down
     const initialScrollY = window.scrollY;
-    const heroHeight = window.innerHeight * 2.4;
+    const heroHeight = getHeroHeight();
     setIsPastHero(initialScrollY >= heroHeight);
     
     let lastScrollY = initialScrollY;
 
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      // The hero container has a height of 240vh
-      const heroHeight = window.innerHeight * 2.4;
+      const heroHeight = getHeroHeight();
 
       const pastHero = currentScrollY >= heroHeight;
       setIsPastHero(pastHero);
