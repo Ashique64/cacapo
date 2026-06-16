@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Shield, ShoppingBag, Database, ArrowLeft, User, LayoutDashboard } from "lucide-react";
+import { Shield, ShoppingBag, Database, ArrowLeft, User, LayoutDashboard, Ticket } from "lucide-react";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
@@ -11,6 +11,7 @@ export default function AdminSidebar() {
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { name: "Orders Desk", path: "/admin/orders", icon: ShoppingBag },
     { name: "Catalog CRUD", path: "/admin/products", icon: Database },
+    { name: "Coupons Desk", path: "/admin/coupons", icon: Ticket },
   ];
 
   return (
