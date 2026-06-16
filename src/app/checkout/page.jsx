@@ -89,6 +89,7 @@ export default function CheckoutPage() {
   // Checkout Processing
   const [orderLoading, setOrderLoading] = useState(false);
   const [placedOrder, setPlacedOrder] = useState(null);
+  const [checkoutError, setCheckoutError] = useState(null);
 
   useEffect(() => {
     setMounted(true);
@@ -325,6 +326,7 @@ export default function CheckoutPage() {
 
     setOrderLoading(true);
     setUtrError("");
+    setCheckoutError(null);
 
     const orderNumber = `CCP-${Math.floor(100000 + Math.random() * 900000)}`;
     const addressData = selectedAddressId && selectedAddressId !== "new"
@@ -449,10 +451,16 @@ export default function CheckoutPage() {
         if (response.ok) {
           const resData = await response.json();
           generatedOrderId = resData.order_id;
+        } else {
+          const resErr = await response.json().catch(() => ({}));
+          throw new Error(resErr.error || "Guest checkout API request failed.");
         }
       }
     } catch (err) {
-      console.warn("Database order save failed, proceeding with local details generation:", err);
+      console.error("Database order save failed:", err);
+      setCheckoutError(err.message || "Failed to save order to database. Please check RLS policies.");
+      setOrderLoading(false);
+      return;
     }
 
     // Capture final details
@@ -780,6 +788,12 @@ export default function CheckoutPage() {
                         )}
                       </div>
 
+                      {Object.values(formErrors).some(val => val) && (
+                        <div className="text-center text-lg mt-6 animate-pulse select-none">
+                          ⚠️
+                        </div>
+                      )}
+
                       <button
                         type="submit"
                         className="w-full py-4 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8"
@@ -971,6 +985,12 @@ export default function CheckoutPage() {
                             Your order will be processed immediately. You will pay the courier partner the exact total amount of{" "}
                             <span className="text-white font-bold">{formatPrice(totalAmount)}</span> in cash upon receiving your package.
                           </p>
+                        </div>
+                      )}
+
+                      {checkoutError && (
+                        <div className="p-4 border border-accent/20 bg-accent/5 text-accent text-xs tracking-wider leading-relaxed text-center font-medium uppercase mt-4">
+                          {checkoutError}
                         </div>
                       )}
 

@@ -37,11 +37,22 @@ export default function CartSidebar() {
   useEffect(() => {
     if (mounted && isOpen) {
       document.body.style.overflow = "hidden";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.stop();
+      }
     } else if (mounted) {
       document.body.style.overflow = "auto";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.start();
+      }
     }
     return () => {
-      if (mounted) document.body.style.overflow = "auto";
+      if (mounted) {
+        document.body.style.overflow = "auto";
+        if (typeof window !== "undefined" && window.lenis) {
+          window.lenis.start();
+        }
+      }
     };
   }, [isOpen, mounted]);
 
@@ -59,6 +70,7 @@ export default function CartSidebar() {
 
       {/* Sliding Sidebar Panel */}
       <div
+        data-lenis-prevent
         className={`fixed top-0 right-0 h-screen w-full sm:w-[440px] bg-zinc-950 border-l border-zinc-900 z-50 flex flex-col justify-between shadow-2xl transition-transform duration-500 ease-in-out select-none ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}

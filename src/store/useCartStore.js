@@ -33,8 +33,11 @@ export const useCartStore = create(
               .single();
 
             if (createError) throw createError;
+            if (!newCart) throw new Error("Failed to create cart record");
             cart = newCart;
           }
+
+          if (!cart) throw new Error("Cart record is missing");
 
           // Fetch cart items
           const { data: dbItems, error: itemsError } = await supabase
@@ -70,23 +73,38 @@ export const useCartStore = create(
 
         try {
           // Get or create cart
-          let { data: cart } = await supabase
+          let { data: cart, error: selectErr } = await supabase
             .from("carts")
             .select("id")
             .eq("user_id", userId)
             .maybeSingle();
 
+          if (selectErr) throw selectErr;
+
           if (!cart) {
-            const { data: newCart } = await supabase
+            const { data: newCart, error: createError } = await supabase
               .from("carts")
               .insert({ user_id: userId })
               .select("id")
               .single();
+            if (createError) throw createError;
+            if (!newCart) throw new Error("Failed to create cart record");
             cart = newCart;
           }
 
+          if (!cart) throw new Error("Cart record is missing");
+
+          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+          const localItemsToKeep = [];
+
           // Merge local items with database
           for (const item of localItems) {
+            const isMockProduct = !uuidRegex.test(item.product_id) || (item.variant_id && !uuidRegex.test(item.variant_id));
+            if (isMockProduct) {
+              localItemsToKeep.push(item);
+              continue;
+            }
+
             const { data: existing } = await supabase
               .from("cart_items")
               .select("id, quantity")
@@ -97,13 +115,14 @@ export const useCartStore = create(
 
             if (existing) {
               // Update quantity
-              await supabase
+              const { error: updateErr } = await supabase
                 .from("cart_items")
                 .update({ quantity: existing.quantity + item.quantity })
                 .eq("id", existing.id);
+              if (updateErr) throw updateErr;
             } else {
               // Insert new
-              await supabase
+              const { error: insertErr } = await supabase
                 .from("cart_items")
                 .insert({
                   cart_id: cart.id,
@@ -111,11 +130,17 @@ export const useCartStore = create(
                   variant_id: item.variant_id || null,
                   quantity: item.quantity
                 });
+              if (insertErr) throw insertErr;
             }
           }
 
           // Re-fetch final merged cart from database
           await get().fetchCart(userId);
+
+          // Restore mock items in local state
+          if (localItemsToKeep.length > 0) {
+            set({ items: [...get().items, ...localItemsToKeep] });
+          }
         } catch (err) {
           console.error("Failed to sync cart:", err);
         }
@@ -130,34 +155,44 @@ export const useCartStore = create(
           (item) => item.product_id === product.id && item.variant_id === variantId
         );
 
-        if (userId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const isMockProduct = !uuidRegex.test(product.id) || (variantId && !uuidRegex.test(variantId));
+
+        if (userId && !isMockProduct) {
           // Sync with database
           try {
-            let { data: cart } = await supabase
+            let { data: cart, error: selectErr } = await supabase
               .from("carts")
               .select("id")
               .eq("user_id", userId)
               .maybeSingle();
 
+            if (selectErr) throw selectErr;
+
             if (!cart) {
-              const { data: newCart } = await supabase
+              const { data: newCart, error: createError } = await supabase
                 .from("carts")
                 .insert({ user_id: userId })
                 .select("id")
                 .single();
+              if (createError) throw createError;
+              if (!newCart) throw new Error("Failed to create cart record");
               cart = newCart;
             }
+
+            if (!cart) throw new Error("Cart record is missing");
 
             if (existingIndex > -1) {
               const item = currentItems[existingIndex];
               const newQty = item.quantity + quantity;
               
-              await supabase
+              const { error: updateErr } = await supabase
                 .from("cart_items")
                 .update({ quantity: newQty })
                 .eq("id", item.id);
+              if (updateErr) throw updateErr;
             } else {
-              await supabase
+              const { error: insertErr } = await supabase
                 .from("cart_items")
                 .insert({
                   cart_id: cart.id,
@@ -165,6 +200,7 @@ export const useCartStore = create(
                   variant_id: variantId,
                   quantity
                 });
+              if (insertErr) throw insertErr;
             }
             // Refresh state from DB
             await get().fetchCart(userId);
@@ -172,7 +208,7 @@ export const useCartStore = create(
             console.error("Failed to add item to DB:", err);
           }
         } else {
-          // Guest mode (localStorage only)
+          // Guest mode or Mock product fallback (localStorage only)
           const newItems = [...currentItems];
           if (existingIndex > -1) {
             newItems[existingIndex].quantity += quantity;
@@ -191,9 +227,16 @@ export const useCartStore = create(
       },
 
       removeItem: async (itemId, userId = null) => {
-        if (userId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const isLocalItem = !uuidRegex.test(itemId) || itemId.toString().startsWith("temp-");
+
+        if (userId && !isLocalItem) {
           try {
-            await supabase.from("cart_items").delete().eq("id", itemId);
+            const { error: deleteErr } = await supabase
+              .from("cart_items")
+              .delete()
+              .eq("id", itemId);
+            if (deleteErr) throw deleteErr;
             await get().fetchCart(userId);
           } catch (err) {
             console.error("Failed to remove item from DB:", err);
@@ -211,9 +254,16 @@ export const useCartStore = create(
           return;
         }
 
-        if (userId) {
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const isLocalItem = !uuidRegex.test(itemId) || itemId.toString().startsWith("temp-");
+
+        if (userId && !isLocalItem) {
           try {
-            await supabase.from("cart_items").update({ quantity }).eq("id", itemId);
+            const { error: updateErr } = await supabase
+              .from("cart_items")
+              .update({ quantity })
+              .eq("id", itemId);
+            if (updateErr) throw updateErr;
             await get().fetchCart(userId);
           } catch (err) {
             console.error("Failed to update quantity in DB:", err);
