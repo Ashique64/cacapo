@@ -347,113 +347,121 @@ export default function CheckoutPage() {
     let generatedOrderId = null;
 
     try {
-      // 1. Save Address to profile if user selected so and address is new
-      let addressId = selectedAddressId && selectedAddressId !== "new" ? selectedAddressId : null;
-      if (user && saveAddressToProfile && (!selectedAddressId || selectedAddressId === "new")) {
-        const { data: savedAddr, error: addrErr } = await supabase
-          .from("addresses")
-          .insert({
-            user_id: user.id,
-            full_name: shippingDetails.fullName,
-            phone: shippingDetails.phone,
-            address_line1: shippingDetails.addressLine1,
-            address_line2: shippingDetails.addressLine2 || null,
-            city: shippingDetails.city,
-            state: shippingDetails.state,
-            country: shippingDetails.country,
-            pincode: shippingDetails.pincode,
-            is_default: shippingDetails.isDefault
-          })
-          .select()
-          .single();
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      const hasMockItems = cartItems.some(item => !uuidRegex.test(item.product_id) || (item.variant_id && !uuidRegex.test(item.variant_id)));
 
-        if (!addrErr && savedAddr) {
-          addressId = savedAddr.id;
+      if (hasMockItems) {
+        // Simulate order placement for demo/mock products
+        generatedOrderId = crypto.randomUUID();
+      } else {
+        // 1. Save Address to profile if user selected so and address is new
+        let addressId = selectedAddressId && selectedAddressId !== "new" ? selectedAddressId : null;
+        if (user && saveAddressToProfile && (!selectedAddressId || selectedAddressId === "new")) {
+          const { data: savedAddr, error: addrErr } = await supabase
+            .from("addresses")
+            .insert({
+              user_id: user.id,
+              full_name: shippingDetails.fullName,
+              phone: shippingDetails.phone,
+              address_line1: shippingDetails.addressLine1,
+              address_line2: shippingDetails.addressLine2 || null,
+              city: shippingDetails.city,
+              state: shippingDetails.state,
+              country: shippingDetails.country,
+              pincode: shippingDetails.pincode,
+              is_default: shippingDetails.isDefault
+            })
+            .select()
+            .single();
+
+          if (!addrErr && savedAddr) {
+            addressId = savedAddr.id;
+          }
         }
-      }
 
-      // 2. Insert Order
-      if (user) {
-        const { data: dbOrder, error: orderErr } = await supabase
-          .from("orders")
-          .insert({
-            user_id: user.id,
-            address_id: addressId,
-            shipping_address: finalAddressJson,
-            order_number: orderNumber,
-            subtotal: subtotal,
-            discount: discount,
-            shipping_charge: shippingCharge,
-            tax: tax,
-            total_amount: totalAmount,
-            payment_status: paymentMethod === "upi" ? "unpaid" : "unpaid",
-            order_status: "pending",
-            payment_method: paymentMethod,
-            applied_coupon_id: appliedCoupon?.id || null
-          })
-          .select()
-          .single();
+        // 2. Insert Order
+        if (user) {
+          const { data: dbOrder, error: orderErr } = await supabase
+            .from("orders")
+            .insert({
+              user_id: user.id,
+              address_id: addressId,
+              shipping_address: finalAddressJson,
+              order_number: orderNumber,
+              subtotal: subtotal,
+              discount: discount,
+              shipping_charge: shippingCharge,
+              tax: tax,
+              total_amount: totalAmount,
+              payment_status: paymentMethod === "upi" ? "unpaid" : "unpaid",
+              order_status: "pending",
+              payment_method: paymentMethod,
+              applied_coupon_id: appliedCoupon?.id || null
+            })
+            .select()
+            .single();
 
-        if (orderErr) throw orderErr;
-        generatedOrderId = dbOrder.id;
+          if (orderErr) throw orderErr;
+          generatedOrderId = dbOrder.id;
 
-        // 3. Insert Order Items
-        const itemsToInsert = cartItems.map(item => ({
-          order_id: generatedOrderId,
-          product_id: item.product_id,
-          variant_id: item.variant_id || null,
-          quantity: item.quantity,
-          price: item.variant?.price || item.product?.price || 0
-        }));
-
-        const { error: itemsErr } = await supabase
-          .from("order_items")
-          .insert(itemsToInsert);
-
-        if (itemsErr) throw itemsErr;
-
-        // 4. Insert Payment record
-        const { error: payErr } = await supabase
-          .from("payments")
-          .insert({
+          // 3. Insert Order Items
+          const itemsToInsert = cartItems.map(item => ({
             order_id: generatedOrderId,
-            payment_gateway: paymentMethod,
-            transaction_id: paymentMethod === "upi" ? utrCode : null,
-            amount: totalAmount,
-            status: "pending"
+            product_id: item.product_id,
+            variant_id: item.variant_id || null,
+            quantity: item.quantity,
+            price: item.variant?.price || item.product?.price || 0
+          }));
+
+          const { error: itemsErr } = await supabase
+            .from("order_items")
+            .insert(itemsToInsert);
+
+          if (itemsErr) throw itemsErr;
+
+          // 4. Insert Payment record
+          const { error: payErr } = await supabase
+            .from("payments")
+            .insert({
+              order_id: generatedOrderId,
+              payment_gateway: paymentMethod,
+              transaction_id: paymentMethod === "upi" ? utrCode : null,
+              amount: totalAmount,
+              status: "pending"
+            });
+
+          if (payErr) throw payErr;
+        } else {
+          // Handle guest order placement via API route if available
+          const response = await fetch("/api/orders", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              shipping_address: finalAddressJson,
+              order_number: orderNumber,
+              subtotal,
+              discount,
+              shipping_charge: shippingCharge,
+              tax,
+              total_amount: totalAmount,
+              payment_method: paymentMethod,
+              payment_reference: paymentMethod === "upi" ? utrCode : null,
+              items: cartItems.map(i => ({
+                product_id: i.product_id,
+                variant_id: i.variant_id || null,
+                quantity: i.quantity,
+                price: i.variant?.price || i.product?.price || 0
+              }))
+            })
           });
 
-        if (payErr) throw payErr;
-      } else {
-        // Handle guest order placement via API route if available
-        const response = await fetch("/api/orders", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            shipping_address: finalAddressJson,
-            order_number: orderNumber,
-            subtotal,
-            discount,
-            shipping_charge: shippingCharge,
-            tax,
-            total_amount: totalAmount,
-            payment_method: paymentMethod,
-            payment_reference: paymentMethod === "upi" ? utrCode : null,
-            items: cartItems.map(i => ({
-              product_id: i.product_id,
-              variant_id: i.variant_id || null,
-              quantity: i.quantity,
-              price: i.variant?.price || i.product?.price || 0
-            }))
-          })
-        });
-
-        if (response.ok) {
-          const resData = await response.json();
-          generatedOrderId = resData.order_id;
-        } else {
-          const resErr = await response.json().catch(() => ({}));
-          throw new Error(resErr.error || "Guest checkout API request failed.");
+          if (response.ok) {
+            const resData = await response.json();
+            generatedOrderId = resData.order_id;
+          } else {
+            const resErr = await response.json().catch(() => ({}));
+            throw new Error(resErr.error || "Guest checkout API request failed.");
+          }
         }
       }
     } catch (err) {
