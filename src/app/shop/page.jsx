@@ -11,95 +11,6 @@ import { ShoppingBag, Heart, SlidersHorizontal, Search, ArrowUpDown, X, Loader2 
 import Navbar from "@/components/layout/Header/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 
-// Mock Products Fallback in case DB is empty
-const MOCK_CATEGORIES = [
-  { id: "all", name: "All Collections", slug: "all" },
-  { id: "cat-clothing", name: "Atelier Apparel", slug: "clothing" },
-  { id: "cat-footwear", name: "Sculpted Footwear", slug: "footwear" },
-  { id: "cat-accessories", name: "Couture Accents", slug: "accessories" }
-];
-
-const MOCK_PRODUCTS = [
-  {
-    id: "p1",
-    name: "SILK SLIP ARCHIVE DRESS",
-    slug: "silk-slip-archive-dress",
-    price: 185000, // ₹1,850 in cents
-    description: "Architectural lines meets flowing silks. Expertly tailored drapery designed to contour and elevate the feminine form.",
-    short_description: "Architectural lines meet flowing silks.",
-    category_id: "cat-clothing",
-    brand: "CACAPO",
-    featured: true,
-    images: ["/Images/clothing.jpg", "/Images/clothing.jpg"],
-    variants: [{ id: "v1-s", size: "S", stock_quantity: 10 }, { id: "v1-m", size: "M", stock_quantity: 15 }]
-  },
-  {
-    id: "p2",
-    name: "PLATINUM BLOCK HEEL",
-    slug: "platinum-block-heel",
-    price: 98000, // ₹980 in cents
-    description: "Crafted in Italy. Striking structural heels and premium buttery leathers that deliver unparalleled elegance with every step.",
-    short_description: "Italian crafted heels and premium leathers.",
-    category_id: "cat-footwear",
-    brand: "CACAPO",
-    featured: true,
-    images: ["/Images/footwear.jpg", "/Images/footwear.jpg"],
-    variants: [{ id: "v2-37", size: "37", stock_quantity: 5 }, { id: "v2-38", size: "38", stock_quantity: 8 }]
-  },
-  {
-    id: "p3",
-    name: "GEOMETRIC CLASP TOTE",
-    slug: "geometric-clasp-tote",
-    price: 240000, // ₹2,400 in cents
-    description: "Statement luxury bag made with high-shine gold accents and clean geometric lines.",
-    short_description: "Statement luxury bag with geometric lines.",
-    category_id: "cat-accessories",
-    brand: "CACAPO",
-    featured: true,
-    images: ["/Images/accessories.jpg", "/Images/accessories.jpg"],
-    variants: []
-  },
-  {
-    id: "p4",
-    name: "DRAPED CASHMERE TRENCH",
-    slug: "draped-cashmere-trench",
-    price: 320000, // ₹3,200 in cents
-    description: "Luxurious double-faced cashmere trench coat with an oversized structural collar.",
-    short_description: "Luxurious cashmere trench coat.",
-    category_id: "cat-clothing",
-    brand: "CACAPO",
-    featured: false,
-    images: ["/Images/clothing.jpg", "/Images/clothing.jpg"],
-    variants: [{ id: "v4-s", size: "S", stock_quantity: 3 }]
-  },
-  {
-    id: "p5",
-    name: "CHAMPAGNE STRAP HEELS",
-    slug: "champagne-strap-heels",
-    price: 110000, // ₹1,100 in cents
-    description: "Delicate satin strap heels in a shimmering champagne shade.",
-    short_description: "Delicate champagne strap heels.",
-    category_id: "cat-footwear",
-    brand: "CACAPO",
-    featured: false,
-    images: ["/Images/footwear.jpg", "/Images/footwear.jpg"],
-    variants: [{ id: "v5-38", size: "38", stock_quantity: 6 }]
-  },
-  {
-    id: "p6",
-    name: "TEXTURED GOLD CHOKER",
-    slug: "textured-gold-choker",
-    price: 145000, // ₹1,450 in cents
-    description: "Textured solid brass collar choker finished in heavy 24k gold plating.",
-    short_description: "Heavy 24k gold plated collar choker.",
-    category_id: "cat-accessories",
-    brand: "CACAPO",
-    featured: false,
-    images: ["/Images/accessories.jpg", "/Images/accessories.jpg"],
-    variants: []
-  }
-];
-
 function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
@@ -110,10 +21,19 @@ function ProductCard({ product }) {
   
   const isWishlisted = wishlistItems.some((item) => item.id === product.id);
   const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
-  const displayPrice = (product.price / 100).toLocaleString("en-IN", {
+  const isCardOutOfStock = product.status === "draft" || product.stock_quantity <= 0;
+  const activePrice = product.sale_price ? product.sale_price : product.price;
+  const originalPrice = product.sale_price ? product.price : null;
+
+  const displayPrice = (activePrice / 100).toLocaleString("en-IN", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2
   });
+
+  const displayOriginalPrice = originalPrice ? (originalPrice / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }) : null;
 
   useEffect(() => {
     if (!isHovered) {
@@ -162,14 +82,26 @@ function ProductCard({ product }) {
             ))}
           </div>
 
+          {/* Sold Out Overlay */}
+          {isCardOutOfStock && (
+            <span className="absolute top-2.5 left-2.5 bg-black/85 border border-zinc-800/80 text-zinc-400 text-[8px] font-extrabold tracking-widest px-2 py-0.5 uppercase z-10 font-mono">
+              Sold Out
+            </span>
+          )}
+
           {/* Hover overlay with ADD TO BAG — hidden on mobile, visible on hover for md+ */}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex items-end justify-center pb-5 z-10">
             <button
               onClick={handleAddBag}
-              className="px-5 py-2 bg-white text-black text-[10px] font-semibold tracking-[0.2em] uppercase flex items-center gap-1.5 hover:bg-accent hover:text-white transition-all duration-300"
+              disabled={isCardOutOfStock}
+              className={`px-5 py-2 text-[10px] font-semibold tracking-[0.2em] uppercase flex items-center gap-1.5 transition-all duration-300 ${
+                isCardOutOfStock
+                  ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
+                  : "bg-white text-black hover:bg-accent hover:text-white"
+              }`}
             >
               <ShoppingBag className="w-3 h-3" />
-              ADD TO BAG
+              {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
             </button>
           </div>
         </Link>
@@ -190,18 +122,28 @@ function ProductCard({ product }) {
             {product.name}
           </h3>
         </Link>
-        <div className="mt-1 flex items-baseline gap-0.5">
+        <div className="mt-1 flex items-baseline gap-1.5 flex-wrap">
           <span className="text-[10px] font-sans text-zinc-400">₹</span>
           <span className="text-xs sm:text-sm font-semibold font-mono text-zinc-100">{displayPrice}</span>
+          {displayOriginalPrice && (
+            <span className="text-[9px] font-semibold font-mono text-zinc-500 line-through">
+              ₹{displayOriginalPrice}
+            </span>
+          )}
         </div>
 
         {/* ADD TO BAG — mobile only, below price */}
         <button
           onClick={handleAddBag}
-          className="mt-2 w-full py-1.5 bg-zinc-900 border border-zinc-800 text-[9px] font-semibold tracking-[0.18em] text-white active:bg-white active:text-black transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer md:hidden"
+          disabled={isCardOutOfStock}
+          className={`mt-2 w-full py-1.5 text-[9px] font-semibold tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer md:hidden ${
+            isCardOutOfStock
+              ? "bg-zinc-950 border border-zinc-900 text-zinc-600 cursor-not-allowed"
+              : "bg-zinc-900 border border-zinc-800 text-white active:bg-white active:text-black"
+          }`}
         >
           <ShoppingBag className="w-2.5 h-2.5" />
-          ADD TO BAG
+          {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
         </button>
       </div>
     </div>
@@ -218,7 +160,7 @@ function ShopContent() {
   const [selectedCategory, setSelectedCategory] = useState("all");
   const [priceRange, setPriceRange] = useState(400000); // Default ₹4,000 in cents, dynamically adjusted later
   const [maxPriceLimit, setMaxPriceLimit] = useState(400000); // Dynamic maximum price limit
-  const [sortBy, setSortBy] = useState("featured");
+  const [sortBy, setSortBy] = useState("newest");
 
   // Mobile Drawer Toggles
   const [showMobileFilters, setShowMobileFilters] = useState(false);
@@ -250,16 +192,16 @@ function ShopContent() {
             product_images(image_url, sort_order),
             product_variants(*)
           `)
-          .eq("status", "active");
+          .in("status", ["active", "draft"]);
 
-        // Set state or fallback to Mock Data
+        // Set state or fallback to Empty arrays
         if (catData && catData.length > 0) {
           setCategories([
             { id: "all", name: "All Collections", slug: "all" },
             ...catData
           ]);
         } else {
-          setCategories(MOCK_CATEGORIES);
+          setCategories([{ id: "all", name: "All Collections", slug: "all" }]);
         }
 
         if (prodData && prodData.length > 0) {
@@ -278,18 +220,16 @@ function ShopContent() {
           setMaxPriceLimit(maxPrice);
           setPriceRange(maxPrice);
         } else {
-          setProducts(MOCK_PRODUCTS);
-          const maxPrice = Math.max(...MOCK_PRODUCTS.map(p => p.price));
-          setMaxPriceLimit(maxPrice);
-          setPriceRange(maxPrice);
+          setProducts([]);
+          setMaxPriceLimit(400000); // Default 4000.00
+          setPriceRange(400000);
         }
       } catch (err) {
         console.error("Error loading products:", err);
-        setProducts(MOCK_PRODUCTS);
-        setCategories(MOCK_CATEGORIES);
-        const maxPrice = Math.max(...MOCK_PRODUCTS.map(p => p.price));
-        setMaxPriceLimit(maxPrice);
-        setPriceRange(maxPrice);
+        setProducts([]);
+        setCategories([{ id: "all", name: "All Collections", slug: "all" }]);
+        setMaxPriceLimit(400000);
+        setPriceRange(400000);
       } finally {
         setLoading(false);
       }
@@ -335,18 +275,23 @@ function ShopContent() {
       return matchesSearch && matchesCategory && matchesPrice;
     })
     .sort((a, b) => {
-      if (sortBy === "price-asc") return a.price - b.price;
-      if (sortBy === "price-desc") return b.price - a.price;
-      if (sortBy === "newest") return new Date(b.created_at) - new Date(a.created_at);
-      // default featured
-      return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
+      if (sortBy === "price-asc") {
+        if (a.price !== b.price) return a.price - b.price;
+      } else if (sortBy === "price-desc") {
+        if (a.price !== b.price) return b.price - a.price;
+      } else if (sortBy === "featured") {
+        const featA = a.featured ? 1 : 0;
+        const featB = b.featured ? 1 : 0;
+        if (featA !== featB) return featB - featA;
+      }
+      return new Date(b.created_at) - new Date(a.created_at);
     });
 
   const resetFilters = () => {
     setSearch("");
     setSelectedCategory("all");
     setPriceRange(maxPriceLimit);
-    setSortBy("featured");
+    setSortBy("newest");
     setCurrentPage(1);
   };
 

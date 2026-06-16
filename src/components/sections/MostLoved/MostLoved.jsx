@@ -10,51 +10,7 @@ import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useAuthStore } from "@/store/useAuthStore";
 
-// Fallback mock data shown when DB is empty
-const MOCK_NEW_ARRIVALS = [
-  {
-    id: "mock-1",
-    name: "SILK SLIP ARCHIVE DRESS",
-    price: 185000,
-    images: ["/Images/clothing.jpg"],
-    slug: "silk-slip-archive-dress",
-  },
-  {
-    id: "mock-2",
-    name: "PLATINUM BLOCK HEEL",
-    price: 98000,
-    images: ["/Images/footwear.jpg"],
-    slug: "platinum-block-heel",
-  },
-  {
-    id: "mock-3",
-    name: "GEOMETRIC CLASP TOTE",
-    price: 240000,
-    images: ["/Images/accessories.jpg"],
-    slug: "geometric-clasp-tote",
-  },
-  {
-    id: "mock-4",
-    name: "DRAPED CASHMERE TRENCH",
-    price: 320000,
-    images: ["/Images/clothing.jpg"],
-    slug: "draped-cashmere-trench",
-  },
-  {
-    id: "mock-5",
-    name: "CHAMPAGNE STRAP HEELS",
-    price: 110000,
-    images: ["/Images/footwear.jpg"],
-    slug: "champagne-strap-heels",
-  },
-  {
-    id: "mock-6",
-    name: "TEXTURED GOLD CHOKER",
-    price: 145000,
-    images: ["/Images/accessories.jpg"],
-    slug: "textured-gold-choker",
-  },
-];
+// No local fallback mock data — loads exclusively from Supabase
 
 function ProductCard({ product }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -66,11 +22,20 @@ function ProductCard({ product }) {
 
   const isWishlisted = wishlistItems.some((item) => item.id === product.id);
   const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
+  const isCardOutOfStock = product.status === "draft" || product.stock_quantity <= 0;
 
-  const displayPrice = (product.price / 100).toLocaleString("en-IN", {
+  const activePrice = product.sale_price ? product.sale_price : product.price;
+  const originalPrice = product.sale_price ? product.price : null;
+
+  const displayPrice = (activePrice / 100).toLocaleString("en-IN", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
+
+  const displayOriginalPrice = originalPrice ? (originalPrice / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }) : null;
 
   useEffect(() => {
     if (!isHovered) {
@@ -86,6 +51,7 @@ function ProductCard({ product }) {
   const handleAddBag = (e) => {
     e.preventDefault();
     e.stopPropagation();
+    if (isCardOutOfStock) return;
     const defaultVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
     addItem(product, defaultVariant, 1, user?.id);
   };
@@ -126,6 +92,13 @@ function ProductCard({ product }) {
           </div>
         </Link>
 
+        {/* Sold Out Overlay */}
+        {isCardOutOfStock && (
+          <span className="absolute top-4 left-4 bg-black/85 border border-zinc-800/80 text-zinc-400 text-[8px] font-extrabold tracking-widest px-2.5 py-1 uppercase z-10 font-mono">
+            Sold Out
+          </span>
+        )}
+
         {/* Wishlist Button */}
         <button
           onClick={handleWishlist}
@@ -154,9 +127,14 @@ function ProductCard({ product }) {
           </div>
 
           {/* Price */}
-          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-1 lg:mt-3 flex items-baseline gap-0.5">
+          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-1 lg:mt-3 flex items-baseline gap-1.5 flex-wrap">
             <span className="text-sm sm:text-lg font-sans font-normal">₹</span>
             <span>{displayPrice}</span>
+            {displayOriginalPrice && (
+              <span className="text-xs sm:text-sm font-semibold font-mono text-zinc-500 line-through">
+                ₹{displayOriginalPrice}
+              </span>
+            )}
           </div>
         </div>
 
@@ -164,10 +142,15 @@ function ProductCard({ product }) {
         <div className="mt-3 lg:mt-6">
           <button
             onClick={handleAddBag}
-            className="w-full py-2.5 md:py-3 bg-zinc-900 border border-zinc-800 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none text-white hover:bg-white hover:text-black hover:border-transparent transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98]"
+            disabled={isCardOutOfStock}
+            className={`w-full py-2.5 md:py-3 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] ${
+              isCardOutOfStock
+                ? "bg-zinc-950 border border-zinc-900 text-zinc-600 cursor-not-allowed"
+                : "bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black hover:border-transparent"
+            }`}
           >
             <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            ADD TO BAG
+            {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
           </button>
         </div>
       </div>
@@ -197,7 +180,8 @@ export default function ProductShowcase({ initialProducts }) {
             product_images(image_url, sort_order),
             product_variants(id, size, color, price, stock_quantity)
           `)
-          .eq("status", "active")
+          .in("status", ["active", "draft"])
+          .eq("featured", true)
           .order("created_at", { ascending: false })
           .limit(6);
 
@@ -213,10 +197,11 @@ export default function ProductShowcase({ initialProducts }) {
           }));
           setProducts(formatted);
         } else {
-          setProducts(MOCK_NEW_ARRIVALS);
+          setProducts([]);
         }
-      } catch {
-        setProducts(MOCK_NEW_ARRIVALS);
+      } catch (err) {
+        console.error("Failed to load new arrivals:", err);
+        setProducts([]);
       } finally {
         setLoading(false);
       }

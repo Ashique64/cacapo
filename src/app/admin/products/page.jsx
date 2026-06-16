@@ -47,7 +47,8 @@ export default function AdminCatalogDesk() {
     category_id: "",
     brand: "CACAPO",
     featured: false,
-    status: "draft"
+    status: "draft",
+    color: ""
   });
   const [productImages, setProductImages] = useState([""]); // Array of image URLs
   const [productVariants, setProductVariants] = useState([]); // Array of { size, color, price, sale_price, stock_quantity, sku }
@@ -62,6 +63,7 @@ export default function AdminCatalogDesk() {
     parent_id: ""
   });
   const [uploading, setUploading] = useState(false);
+  const [uploadingProductImage, setUploadingProductImage] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -176,20 +178,64 @@ export default function AdminCatalogDesk() {
   };
 
   // Image inputs helpers
-  const handleAddImageField = () => {
-    setProductImages(prev => [...prev, ""]);
-  };
-
   const handleRemoveImageField = (index) => {
     setProductImages(prev => prev.filter((_, idx) => idx !== index));
   };
 
-  const handleImageChange = (index, value) => {
+  const handleMakePrimary = (index) => {
     setProductImages(prev => {
       const updated = [...prev];
-      updated[index] = value;
+      const [target] = updated.splice(index, 1);
+      updated.unshift(target);
       return updated;
     });
+  };
+
+  const handleProductImageUpload = async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    setUploadingProductImage(true);
+    try {
+      const uploadedUrls = [...productImages];
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        if (file.size > 5 * 1024 * 1024) {
+          alert(`Image "${file.name}" exceeds 5MB limit and will be skipped.`);
+          continue;
+        }
+
+        const fileExt = file.name.split('.').pop();
+        const fileName = `product-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+        const filePath = `${fileName}`;
+
+        const { data, error: uploadError } = await supabase.storage
+          .from("products")
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: false
+          });
+
+        if (uploadError) {
+          if (uploadError.message?.includes("bucket not found") || uploadError.error === "Bucket not found") {
+            throw new Error("Supabase Storage bucket 'products' not found. Please create a public bucket named 'products' in your Supabase dashboard.");
+          }
+          throw uploadError;
+        }
+
+        const { data: { publicUrl } } = supabase.storage
+          .from("products")
+          .getPublicUrl(filePath);
+
+        uploadedUrls.push(publicUrl);
+      }
+      setProductImages(uploadedUrls);
+    } catch (err) {
+      console.error("Product image upload failed:", err);
+      alert(err.message || "Failed to upload image. Make sure storage bucket 'products' is created and set to public.");
+    } finally {
+      setUploadingProductImage(false);
+    }
   };
 
   // Variant helpers
@@ -227,9 +273,10 @@ export default function AdminCatalogDesk() {
       category_id: categories[0]?.id || "",
       brand: "CACAPO",
       featured: false,
-      status: "draft"
+      status: "draft",
+      color: ""
     });
-    setProductImages([""]);
+    setProductImages([]);
     setProductVariants([]);
     setShowProductModal(true);
   };
@@ -249,13 +296,14 @@ export default function AdminCatalogDesk() {
       category_id: prod.category_id || "",
       brand: prod.brand || "CACAPO",
       featured: prod.featured || false,
-      status: prod.status || "draft"
+      status: (prod.status === "active" || prod.status === "draft") ? prod.status : "draft",
+      color: prod.product_variants?.[0]?.color || ""
     });
     
     // Set Images
     const imgs = prod.product_images?.length > 0 
       ? prod.product_images.map(img => img.image_url) 
-      : [""];
+      : [];
     setProductImages(imgs);
 
     // Set Variants
@@ -285,6 +333,10 @@ export default function AdminCatalogDesk() {
 
       if (isNaN(priceCents) || priceCents <= 0) {
         throw new Error("Please enter a valid product price.");
+      }
+
+      if (salePriceCents !== null && salePriceCents >= priceCents) {
+        throw new Error("Sale price must be lower than the regular price.");
       }
 
       const prodPayload = {
@@ -365,7 +417,7 @@ export default function AdminCatalogDesk() {
         return {
           product_id: productId,
           size: v.size.trim() || null,
-          color: v.color.trim() || null,
+          color: productForm.color.trim().toUpperCase() || null,
           price: vPrice,
           sale_price: vSalePrice,
           stock_quantity: parseInt(v.stock_quantity) || 0,
@@ -780,8 +832,8 @@ export default function AdminCatalogDesk() {
                     />
                   </div>
 
-                  {/* Brand & SKU */}
-                  <div className="grid grid-cols-2 gap-4">
+                  {/* Brand, SKU & Color */}
+                  <div className="grid grid-cols-3 gap-4">
                     <div className="space-y-1.5">
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Brand *</label>
                       <input
@@ -797,9 +849,20 @@ export default function AdminCatalogDesk() {
                       <input
                         type="text"
                         value={productForm.sku}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, sku: e.target.value }))}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, sku: e.target.value.toUpperCase() }))}
                         className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none font-mono transition-all"
                         placeholder="CAC-SILK-01"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Product Color *</label>
+                      <input
+                        type="text"
+                        required
+                        value={productForm.color}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, color: e.target.value.toUpperCase() }))}
+                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all"
+                        placeholder="e.g. BLACK"
                       />
                     </div>
                   </div>
@@ -852,9 +915,8 @@ export default function AdminCatalogDesk() {
                         onChange={(e) => setProductForm(prev => ({ ...prev, status: e.target.value }))}
                         className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all uppercase font-semibold text-[11px]"
                       >
-                        <option value="draft">Draft</option>
-                        <option value="active">Active</option>
-                        <option value="archived">Archived</option>
+                        <option value="active">Available</option>
+                        <option value="draft">Out of Stock</option>
                       </select>
                     </div>
                   </div>
@@ -862,12 +924,21 @@ export default function AdminCatalogDesk() {
                   {/* Basic fields */}
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Base Stock Quantity *</label>
+                      <div className="flex justify-between items-center">
+                        <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Base Stock Quantity *</label>
+                        <span className={`text-[8px] font-extrabold tracking-widest uppercase px-1.5 py-0.5 font-mono ${
+                          productForm.stock_quantity > 0 
+                            ? "bg-green-500/10 text-green-500 border border-green-500/20" 
+                            : "bg-red-500/10 text-red-400 border border-red-500/20"
+                        }`}>
+                          {productForm.stock_quantity > 0 ? "In Stock (Available)" : "Out of Stock"}
+                        </span>
+                      </div>
                       <input
                         type="number"
                         required
-                        value={productForm.stock_quantity}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, stock_quantity: parseInt(e.target.value) || 0 }))}
+                        value={productForm.stock_quantity.toString()}
+                        onChange={(e) => setProductForm(prev => ({ ...prev, stock_quantity: parseInt(e.target.value, 10) || 0 }))}
                         className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none font-mono transition-all"
                       />
                     </div>
@@ -879,7 +950,7 @@ export default function AdminCatalogDesk() {
                           onChange={(e) => setProductForm(prev => ({ ...prev, featured: e.target.checked }))}
                           className="accent-accent w-4 h-4 cursor-pointer"
                         />
-                        Featured Product
+                        New Arrival
                       </label>
                     </div>
                   </div>
@@ -914,42 +985,66 @@ export default function AdminCatalogDesk() {
                     />
                   </div>
 
-                  {/* Multi-Image Gallery */}
+                  {/* Product Image Gallery Uploader */}
                   <div className="space-y-2.5">
-                    <div className="flex justify-between items-center border-b border-zinc-900 pb-1.5">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5">
-                        <ImageIcon className="w-4 h-4 text-accent" /> Image Gallery URLs
-                      </label>
-                      <button
-                        type="button"
-                        onClick={handleAddImageField}
-                        className="text-[9px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors bg-transparent border-none cursor-pointer"
-                      >
-                        + Add Image URL
-                      </button>
-                    </div>
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5 border-b border-zinc-900 pb-1.5">
+                      <ImageIcon className="w-4 h-4 text-accent" /> Product Image Gallery
+                    </label>
 
-                    <div className="space-y-2.5 max-h-[140px] overflow-y-auto pr-1">
+                    <div className="grid grid-cols-4 gap-2">
                       {productImages.map((url, index) => (
-                        <div key={index} className="flex gap-2 items-center">
-                          <input
-                            type="url"
-                            placeholder="https://example.com/image.jpg"
-                            value={url}
-                            onChange={(e) => handleImageChange(index, e.target.value)}
-                            className="flex-1 bg-zinc-900 border border-zinc-800 focus:border-accent text-xs px-3 py-2 text-white outline-none rounded-none transition-all font-mono"
-                          />
-                          {productImages.length > 1 && (
+                        <div key={index} className="relative aspect-[3/4] bg-zinc-900 border border-zinc-800 overflow-hidden group">
+                          <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
+                          
+                          {/* Primary Badge */}
+                          {index === 0 && (
+                            <span className="absolute top-1.5 left-1.5 bg-accent text-white text-[7px] font-extrabold tracking-widest px-1.5 py-0.5 uppercase z-10 font-mono">
+                              Primary
+                            </span>
+                          )}
+
+                          {/* Hover Action Overlay */}
+                          <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-2 p-1">
+                            {index > 0 && (
+                              <button
+                                type="button"
+                                onClick={() => handleMakePrimary(index)}
+                                className="px-2 py-1 bg-white text-black hover:bg-accent hover:text-white text-[8px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer border-none"
+                              >
+                                Set Primary
+                              </button>
+                            )}
                             <button
                               type="button"
                               onClick={() => handleRemoveImageField(index)}
-                              className="text-zinc-500 hover:text-accent p-1 cursor-pointer bg-transparent border-none"
+                              className="text-zinc-400 hover:text-accent p-1 cursor-pointer bg-transparent border-none flex items-center gap-1 text-[8px] font-bold uppercase tracking-widest"
                             >
-                              <X className="w-4 h-4" />
+                              <Trash2 className="w-3.5 h-3.5" /> Remove
                             </button>
-                          )}
+                          </div>
                         </div>
                       ))}
+
+                      {/* Add Image Upload Card */}
+                      <label className="relative aspect-[3/4] border border-zinc-800 hover:border-accent bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors flex flex-col items-center justify-center cursor-pointer border-dashed group min-h-[90px]">
+                        <input
+                          type="file"
+                          accept="image/*"
+                          multiple
+                          onChange={handleProductImageUpload}
+                          className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                          disabled={uploadingProductImage}
+                        />
+                        {uploadingProductImage ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                        ) : (
+                          <div className="flex flex-col items-center gap-1 text-zinc-500 group-hover:text-zinc-300 transition-colors text-center p-1">
+                            <Plus className="w-4 h-4 text-zinc-500 group-hover:text-accent transition-colors" />
+                            <span className="text-[8px] font-bold uppercase tracking-wider block">Upload</span>
+                            <span className="text-[7px] text-zinc-600 block">WEBP/JPEG</span>
+                          </div>
+                        )}
+                      </label>
                     </div>
                   </div>
 
@@ -986,23 +1081,13 @@ export default function AdminCatalogDesk() {
                             type="text"
                             placeholder="S, M, 38"
                             value={v.size}
-                            onChange={(e) => handleVariantChange(index, "size", e.target.value)}
+                            onChange={(e) => handleVariantChange(index, "size", e.target.value.toUpperCase())}
                             className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2 py-1 text-white outline-none rounded-none"
                             required
                           />
                         </div>
 
-                        {/* Color */}
-                        <div className="w-20 space-y-1">
-                          <span className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Color</span>
-                          <input
-                            type="text"
-                            placeholder="Black, Gold"
-                            value={v.color}
-                            onChange={(e) => handleVariantChange(index, "color", e.target.value)}
-                            className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2 py-1 text-white outline-none rounded-none"
-                          />
-                        </div>
+
 
                         {/* Price */}
                         <div className="w-24 space-y-1">
@@ -1035,8 +1120,8 @@ export default function AdminCatalogDesk() {
                           <span className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Stock count</span>
                           <input
                             type="number"
-                            value={v.stock_quantity}
-                            onChange={(e) => handleVariantChange(index, "stock_quantity", parseInt(e.target.value) || 0)}
+                            value={v.stock_quantity.toString()}
+                            onChange={(e) => handleVariantChange(index, "stock_quantity", parseInt(e.target.value, 10) || 0)}
                             className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2 py-1 text-white outline-none rounded-none font-mono"
                             required
                           />
@@ -1049,7 +1134,7 @@ export default function AdminCatalogDesk() {
                             type="text"
                             placeholder="Unique variant sku"
                             value={v.sku}
-                            onChange={(e) => handleVariantChange(index, "sku", e.target.value)}
+                            onChange={(e) => handleVariantChange(index, "sku", e.target.value.toUpperCase())}
                             className="w-full bg-zinc-950 border border-zinc-800 text-xs px-2 py-1 text-white outline-none rounded-none font-mono"
                           />
                         </div>

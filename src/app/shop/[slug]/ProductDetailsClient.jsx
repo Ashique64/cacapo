@@ -19,6 +19,40 @@ import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useAuthStore } from "@/store/useAuthStore";
 
+const SIZE_ORDER = {
+  "XXS": 1,
+  "XS": 2,
+  "S": 3,
+  "M": 4,
+  "L": 5,
+  "XL": 6,
+  "XXL": 7,
+  "XXXL": 8,
+  "3XL": 9,
+  "4XL": 10
+};
+
+function sortSizes(sizesArray) {
+  return [...sizesArray].sort((a, b) => {
+    const orderA = SIZE_ORDER[a.toUpperCase()];
+    const orderB = SIZE_ORDER[b.toUpperCase()];
+    
+    if (orderA !== undefined && orderB !== undefined) {
+      return orderA - orderB;
+    }
+    if (orderA !== undefined) return -1;
+    if (orderB !== undefined) return 1;
+
+    const numA = parseFloat(a);
+    const numB = parseFloat(b);
+    if (!isNaN(numA) && !isNaN(numB)) {
+      return numA - numB;
+    }
+
+    return a.localeCompare(b);
+  });
+}
+
 export default function ProductDetailsClient({ product, relatedProducts }) {
   const { user } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
@@ -35,8 +69,11 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   const mainImageRef = useRef(null);
 
   // Variants State
-  const sizes = Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean)));
-  const firstInStockVariant = product.variants.find((v) => v.stock_quantity > 0);
+  const unsortedSizes = Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean)));
+  const sizes = sortSizes(unsortedSizes);
+  const firstInStockVariant = product.variants
+    ?.filter((v) => v.stock_quantity > 0)
+    .sort((a, b) => sizes.indexOf(a.size) - sizes.indexOf(b.size))[0] || null;
   const [selectedSize, setSelectedSize] = useState(firstInStockVariant?.size || sizes[0] || "");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -57,14 +94,24 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   
   // Find current selected variant
   const currentVariant = product.variants.find((v) => v.size === selectedSize) || null;
-  const isOutOfStock = currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant;
+  const isOutOfStock = product.status === "draft" || (currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant);
 
   // Pricing
-  const activePrice = currentVariant && currentVariant.price ? currentVariant.price : product.price;
+  const regularPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
+  const salePrice = (currentVariant && currentVariant.sale_price) ? currentVariant.sale_price : product.sale_price;
+
+  const activePrice = salePrice ? salePrice : regularPrice;
+  const originalPrice = salePrice ? regularPrice : null;
+
   const displayPrice = (activePrice / 100).toLocaleString("en-IN", {
     minimumFractionDigits: 0,
     maximumFractionDigits: 2,
   });
+
+  const displayOriginalPrice = originalPrice ? (originalPrice / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }) : null;
 
   // Share link copy handler
   const handleShare = () => {
@@ -318,10 +365,22 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             </h1>
 
             {/* Price Box */}
-            <div className="flex items-baseline gap-1 mt-4">
+            <div className="flex items-baseline gap-2 mt-4 flex-wrap">
               <span className="text-base text-zinc-400 font-sans font-normal">₹</span>
               <span className="text-3xl font-bold font-mono tracking-tight text-white">{displayPrice}</span>
+              {displayOriginalPrice && (
+                <span className="text-sm font-semibold font-mono text-zinc-500 line-through ml-2">
+                  ₹{displayOriginalPrice}
+                </span>
+              )}
             </div>
+
+            {/* Color Display */}
+            {product.variants?.[0]?.color && (
+              <div className="text-[11px] tracking-[0.25em] text-zinc-400 uppercase mt-3">
+                Color: <span className="text-zinc-100 font-semibold">{product.variants[0].color}</span>
+              </div>
+            )}
             
             {/* Inventory alert */}
             {currentVariant && currentVariant.stock_quantity > 0 && currentVariant.stock_quantity <= 3 && (
