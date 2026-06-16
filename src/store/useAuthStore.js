@@ -53,6 +53,24 @@ export const useAuthStore = create((set, get) => ({
     set({ user: null, session: null, loading: false });
     return { error };
   },
+
+  resetPasswordForEmail: async (email, redirectTo) => {
+    set({ loading: true });
+    const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo,
+    });
+    set({ loading: false });
+    return { data, error };
+  },
+
+  updatePassword: async (newPassword) => {
+    set({ loading: true });
+    const { data, error } = await supabase.auth.updateUser({
+      password: newPassword,
+    });
+    set({ loading: false });
+    return { data, error };
+  },
 }));
 
 // Auto-initialize on client side

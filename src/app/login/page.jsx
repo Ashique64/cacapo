@@ -21,7 +21,8 @@ function LoginContent() {
   const signIn = useAuthStore((state) => state.signIn);
   const signUp = useAuthStore((state) => state.signUp);
 
-  const [authTab, setAuthTab] = useState("signin");
+  const type = searchParams.get("type");
+  const [authTab, setAuthTab] = useState(type === "recovery" ? "recovery" : "signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -33,39 +34,104 @@ function LoginContent() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(null);
   const [verificationSent, setVerificationSent] = useState(false);
 
-  // If user is already logged in, redirect away
+  // If user is already logged in, redirect away (except when in recovery flow)
   useEffect(() => {
-    if (user && !loading) {
+    if (user && !loading && authTab !== "recovery") {
       router.push(redirectUrl);
     }
-  }, [user, loading, redirectUrl, router]);
+  }, [user, loading, redirectUrl, router, authTab]);
+
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+    setSuccessMessage(null);
 
-    // 1. Basic presence validation
+    // 1. Forgot password request flow
+    if (authTab === "forgot") {
+      if (!email.trim()) {
+        setError("Email Address is required");
+        return;
+      }
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email.trim())) {
+        setError("Please enter a valid email address");
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const resetRedirect = `${window.location.origin}/login?type=recovery`;
+        const { error: resetErr } = await useAuthStore.getState().resetPasswordForEmail(email.trim(), resetRedirect);
+        if (resetErr) throw resetErr;
+        setVerificationSent(true);
+      } catch (err) {
+        setError(err.message || "Failed to send reset link.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // 2. Recovery update flow (new password)
+    if (authTab === "recovery") {
+      if (!password.trim() || !confirmPassword.trim()) {
+        setError("Password and Confirm Password are required");
+        return;
+      }
+      if (password.length < 6) {
+        setError("Password must be at least 6 characters");
+        return;
+      }
+      if (password !== confirmPassword) {
+        setError("Passwords do not match");
+        return;
+      }
+
+      setSubmitting(true);
+      try {
+        const { error: updateErr } = await useAuthStore.getState().updatePassword(password);
+        if (updateErr) throw updateErr;
+        
+        // Sign out user to clear recovery session and force login
+        await useAuthStore.getState().signOut();
+        
+        setSuccessMessage("Password updated successfully! Redirecting to sign in...");
+        setTimeout(() => {
+          router.push("/login");
+        }, 2500);
+      } catch (err) {
+        setError(err.message || "Failed to update password.");
+      } finally {
+        setSubmitting(false);
+      }
+      return;
+    }
+
+    // 3. Regular Sign In / Sign Up flows
+    // Basic presence validation
     if (!email.trim() || !password.trim()) {
       setError("Email and Password are required");
       return;
     }
 
-    // 2. Email format validation
+    // Email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email.trim())) {
       setError("Please enter a valid email address");
       return;
     }
 
-    // 3. Password length validation
+    // Password length validation
     if (password.length < 6) {
       setError("Password must be at least 6 characters");
       return;
     }
 
-    // 4. Registration validation checks
+    // Registration validation checks
     if (authTab === "signup") {
       if (!fullName.trim()) {
         setError("Full Name is required");
@@ -143,12 +209,24 @@ function LoginContent() {
             CACAPO
           </span>
           <h1 className="text-xl font-bold uppercase tracking-[0.15em] text-white">
-            {verificationSent ? "VERIFY EMAIL" : (authTab === "signin" ? "SIGN IN" : "SIGN UP")}
-          </h1>
-          <p className="text-[11px] text-zinc-500 tracking-wider">
             {verificationSent 
-              ? "Confirm your email address to activate your account."
-              : "Sign in or create an account to finalize your order details securely."}
+              ? (authTab === "forgot" ? "RESET LINK SENT" : "VERIFY EMAIL") 
+              : (authTab === "signin" 
+                ? "SIGN IN" 
+                : authTab === "signup" 
+                  ? "SIGN UP" 
+                  : authTab === "forgot" 
+                    ? "FORGOT PASSWORD" 
+                    : "UPDATE PASSWORD")}
+          </h1>
+          <p className="text-[11px] text-zinc-500 tracking-wider font-medium uppercase tracking-[0.1em]">
+            {verificationSent 
+              ? (authTab === "forgot" ? "Please check your inbox to proceed." : "Confirm your email address to activate your account.")
+              : (authTab === "forgot" 
+                ? "Retrieve access to your premium Cacapo account." 
+                : authTab === "recovery"
+                  ? "Define a new secure password for your account."
+                  : "Sign in or create an account to finalize your order details securely.")}
           </p>
         </div>
 
@@ -163,13 +241,15 @@ function LoginContent() {
             
             <div className="space-y-2">
               <p className="text-xs text-zinc-400 leading-relaxed">
-                We've sent a verification link to:
+                {authTab === "forgot" ? "We've sent a password reset link to:" : "We've sent a verification link to:"}
               </p>
               <p className="text-sm font-bold text-white tracking-wider break-all">
                 {email}
               </p>
               <p className="text-xs text-zinc-500 leading-relaxed pt-2">
-                Please check your inbox (and spam folder) and click the link to activate your account.
+                {authTab === "forgot" 
+                  ? "Please check your inbox and click the link to reset your password." 
+                  : "Please check your inbox (and spam folder) and click the link to activate your account."}
               </p>
             </div>
 
@@ -189,51 +269,59 @@ function LoginContent() {
           </div>
         ) : (
           <>
-            {/* Tab Selector */}
-            <div className="flex border-b border-zinc-900 text-xs font-bold tracking-widest font-sans">
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthTab("signin");
-                  setError(null);
-                  setPassword("");
-                  setConfirmPassword("");
-                  setShowPassword(false);
-                  setShowConfirmPassword(false);
-                }}
-                className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
-                  authTab === "signin" 
-                    ? "border-accent text-white" 
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Sign In
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setAuthTab("signup");
-                  setError(null);
-                  setPassword("");
-                  setConfirmPassword("");
-                  setShowPassword(false);
-                  setShowConfirmPassword(false);
-                }}
-                className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
-                  authTab === "signup" 
-                    ? "border-accent text-white" 
-                    : "border-transparent text-zinc-500 hover:text-zinc-300"
-                }`}
-              >
-                Create Account
-              </button>
-            </div>
+            {/* Tab Selector - Hide for recovery and forgot flows */}
+            {authTab !== "forgot" && authTab !== "recovery" && (
+              <div className="flex border-b border-zinc-900 text-xs font-bold tracking-widest font-sans">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab("signin");
+                    setError(null);
+                    setPassword("");
+                    setConfirmPassword("");
+                    setShowPassword(false);
+                    setShowConfirmPassword(false);
+                  }}
+                  className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
+                    authTab === "signin" 
+                      ? "border-accent text-white" 
+                      : "border-transparent text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Sign In
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab("signup");
+                    setError(null);
+                    setPassword("");
+                    setConfirmPassword("");
+                    setShowPassword(false);
+                    setShowConfirmPassword(false);
+                  }}
+                  className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
+                    authTab === "signup" 
+                      ? "border-accent text-white" 
+                      : "border-transparent text-zinc-500 hover:text-zinc-300"
+                  }`}
+                >
+                  Create Account
+                </button>
+              </div>
+            )}
 
             {/* Form */}
             <form onSubmit={handleSubmit} className="space-y-5">
               {error && (
                 <div className="p-3 border border-accent/20 bg-accent/5 text-accent text-xs tracking-wider leading-relaxed text-center font-medium">
                   {error}
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="p-3 border border-green-500/20 bg-green-500/5 text-green-500 text-xs tracking-wider leading-relaxed text-center font-medium">
+                  {successMessage}
                 </div>
               )}
 
@@ -269,48 +357,70 @@ function LoginContent() {
                 </>
               )}
 
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="custom-input text-xs tracking-wider py-2.5 px-3"
-                  placeholder="e.g. customer@cacapo.com"
-                  suppressHydrationWarning
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="custom-input text-xs tracking-wider py-2.5 px-3 pr-10"
-                    placeholder="Minimum 6 characters"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              {authTab === "signup" && (
+              {/* Email field - shown in sign in, sign up, forgot, but not recovery */}
+              {authTab !== "recovery" && (
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
-                    Confirm Password
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="custom-input text-xs tracking-wider py-2.5 px-3"
+                    placeholder="e.g. customer@cacapo.com"
+                    suppressHydrationWarning
+                  />
+                </div>
+              )}
+
+              {/* Password field - shown in sign in, sign up, recovery, but not forgot */}
+              {authTab !== "forgot" && (
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    {authTab === "recovery" ? "New Password" : "Password"}
+                  </label>
+                  <div className="relative">
+                    <input
+                      type={showPassword ? "text" : "password"}
+                      required
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="custom-input text-xs tracking-wider py-2.5 px-3 pr-10"
+                      placeholder={authTab === "recovery" ? "Min 6 characters" : "Minimum 6 characters"}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none"
+                    >
+                      {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                  {authTab === "signin" && (
+                    <div className="flex justify-end pt-1">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setAuthTab("forgot");
+                          setError(null);
+                          setPassword("");
+                        }}
+                        className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors p-0 bg-transparent border-none cursor-pointer"
+                      >
+                        Forgot Password?
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Confirm Password field - shown in sign up and recovery */}
+              {(authTab === "signup" || authTab === "recovery") && (
+                <div className="space-y-1.5">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    {authTab === "recovery" ? "Confirm New Password" : "Confirm Password"}
                   </label>
                   <div className="relative">
                     <input
@@ -335,20 +445,39 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-800 disabled:text-zinc-500"
+                className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-800 disabled:text-zinc-500 cursor-pointer"
               >
                 {submitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> PROCESSING...
                   </>
                 ) : (
-                  authTab === "signin" ? "SIGN IN" : "CREATE ACCOUNT"
+                  authTab === "signin" 
+                    ? "SIGN IN" 
+                    : authTab === "signup" 
+                      ? "CREATE ACCOUNT" 
+                      : authTab === "forgot" 
+                        ? "SEND RESET LINK" 
+                        : "UPDATE PASSWORD"
                 )}
               </button>
+
+              {authTab === "forgot" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab("signin");
+                    setError(null);
+                    setEmail("");
+                  }}
+                  className="w-full py-3 border border-zinc-800 hover:border-accent text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none flex items-center justify-center gap-2 cursor-pointer bg-transparent"
+                >
+                  BACK TO SIGN IN
+                </button>
+              )}
             </form>
           </>
         )}
-
       </div>
     </div>
   );
