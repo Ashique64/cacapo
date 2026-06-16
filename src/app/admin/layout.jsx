@@ -46,7 +46,7 @@ export default async function AdminLayout({ children }) {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-black">
         {/* Top Header */}
-        <header className="h-16 border-b border-zinc-900 bg-zinc-950/20 px-8 flex items-center justify-between shrink-0">
+        <header className="h-16 border-b border-zinc-900 bg-zinc-950/20 px-4 md:px-8 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-4">
             <div className="h-2 w-2 rounded-full bg-green-500 animate-ping" />
             <span className="text-[10px] font-bold tracking-widest text-zinc-500 uppercase">
@@ -54,13 +54,13 @@ export default async function AdminLayout({ children }) {
             </span>
           </div>
 
-          <div className="text-[10px] font-bold tracking-wider text-zinc-400">
+          <div className="text-[10px] font-bold tracking-wider text-zinc-400 truncate max-w-[200px] sm:max-w-none">
             Authenticated: <span className="text-white font-semibold">{user.email}</span>
           </div>
         </header>
 
         {/* Content Body */}
-        <main className="flex-1 p-8 md:p-12 overflow-y-auto">
+        <main className="flex-1 p-4 sm:p-8 md:p-12 overflow-y-auto">
           {children}
         </main>
       </div>
