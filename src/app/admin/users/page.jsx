@@ -66,7 +66,7 @@ export default function AdminUsersDesk() {
           phone: p.phone || "N/A",
           created_at: p.created_at,
           role: admin ? admin.role : "customer",
-          email: admin ? admin.email : null,
+          email: admin ? admin.email : p.email,
         };
       });
 
@@ -416,7 +416,7 @@ export default function AdminUsersDesk() {
                 </div>
                 <div className="space-y-1">
                   <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">Auth Email Address</span>
-                  <span className="text-zinc-200 font-semibold text-xs">{selectedUser.email || "N/A (Standard Customer)"}</span>
+                  <span className="text-zinc-200 font-semibold text-xs">{selectedUser.email || "N/A"}</span>
                 </div>
                 <div className="space-y-1">
                   <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">System Permission Role</span>
