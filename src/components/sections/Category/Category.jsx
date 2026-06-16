@@ -8,39 +8,10 @@ import { ArrowUpRight, Loader2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 // Fallback data keyed by slug — used when DB has no image_url or is empty
-const FALLBACK_CATEGORIES = [
-  {
-    name: "ATELIER APPAREL",
-    slug: "clothing",
-    description: "Architectural lines meets flowing silks. Expertly tailored drapery designed to contour and elevate the feminine form.",
-    shortDesc: "Architectural lines meet flowing silks. Expertly tailored drapery.",
-    image_url: "/Images/clothing.jpg",
-    tag: "CLOTHING",
-  },
-  {
-    name: "SCULPTED FOOTWEAR",
-    slug: "footwear",
-    description: "Crafted in Italy. Striking structural heels and premium buttery leathers that deliver unparalleled elegance with every step.",
-    shortDesc: "Italian crafted heels and premium leathers for unparalleled elegance.",
-    image_url: "/Images/footwear.jpg",
-    tag: "FOOTWEAR",
-  },
-  {
-    name: "COUTURE ACCENTS",
-    slug: "accessories",
-    description: "Statement jewelry, structural bags, and luxury accessories made with high-shine gold accents and clean geometric lines.",
-    shortDesc: "Statement jewelry and bags featuring clean geometric gold lines.",
-    image_url: "/Images/accessories.jpg",
-    tag: "ACCESSORIES",
-  },
-];
+const FALLBACK_CATEGORIES = [];
 
 // Image fallback map by slug — used when a Supabase category has no image_url
-const SLUG_IMAGE_FALLBACK = {
-  clothing: "/Images/clothing.jpg",
-  footwear: "/Images/footwear.jpg",
-  accessories: "/Images/accessories.jpg",
-};
+const SLUG_IMAGE_FALLBACK = {};
 
 export default function Collections({ initialCategories }) {
   const sectionRef = useRef(null);
@@ -66,7 +37,7 @@ export default function Collections({ initialCategories }) {
           // Enrich each category with a resolved image and tag label
           const enriched = data.map((cat) => ({
             ...cat,
-            image_url: cat.image_url || SLUG_IMAGE_FALLBACK[cat.slug] || "/Images/clothing.jpg",
+            image_url: cat.image_url || "",
             tag: cat.slug.toUpperCase(),
             shortDesc: cat.description || "",
           }));

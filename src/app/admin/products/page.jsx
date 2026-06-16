@@ -61,6 +61,7 @@ export default function AdminCatalogDesk() {
     image_url: "",
     parent_id: ""
   });
+  const [uploading, setUploading] = useState(false);
 
   useEffect(() => {
     fetchData();
@@ -126,6 +127,52 @@ export default function AdminCatalogDesk() {
       name,
       slug: generateSlug(name)
     }));
+  };
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert("Image size exceeds 5MB limit.");
+      return;
+    }
+
+    setUploading(true);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `category-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from("categories")
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) {
+        if (uploadError.message?.includes("bucket not found") || uploadError.error === "Bucket not found") {
+          throw new Error("Supabase Storage bucket 'categories' not found. Please create a public bucket named 'categories' in your Supabase dashboard.");
+        }
+        throw uploadError;
+      }
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("categories")
+        .getPublicUrl(filePath);
+
+      setCategoryForm((prev) => ({
+        ...prev,
+        image_url: publicUrl
+      }));
+
+    } catch (err) {
+      console.error("Image upload failed:", err);
+      alert(err.message || "Failed to upload image. Make sure storage bucket 'categories' is created and set to public.");
+    } finally {
+      setUploading(false);
+    }
   };
 
   // Image inputs helpers
@@ -1102,16 +1149,51 @@ export default function AdminCatalogDesk() {
                 />
               </div>
 
-              {/* Image URL */}
+              {/* Image Upload */}
               <div className="space-y-1.5">
-                <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Image Asset URL</label>
-                <input
-                  type="url"
-                  value={categoryForm.image_url}
-                  onChange={(e) => setCategoryForm(prev => ({ ...prev, image_url: e.target.value }))}
-                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none font-mono transition-all"
-                  placeholder="https://example.com/category-thumb.jpg"
-                />
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Collection Thumbnail Image</label>
+                {categoryForm.image_url ? (
+                  <div className="relative border border-zinc-800 bg-zinc-950 p-2 flex items-center justify-between gap-4">
+                    <img 
+                      src={categoryForm.image_url} 
+                      alt="Category preview" 
+                      className="w-16 h-16 object-cover border border-zinc-800"
+                    />
+                    <div className="flex-1 truncate">
+                      <span className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Uploaded URL</span>
+                      <span className="block text-[9px] font-mono text-zinc-400 truncate mt-0.5">{categoryForm.image_url}</span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setCategoryForm(prev => ({ ...prev, image_url: "" }))}
+                      className="p-1.5 border border-zinc-800 hover:border-accent hover:text-accent text-zinc-400 transition-colors bg-zinc-900 cursor-pointer"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="relative border border-zinc-800 bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors py-6 flex flex-col items-center justify-center cursor-pointer border-dashed group">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="absolute inset-0 opacity-0 cursor-pointer w-full h-full"
+                      disabled={uploading}
+                    />
+                    {uploading ? (
+                      <div className="flex flex-col items-center gap-2 text-zinc-500">
+                        <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest">Uploading Asset...</span>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center gap-2 text-zinc-500 group-hover:text-zinc-300 transition-colors">
+                        <ImageIcon className="w-5 h-5 text-zinc-600 group-hover:text-accent transition-colors" />
+                        <span className="text-[9px] font-bold uppercase tracking-widest">Select & Upload Image</span>
+                        <span className="text-[8px] text-zinc-600 block">PNG, JPG, or WEBP up to 5MB</span>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Parent Category Selector */}
