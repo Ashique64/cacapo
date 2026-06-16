@@ -12,11 +12,25 @@ export const useAuthStore = create((set, get) => ({
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       set({ session, user: session?.user ?? null, loading: false });
+      if (typeof window !== "undefined") {
+        if (session) {
+          document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${3600 * 24 * 7}; SameSite=Lax; Secure`;
+        } else {
+          document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure`;
+        }
+      }
     });
 
     // Listen to changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       set({ session, user: session?.user ?? null, loading: false });
+      if (typeof window !== "undefined") {
+        if (session) {
+          document.cookie = `sb-access-token=${session.access_token}; path=/; max-age=${3600 * 24 * 7}; SameSite=Lax; Secure`;
+        } else {
+          document.cookie = `sb-access-token=; path=/; max-age=0; SameSite=Lax; Secure`;
+        }
+      }
     });
 
     return () => {

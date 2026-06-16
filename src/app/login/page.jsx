@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/useAuthStore";
 import Link from "next/link";
 import Navbar from "@/components/layout/Header/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
+import { supabase } from "@/lib/supabase";
 
 function LoginContent() {
   const router = useRouter();
@@ -39,9 +40,26 @@ function LoginContent() {
 
   // If user is already logged in, redirect away (except when in recovery flow)
   useEffect(() => {
-    if (user && !loading && authTab !== "recovery") {
-      router.push(redirectUrl);
-    }
+    const handleRedirect = async () => {
+      if (user && !loading && authTab !== "recovery") {
+        try {
+          const { data: isAdmin } = await supabase
+            .from("admin_users")
+            .select("role")
+            .eq("id", user.id)
+            .maybeSingle();
+
+          if (isAdmin) {
+            router.push("/admin");
+          } else {
+            router.push(redirectUrl);
+          }
+        } catch (e) {
+          router.push(redirectUrl);
+        }
+      }
+    };
+    handleRedirect();
   }, [user, loading, redirectUrl, router, authTab]);
 
 
@@ -153,6 +171,21 @@ function LoginContent() {
       if (authTab === "signin") {
         const { error: signInErr } = await signIn(email, password);
         if (signInErr) throw signInErr;
+
+        // Perform admin check to determine redirect destination
+        const sessionUser = useAuthStore.getState().user;
+        if (sessionUser) {
+          const { data: isAdmin } = await supabase
+            .from("admin_users")
+            .select("role")
+            .eq("id", sessionUser.id)
+            .maybeSingle();
+
+          if (isAdmin) {
+            router.push("/admin");
+            return;
+          }
+        }
       } else {
         const { data, error: signUpErr } = await signUp(email, password, {
           full_name: fullName.trim(),
