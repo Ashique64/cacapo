@@ -2,12 +2,25 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Shield, ShoppingBag, Database, ArrowLeft, User, LayoutDashboard, Ticket, Box, Menu, X } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut } from "lucide-react";
+import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminSidebar() {
   const pathname = usePathname();
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const signOut = useAuthStore((state) => state.signOut);
+
+  const handleLogout = async () => {
+    try {
+      setIsOpen(false);
+      await signOut();
+      router.push("/login");
+    } catch (err) {
+      console.error("Failed to sign out:", err);
+    }
+  };
 
   const navItems = [
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
@@ -15,6 +28,7 @@ export default function AdminSidebar() {
     { name: "Catalog CRUD", path: "/admin/products", icon: Database },
     { name: "Coupons Desk", path: "/admin/coupons", icon: Ticket },
     { name: "Inventory Desk", path: "/admin/inventory", icon: Box },
+    { name: "Users Desk", path: "/admin/users", icon: Users },
   ];
 
   return (
@@ -84,23 +98,13 @@ export default function AdminSidebar() {
 
         {/* Sidebar Footer area */}
         <div className="p-4 border-t border-zinc-900 md:border-t-0 md:border-t-zinc-900 space-y-2 text-[10px] font-bold tracking-widest uppercase">
-          <Link
-            href="/account"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-zinc-500 hover:text-white transition-all duration-300 group hover:translate-x-1 font-medium"
+          <button
+            onClick={handleLogout}
+            className="w-full flex items-center gap-3 px-4 py-2.5 text-zinc-500 hover:text-white transition-all duration-300 group hover:translate-x-1 font-medium bg-transparent border-0 cursor-pointer text-left outline-none"
           >
-            <User className="w-3.5 h-3.5 text-zinc-600 transition-colors group-hover:text-white" />
-            <span>My Account</span>
-          </Link>
-
-          <Link
-            href="/"
-            onClick={() => setIsOpen(false)}
-            className="flex items-center gap-3 px-4 py-2.5 text-zinc-500 hover:text-white transition-all duration-300 group hover:translate-x-1 font-medium"
-          >
-            <ArrowLeft className="w-3.5 h-3.5 text-zinc-600 transition-colors group-hover:text-white" />
-            <span>Back to Shop</span>
-          </Link>
+            <LogOut className="w-3.5 h-3.5 text-zinc-600 transition-colors group-hover:text-white" />
+            <span>Sign Out</span>
+          </button>
         </div>
       </div>
     </aside>

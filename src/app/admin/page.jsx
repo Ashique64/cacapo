@@ -7,7 +7,8 @@ import {
   Package, 
   ArrowRight, 
   DollarSign,
-  AlertCircle
+  AlertCircle,
+  Users
 } from "lucide-react";
 
 export const revalidate = 0; // Fetch dynamic data on every request
@@ -22,6 +23,7 @@ export default async function AdminDashboardPage() {
     ordersCount: 0,
     pendingOrders: 0,
     productsCount: 0,
+    usersCount: 0,
   };
   let recentOrders = [];
   let errorMsg = null;
@@ -53,6 +55,14 @@ export default async function AdminDashboardPage() {
     if (productsError) throw productsError;
     stats.productsCount = count || 0;
 
+    // 3. Fetch Users (Profiles) count
+    const { count: usersCount, error: usersError } = await supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true });
+
+    if (usersError) throw usersError;
+    stats.usersCount = usersCount || 0;
+
   } catch (err) {
     console.error("Error loading admin stats dashboard:", err);
     errorMsg = "Unable to fetch live database analytics. Using sandbox mode.";
@@ -63,6 +73,7 @@ export default async function AdminDashboardPage() {
       ordersCount: 12,
       pendingOrders: 3,
       productsCount: 6,
+      usersCount: 8,
     };
     recentOrders = [
       { order_number: "CACAPO-9824", total_amount: 18500000, order_status: "pending", created_at: new Date().toISOString(), shipping_address: { full_name: "Muhammed Ashique" } },
@@ -104,7 +115,7 @@ export default async function AdminDashboardPage() {
       </div>
 
       {/* Stats Cards Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         
         {/* Revenue */}
         <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-4">
@@ -172,6 +183,22 @@ export default async function AdminDashboardPage() {
           </div>
         </div>
 
+        {/* Registered Users */}
+        <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-4">
+          <div className="flex justify-between items-center text-zinc-500">
+            <span className="text-[10px] font-extrabold tracking-widest uppercase">Registered Users</span>
+            <Users className="w-4 h-4 text-accent animate-pulse" />
+          </div>
+          <div>
+            <h2 className="text-xl md:text-2xl font-black tracking-wide text-white">
+              {stats.usersCount}
+            </h2>
+            <span className="text-[9px] text-zinc-600 font-bold uppercase tracking-wider block mt-1">
+              Registered customers & admins
+            </span>
+          </div>
+        </div>
+
       </div>
 
       {/* Grid: Navigation Desk & Recent Orders */}
@@ -221,6 +248,27 @@ export default async function AdminDashboardPage() {
                   </h4>
                   <p className="text-[11px] text-zinc-500 tracking-wide leading-relaxed max-w-[280px]">
                     Create new collections, customize inventory variations, and edit pricing thresholds.
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
+              </div>
+            </Link>
+
+            {/* Link to Users Desk */}
+            <Link 
+              href="/admin/users" 
+              className="group block p-6 border border-zinc-900 bg-zinc-950/10 hover:border-zinc-800 hover:bg-zinc-950/60 transition-all duration-300 relative overflow-hidden"
+            >
+              <div className="flex justify-between items-start">
+                <div className="space-y-2">
+                  <span className="text-[8px] font-extrabold tracking-widest px-2 py-0.5 bg-zinc-800 border border-zinc-700 text-zinc-400 font-mono block w-fit">
+                    PROFILES & ROLES
+                  </span>
+                  <h4 className="text-sm font-bold tracking-widest uppercase text-white group-hover:text-accent transition-colors">
+                    Users & Roles Desk
+                  </h4>
+                  <p className="text-[11px] text-zinc-500 tracking-wide leading-relaxed max-w-[280px]">
+                    Manage registered client profiles, view their addresses, and inspect customer order history logs.
                   </p>
                 </div>
                 <ArrowRight className="w-4 h-4 text-zinc-500 group-hover:text-white group-hover:translate-x-1 transition-all" />
