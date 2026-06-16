@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { 
   User, 
   MapPin, 
@@ -13,7 +14,10 @@ import {
   Check, 
   ChevronDown, 
   ChevronUp, 
-  AlertCircle 
+  AlertCircle,
+  Lock,
+  Eye,
+  EyeOff
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { supabase } from "@/lib/supabase";
@@ -50,6 +54,16 @@ export default function AccountPage() {
   });
   const [addressErrors, setAddressErrors] = useState({});
   const [addressSubmitting, setAddressSubmitting] = useState(false);
+
+  // Password Change State
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
+  const [passwordSubmitting, setPasswordSubmitting] = useState(false);
+  const [passwordError, setPasswordError] = useState(null);
+  const [passwordSuccess, setPasswordSuccess] = useState(false);
 
   // Orders State
   const [orders, setOrders] = useState([]);
@@ -246,6 +260,42 @@ export default function AccountPage() {
     }
   };
 
+  const handlePasswordChange = async (e) => {
+    e.preventDefault();
+    setPasswordError(null);
+    setPasswordSuccess(false);
+
+    if (!newPassword.trim() || !confirmNewPassword.trim()) {
+      setPasswordError("Both fields are required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      setPasswordError("Password must be at least 6 characters");
+      return;
+    }
+    if (newPassword !== confirmNewPassword) {
+      setPasswordError("Passwords do not match");
+      return;
+    }
+
+    setPasswordSubmitting(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      setPasswordSuccess(true);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      setTimeout(() => {
+        setShowPasswordForm(false);
+        setPasswordSuccess(false);
+      }, 2000);
+    } catch (err) {
+      setPasswordError(err.message || "Failed to update password");
+    } finally {
+      setPasswordSubmitting(false);
+    }
+  };
+
   const toggleOrderExpand = (id) => {
     setExpandedOrderId(prev => (prev === id ? null : id));
   };
@@ -322,22 +372,114 @@ export default function AccountPage() {
                 
                 <div className="space-y-4 text-xs tracking-wider">
                   <div>
+                    <span className="text-zinc-500 font-bold block text-[10px] uppercase">Full Name</span>
+                    <span className="text-white font-medium block mt-1">
+                      {user.user_metadata?.full_name || profile?.full_name || "N/A"}
+                    </span>
+                  </div>
+                  <div>
                     <span className="text-zinc-500 font-bold block text-[10px] uppercase">Registered Email</span>
                     <span className="text-white font-medium block mt-1">{user.email}</span>
                   </div>
-                  {profile && (
-                    <>
-                      <div>
-                        <span className="text-zinc-500 font-bold block text-[10px] uppercase">Full Name</span>
-                        <span className="text-white font-medium block mt-1">{profile.full_name || "N/A"}</span>
-                      </div>
-                      <div>
-                        <span className="text-zinc-500 font-bold block text-[10px] uppercase">Contact Number</span>
-                        <span className="text-white font-medium block mt-1">{profile.phone || "N/A"}</span>
-                      </div>
-                    </>
+                  <div>
+                    <span className="text-zinc-500 font-bold block text-[10px] uppercase">Phone Number</span>
+                    <span className="text-white font-medium block mt-1">
+                      {user.user_metadata?.phone || profile?.phone || "N/A"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Change Password Box */}
+              <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-6">
+                <div className="flex justify-between items-center">
+                  <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+                    <Lock className="w-4 h-4 text-accent" /> Password & Security
+                  </h3>
+                  {!showPasswordForm && (
+                    <button
+                      onClick={() => { setShowPasswordForm(true); setPasswordError(null); setPasswordSuccess(false); }}
+                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors"
+                    >
+                      Change Password
+                    </button>
                   )}
                 </div>
+
+                {showPasswordForm ? (
+                  <form onSubmit={handlePasswordChange} className="space-y-4">
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">New Password *</label>
+                      <div className="relative">
+                        <input
+                          type={showNewPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          className="custom-input text-xs tracking-wide py-2 px-3 pr-10"
+                          placeholder="Min 6 characters"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                        >
+                          {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Confirm New Password *</label>
+                      <div className="relative">
+                        <input
+                          type={showConfirmNewPassword ? "text" : "password"}
+                          value={confirmNewPassword}
+                          onChange={(e) => setConfirmNewPassword(e.target.value)}
+                          className="custom-input text-xs tracking-wide py-2 px-3 pr-10"
+                          placeholder="Re-enter password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                        >
+                          {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {passwordError && (
+                      <p className="text-accent text-[10px] tracking-wider flex items-center gap-1">
+                        <AlertCircle className="w-3 h-3" /> {passwordError}
+                      </p>
+                    )}
+
+                    {passwordSuccess && (
+                      <p className="text-green-500 text-[10px] tracking-wider flex items-center gap-1">
+                        <Check className="w-3 h-3" /> Password updated successfully!
+                      </p>
+                    )}
+
+                    <div className="flex gap-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={() => { setShowPasswordForm(false); setNewPassword(""); setConfirmNewPassword(""); setPasswordError(null); }}
+                        className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all duration-300 rounded-none"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        disabled={passwordSubmitting}
+                        className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none flex items-center justify-center gap-1.5"
+                      >
+                        {passwordSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Update"}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <p className="text-xs text-zinc-500 tracking-wider">Change your account password to keep your account secure.</p>
+                )}
               </div>
 
               {/* Addresses Box */}

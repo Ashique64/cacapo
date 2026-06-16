@@ -31,6 +31,38 @@ export default function Hero() {
     const isMobileDevice = window.innerWidth < 1024;
     setIsMobile(isMobileDevice);
 
+    const hasPreloaderRun = typeof window !== "undefined" && sessionStorage.getItem("cacapo_preloader_done") === "true";
+
+    if (hasPreloaderRun) {
+      setLoadingProgress(100);
+      setIsLoaded(true);
+      setIsPreloaderRemoved(true);
+      if (isMobileDevice) {
+        return;
+      }
+      
+      // Load desktop images silently in the background for canvas drawing on scroll
+      let loadedCount = 0;
+      const imagesArray = [];
+      const handleImageLoad = () => {
+        loadedCount++;
+        if (loadedCount === totalFrames) {
+          if (imagesArray[0]) {
+            drawImage(imagesArray[0]);
+          }
+        }
+      };
+      for (let i = 1; i <= totalFrames; i++) {
+        const img = new Image();
+        img.src = getFramePath(i);
+        img.onload = handleImageLoad;
+        img.onerror = handleImageLoad;
+        imagesArray.push(img);
+      }
+      imagesRef.current = imagesArray;
+      return;
+    }
+
     if (isMobileDevice) {
       // Skip frames load on mobile/tablet for instant speed
       setLoadingProgress(100);
@@ -44,6 +76,7 @@ export default function Hero() {
           const tl = gsap.timeline({
             onComplete: () => {
               setIsPreloaderRemoved(true);
+              sessionStorage.setItem("cacapo_preloader_done", "true");
               // Allow scroll on body
               document.body.style.overflow = "auto";
             }
@@ -69,6 +102,7 @@ export default function Hero() {
           }, "<"); // Starts at same time
         } else {
           setIsPreloaderRemoved(true);
+          sessionStorage.setItem("cacapo_preloader_done", "true");
           document.body.style.overflow = "auto";
         }
       }, 1600);
@@ -104,6 +138,7 @@ export default function Hero() {
             const tl = gsap.timeline({
               onComplete: () => {
                 setIsPreloaderRemoved(true);
+                sessionStorage.setItem("cacapo_preloader_done", "true");
                 // Allow scroll on body
                 document.body.style.overflow = "auto";
               }
