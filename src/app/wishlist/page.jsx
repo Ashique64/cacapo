@@ -97,7 +97,7 @@ export default function WishlistPage() {
         {/* Wishlist Grid */}
         {mounted && wishlistCount > 0 && (
           <div className="max-w-7xl mx-auto px-6 pb-24 select-none relative z-10">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {wishlistItems.map((product) => {
                 const displayPrice = (product.price / 100).toLocaleString("en-IN", {
                   minimumFractionDigits: 0,
@@ -116,8 +116,8 @@ export default function WishlistPage() {
                     className="group flex flex-col bg-zinc-950/40 border border-zinc-900 relative overflow-hidden transition-all duration-500 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(255,77,77,0.03)]"
                   >
                     
-                    {/* Image frame with aspect ratio 15/16 */}
-                    <div className="w-full overflow-hidden relative" style={{ aspectRatio: "15/16" }}>
+                    {/* Image frame with aspect ratio 15/16 on mobile/tablet and square on desktop */}
+                    <div className="w-full overflow-hidden relative aspect-[15/16] lg:aspect-square">
                       <Link href={`/shop/${product.slug}`} className="block w-full h-full">
                         <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50 z-2 pointer-events-none" />
                         <img 

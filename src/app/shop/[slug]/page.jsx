@@ -5,7 +5,7 @@ import Footer from "@/components/layout/Footer/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import ProductDetailsClient from "./ProductDetailsClient";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60;
 
 const MOCK_PRODUCTS = [
   {
@@ -202,4 +202,24 @@ export default async function ProductDetailsPage({ params }) {
       <Footer />
     </SmoothScroll>
   );
+}
+
+export async function generateStaticParams() {
+  try {
+    const { data: products } = await supabase
+      .from("products")
+      .select("slug")
+      .eq("status", "active");
+
+    const dbSlugs = products ? products.map(p => ({ slug: p.slug })) : [];
+    const mockSlugs = MOCK_PRODUCTS.map(p => ({ slug: p.slug }));
+    
+    const allSlugs = [...dbSlugs, ...mockSlugs];
+    const uniqueSlugs = Array.from(new Set(allSlugs.map(s => s.slug))).map(slug => ({ slug }));
+    
+    return uniqueSlugs;
+  } catch (err) {
+    console.error("Error generating static params:", err);
+    return MOCK_PRODUCTS.map(p => ({ slug: p.slug }));
+  }
 }

@@ -3,7 +3,7 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Navbar from "@/components/layout/Header/Navbar";
 import HomePage from "@/pages/HomePage";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 60; // Cache and revalidate every minute
 
 const FALLBACK_CATEGORIES = [
   {
