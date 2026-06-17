@@ -44,8 +44,54 @@ export default function AdminInventoryDesk() {
     }, 4000);
   };
 
+  const [isLive, setIsLive] = useState(false);
+
   useEffect(() => {
     fetchData();
+  }, [activeTab]);
+
+  // Real-time subscription: updates stock live when variants or products change
+  useEffect(() => {
+    if (activeTab !== "stock") return;
+
+    const channel = supabase
+      .channel("inventory-realtime")
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "product_variants" },
+        (payload) => {
+          const updated = payload.new;
+          setStockItems(prev =>
+            prev.map(item =>
+              item.type === "variant" && item.id === updated.id
+                ? { ...item, stock: updated.stock_quantity }
+                : item
+            )
+          );
+        }
+      )
+      .on(
+        "postgres_changes",
+        { event: "UPDATE", schema: "public", table: "products" },
+        (payload) => {
+          const updated = payload.new;
+          setStockItems(prev =>
+            prev.map(item =>
+              item.type === "product" && item.id === updated.id
+                ? { ...item, stock: updated.stock_quantity }
+                : item
+            )
+          );
+        }
+      )
+      .subscribe((status) => {
+        setIsLive(status === "SUBSCRIBED");
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+      setIsLive(false);
+    };
   }, [activeTab]);
 
   const fetchData = async () => {
@@ -249,13 +295,27 @@ export default function AdminInventoryDesk() {
           </h1>
         </div>
 
-        <button 
-          onClick={fetchData}
-          disabled={loading}
-          className="px-4 py-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Sync Logs
-        </button>
+        <div className="flex items-center gap-3">
+          {/* Real-time live indicator */}
+          {activeTab === "stock" && (
+            <div className={`flex items-center gap-1.5 px-3 py-1.5 border text-[9px] font-bold tracking-widest uppercase ${
+              isLive
+                ? "border-green-500/30 bg-green-500/5 text-green-400"
+                : "border-zinc-800 bg-zinc-950 text-zinc-600"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${isLive ? "bg-green-400 animate-pulse" : "bg-zinc-600"}`} />
+              {isLive ? "Live" : "Connecting…"}
+            </div>
+          )}
+
+          <button 
+            onClick={fetchData}
+            disabled={loading}
+            className="px-4 py-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Sync Logs
+          </button>
+        </div>
       </div>
 
       {/* Tab Switcher & Filters */}

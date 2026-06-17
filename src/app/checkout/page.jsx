@@ -454,7 +454,20 @@ export default function CheckoutPage() {
 
           if (itemsErr) throw itemsErr;
 
-          // 4. Insert Payment record
+          // 4. Deduct stock for each ordered item via SECURITY DEFINER function (bypasses RLS)
+          for (const item of cartItems) {
+            const qty = item.quantity || 1;
+            const variantId = item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null;
+            const productId = item.product_id && uuidRegex.test(item.product_id) ? item.product_id : null;
+
+            await supabase.rpc("deduct_stock", {
+              p_variant_id: variantId,
+              p_product_id: variantId ? null : productId,
+              p_quantity: qty
+            });
+          }
+
+          // 5. Insert Payment record
           const { error: payErr } = await supabase
             .from("payments")
             .insert({
