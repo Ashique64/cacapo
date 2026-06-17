@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings } from "lucide-react";
+import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings, TrendingUp } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
 export default function AdminSidebar() {
@@ -24,6 +24,7 @@ export default function AdminSidebar() {
 
   const navItems = [
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
+    { name: "Sales Report", path: "/admin/sales", icon: TrendingUp },
     { name: "Orders Desk", path: "/admin/orders", icon: ShoppingBag },
     { name: "Catalog CRUD", path: "/admin/products", icon: Database },
     { name: "Coupons Desk", path: "/admin/coupons", icon: Ticket },
