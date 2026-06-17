@@ -17,7 +17,8 @@ import {
   ToggleRight,
   RefreshCw,
   Percent,
-  Download
+  Download,
+  Tag
 } from "lucide-react";
 
 export default function SalesReportDesk() {
@@ -29,6 +30,7 @@ export default function SalesReportDesk() {
   const [fromDate, setFromDate] = useState("");
   const [toDate, setToDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("paid"); // default to paid to show real revenue
+  const [productFilter, setProductFilter] = useState("all");
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +38,7 @@ export default function SalesReportDesk() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [fromDate, toDate, statusFilter]);
+  }, [fromDate, toDate, statusFilter, productFilter]);
 
   // Calculation Toggles
   const [deductCoupons, setDeductCoupons] = useState(true);
@@ -62,7 +64,13 @@ export default function SalesReportDesk() {
           discount,
           payment_status,
           order_status,
-          shipping_address
+          shipping_address,
+          order_items (
+            id,
+            quantity,
+            price,
+            product:products (id, name, slug)
+          )
         `)
         .order("created_at", { ascending: false });
 
@@ -76,8 +84,8 @@ export default function SalesReportDesk() {
     }
   };
 
-  // Filter Data
-  const filteredOrders = orders.filter(order => {
+  // Filter Data by Date & Status (for computing top products dynamically)
+  const dateStatusFilteredOrders = orders.filter(order => {
     let matchesDate = true;
     const orderDate = new Date(order.created_at);
     
@@ -85,7 +93,6 @@ export default function SalesReportDesk() {
       matchesDate = matchesDate && orderDate >= new Date(fromDate);
     }
     if (toDate) {
-      // To date should include the end of the day
       const toDateObj = new Date(toDate);
       toDateObj.setHours(23, 59, 59, 999);
       matchesDate = matchesDate && orderDate <= toDateObj;
@@ -97,6 +104,42 @@ export default function SalesReportDesk() {
     }
 
     return matchesDate && matchesStatus;
+  });
+
+  // Calculate Top Selling Products list dynamically
+  const productSalesMap = {};
+  dateStatusFilteredOrders.forEach(order => {
+    if (order.order_items) {
+      order.order_items.forEach(item => {
+        if (item.product) {
+          const prodId = item.product.id;
+          if (!productSalesMap[prodId]) {
+            productSalesMap[prodId] = {
+              id: prodId,
+              name: item.product.name,
+              slug: item.product.slug,
+              quantity: 0,
+              revenue: 0
+            };
+          }
+          productSalesMap[prodId].quantity += item.quantity;
+          productSalesMap[prodId].revenue += item.price * item.quantity;
+        }
+      });
+    }
+  });
+
+  const topProductsList = Object.values(productSalesMap)
+    .sort((a, b) => b.quantity - a.quantity)
+    .slice(0, 10); // Show top 10 products
+
+  // Filter Data (Final, applying product filter)
+  const filteredOrders = dateStatusFilteredOrders.filter(order => {
+    let matchesProduct = true;
+    if (productFilter !== "all") {
+      matchesProduct = order.order_items && order.order_items.some(item => item.product?.id === productFilter);
+    }
+    return matchesProduct;
   });
 
   // Calculate Revenue
@@ -300,8 +343,8 @@ export default function SalesReportDesk() {
         
         {/* Left: Standard Filters */}
         <div className="flex-1 space-y-4">
-          <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-2">Filter by Date & Status</h4>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-2">Filter by Date, Status & Product</h4>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-accent transition-all">
               <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-4 absolute pointer-events-none">From:</span>
               <input
@@ -334,6 +377,22 @@ export default function SalesReportDesk() {
               </select>
               <Filter className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
+
+            <div className="relative">
+              <select
+                value={productFilter}
+                onChange={(e) => setProductFilter(e.target.value)}
+                className="w-full bg-zinc-950 border border-zinc-800 focus:border-accent text-white px-4 py-2.5 pl-10 text-xs tracking-wider outline-none transition-all rounded-none appearance-none"
+              >
+                <option value="all">All Products</option>
+                {topProductsList.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+              <Tag className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            </div>
           </div>
         </div>
 
@@ -365,6 +424,46 @@ export default function SalesReportDesk() {
         </div>
 
       </div>
+
+      {/* Top Performing Products Interactive Bar */}
+      {topProductsList.length > 0 && (
+        <div className="p-6 border border-zinc-900 bg-zinc-950/20 space-y-4">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="w-4 h-4 text-accent" />
+            <h3 className="text-xs font-bold tracking-[0.25em] uppercase text-zinc-400">
+              Top Performing Products (Click to Filter Ledger)
+            </h3>
+          </div>
+          <div className="flex flex-wrap gap-2.5">
+            <button
+              onClick={() => setProductFilter("all")}
+              className={`px-3 py-1.5 border text-[10px] font-bold tracking-widest transition-all uppercase cursor-pointer ${
+                productFilter === "all"
+                  ? "border-accent bg-accent text-white"
+                  : "border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:text-white hover:border-zinc-600"
+              }`}
+            >
+              All Items
+            </button>
+            {topProductsList.map((p) => {
+              const isSelected = productFilter === p.id;
+              return (
+                <button
+                  key={p.id}
+                  onClick={() => setProductFilter(p.id)}
+                  className={`px-3 py-1.5 border text-[10px] font-bold tracking-widest transition-all uppercase cursor-pointer ${
+                    isSelected
+                      ? "border-accent bg-accent/20 text-accent font-extrabold"
+                      : "border-zinc-800 bg-zinc-950/60 text-zinc-400 hover:text-white hover:border-zinc-600"
+                  }`}
+                >
+                  {p.name} ({p.quantity} sold)
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Grid Content */}
       {loading ? (
