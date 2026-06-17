@@ -91,9 +91,44 @@ export default function CheckoutPage() {
   const [placedOrder, setPlacedOrder] = useState(null);
   const [checkoutError, setCheckoutError] = useState(null);
 
+  // Store Settings state
+  const [storeSettings, setStoreSettings] = useState({
+    upi_id: "pay@cacapoclothing",
+    gst_number: "",
+    upi_qr_url: "",
+    support_phone: "+91 98765 43210"
+  });
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch settings dynamically from database
+  useEffect(() => {
+    if (mounted) {
+      const fetchStoreSettings = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("store_settings")
+            .select("*");
+          if (error) throw error;
+          if (data) {
+            const settingsMap = {};
+            data.forEach((item) => {
+              settingsMap[item.key] = item.value;
+            });
+            setStoreSettings((prev) => ({
+              ...prev,
+              ...settingsMap
+            }));
+          }
+        } catch (err) {
+          console.error("Failed to fetch store settings in checkout:", err);
+        }
+      };
+      fetchStoreSettings();
+    }
+  }, [mounted]);
 
   // Fetch addresses when mounted & logged in
   useEffect(() => {
@@ -194,11 +229,11 @@ export default function CheckoutPage() {
     }
   }
 
-  // 18% GST (Tax)
+  // 18% GST (Tax) - Inclusive in Subtotal
   const taxableAmount = Math.max(0, subtotal - discount);
-  const tax = Math.round(taxableAmount * 0.18);
+  const tax = Math.round(taxableAmount * (18 / 118));
 
-  const totalAmount = taxableAmount + shippingCharge + tax;
+  const totalAmount = taxableAmount + shippingCharge;
 
   const formatPrice = (cents) => {
     return new Intl.NumberFormat("en-IN", {
@@ -299,7 +334,7 @@ export default function CheckoutPage() {
   };
 
   const handleCopyUpi = () => {
-    navigator.clipboard.writeText("pay@cacapo");
+    navigator.clipboard.writeText(storeSettings.upi_id || "pay@cacapo");
     setCopiedUpi(true);
     setTimeout(() => setCopiedUpi(false), 2000);
   };
@@ -348,7 +383,7 @@ export default function CheckoutPage() {
 
     try {
       const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-      const hasMockItems = cartItems.some(item => !uuidRegex.test(item.product_id) || (item.variant_id && !uuidRegex.test(item.variant_id)));
+      const hasMockItems = cartItems.some(item => !uuidRegex.test(item.product_id));
 
       if (hasMockItems) {
         // Simulate order placement for demo/mock products
@@ -408,7 +443,7 @@ export default function CheckoutPage() {
           const itemsToInsert = cartItems.map(item => ({
             order_id: generatedOrderId,
             product_id: item.product_id,
-            variant_id: item.variant_id || null,
+            variant_id: item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null,
             quantity: item.quantity,
             price: item.variant?.price || item.product?.price || 0
           }));
@@ -448,7 +483,7 @@ export default function CheckoutPage() {
               payment_reference: paymentMethod === "upi" ? utrCode : null,
               items: cartItems.map(i => ({
                 product_id: i.product_id,
-                variant_id: i.variant_id || null,
+                variant_id: i.variant_id && uuidRegex.test(i.variant_id) ? i.variant_id : null,
                 quantity: i.quantity,
                 price: i.variant?.price || i.product?.price || 0
               }))
@@ -891,42 +926,50 @@ export default function CheckoutPage() {
                             <div className="relative w-44 h-44 border border-zinc-800 p-2 bg-white flex items-center justify-center select-none">
                               {/* SCAN LINE ANIMATION */}
                               <div className="animate-scan"></div>
-                              <svg className="w-40 h-40" viewBox="0 0 100 100" fill="black">
-                                {/* Simulated luxury high-end QR matrix */}
-                                <rect x="0" y="0" width="25" height="25" />
-                                <rect x="5" y="5" width="15" height="15" fill="white" />
-                                <rect x="9" y="9" width="7" height="7" />
-                                
-                                <rect x="75" y="0" width="25" height="25" />
-                                <rect x="80" y="5" width="15" height="15" fill="white" />
-                                <rect x="84" y="9" width="7" height="7" />
+                              {storeSettings.upi_qr_url ? (
+                                <img
+                                  src={storeSettings.upi_qr_url}
+                                  alt="UPI Payment QR Code"
+                                  className="w-40 h-40 object-contain select-none"
+                                />
+                              ) : (
+                                <svg className="w-40 h-40" viewBox="0 0 100 100" fill="black">
+                                  {/* Simulated luxury high-end QR matrix */}
+                                  <rect x="0" y="0" width="25" height="25" />
+                                  <rect x="5" y="5" width="15" height="15" fill="white" />
+                                  <rect x="9" y="9" width="7" height="7" />
+                                  
+                                  <rect x="75" y="0" width="25" height="25" />
+                                  <rect x="80" y="5" width="15" height="15" fill="white" />
+                                  <rect x="84" y="9" width="7" height="7" />
 
-                                <rect x="0" y="75" width="25" height="25" />
-                                <rect x="5" y="80" width="15" height="15" fill="white" />
-                                <rect x="9" y="84" width="7" height="7" />
+                                  <rect x="0" y="75" width="25" height="25" />
+                                  <rect x="5" y="80" width="15" height="15" fill="white" />
+                                  <rect x="9" y="84" width="7" height="7" />
 
-                                <rect x="35" y="5" width="5" height="15" />
-                                <rect x="50" y="10" width="10" height="5" />
-                                <rect x="65" y="5" width="5" height="10" />
+                                  <rect x="35" y="5" width="5" height="15" />
+                                  <rect x="50" y="10" width="10" height="5" />
+                                  <rect x="65" y="5" width="5" height="10" />
 
-                                <rect x="30" y="30" width="15" height="5" />
-                                <rect x="35" y="45" width="20" height="10" />
-                                <rect x="60" y="30" width="10" height="15" />
-                                
-                                <rect x="5" y="35" width="10" height="10" />
-                                <rect x="20" y="45" width="5" height="15" />
+                                  <rect x="30" y="30" width="15" height="5" />
+                                  <rect x="35" y="45" width="20" height="10" />
+                                  <rect x="60" y="30" width="10" height="15" />
+                                  
+                                  <rect x="5" y="35" width="10" height="10" />
+                                  <rect x="20" y="45" width="5" height="15" />
 
-                                <rect x="75" y="35" width="15" height="5" />
-                                <rect x="85" y="45" width="10" height="15" />
+                                  <rect x="75" y="35" width="15" height="5" />
+                                  <rect x="85" y="45" width="10" height="15" />
 
-                                <rect x="35" y="65" width="15" height="15" />
-                                <rect x="30" y="85" width="10" height="5" />
-                                <rect x="50" y="80" width="15" height="10" />
+                                  <rect x="35" y="65" width="15" height="15" />
+                                  <rect x="30" y="85" width="10" height="5" />
+                                  <rect x="50" y="80" width="15" height="10" />
 
-                                <rect x="70" y="70" width="10" height="5" />
-                                <rect x="85" y="75" width="5" height="10" />
-                                <rect x="75" y="90" width="15" height="5" />
-                              </svg>
+                                  <rect x="70" y="70" width="10" height="5" />
+                                  <rect x="85" y="75" width="5" height="10" />
+                                  <rect x="75" y="90" width="15" height="5" />
+                                </svg>
+                              )}
                             </div>
 
                             {/* Payment details text */}
@@ -942,7 +985,7 @@ export default function CheckoutPage() {
                                 <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">Cacapo Official UPI ID</p>
                                 <div className="flex items-center justify-center md:justify-start gap-2">
                                   <code className="bg-zinc-900 border border-zinc-800 text-white font-mono px-3 py-1.5 text-xs tracking-wider">
-                                    pay@cacapo
+                                    {storeSettings.upi_id}
                                   </code>
                                   <button
                                     type="button"
@@ -1145,13 +1188,18 @@ export default function CheckoutPage() {
                         </span>
                       </div>
 
-                      <div className="flex justify-between text-zinc-400">
-                        <span className="tracking-wider">Estimated GST (18%)</span>
-                        <span className="font-semibold">{formatPrice(tax)}</span>
-                      </div>
-
-                      <div className="flex justify-between text-white border-t border-zinc-900 pt-3 text-sm font-bold">
-                        <span className="tracking-widest uppercase">Total Due</span>
+                      <div className="flex justify-between text-white border-t border-zinc-900 pt-3 text-sm font-bold items-start">
+                        <div className="flex flex-col">
+                          <span className="tracking-widest uppercase">Total Due</span>
+                          <span className="text-[10px] text-zinc-500 tracking-wider font-normal mt-0.5">
+                            (Inclusive of 18% GST)
+                          </span>
+                          {storeSettings.gst_number && (
+                            <span className="text-[9px] text-zinc-600 font-mono tracking-widest uppercase mt-1">
+                              GSTIN: {storeSettings.gst_number}
+                            </span>
+                          )}
+                        </div>
                         <span className="text-base tracking-wider">{formatPrice(totalAmount)}</span>
                       </div>
                     </div>

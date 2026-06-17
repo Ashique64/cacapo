@@ -254,7 +254,7 @@ export const useCartStore = create(
           return;
         }
 
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
         const isLocalItem = !uuidRegex.test(itemId) || itemId.toString().startsWith("temp-");
 
         if (userId && !isLocalItem) {

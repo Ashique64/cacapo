@@ -16,7 +16,8 @@ import {
   ChevronDown, 
   ChevronUp,
   Loader2,
-  RefreshCw
+  RefreshCw,
+  X
 } from "lucide-react";
 
 export default function AdminOrdersDesk() {
@@ -32,11 +33,42 @@ export default function AdminOrdersDesk() {
   // Shipment form states (scoped by order ID)
   const [shippingCarrier, setShippingCarrier] = useState({});
   const [trackingNumber, setTrackingNumber] = useState({});
+  const [gstNumber, setGstNumber] = useState("");
   const [actionLoading, setActionLoading] = useState({});
+
+  // Toast State
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4000);
+  };
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
 
   useEffect(() => {
     fetchOrders();
+    fetchGst();
   }, []);
+
+  const fetchGst = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("store_settings")
+        .select("value")
+        .eq("key", "gst_number")
+        .maybeSingle();
+      if (error) throw error;
+      if (data && data.value) {
+        setGstNumber(data.value);
+      }
+    } catch (err) {
+      console.error("Failed to load GST number for admin invoice:", err);
+    }
+  };
 
   const fetchOrders = async () => {
     setLoading(true);
@@ -84,40 +116,58 @@ export default function AdminOrdersDesk() {
     }
   };
 
-  const handleVerifyPayment = async (orderId) => {
-    if (!confirm("Confirm payment verification? This updates payment status to PAID and order to PROCESSING.")) return;
-    
-    setActionLoading(prev => ({ ...prev, [orderId]: true }));
-    try {
-      // 1. Update orders table
-      const { error: orderError } = await supabase
-        .from("orders")
-        .update({ 
-          payment_status: "paid", 
-          order_status: "processing" 
-        })
-        .eq("id", orderId);
+  const handleVerifyPayment = (orderId) => {
+    const targetOrder = orders.find(o => o.id === orderId);
+    const currentStatus = targetOrder?.order_status || "pending";
+    const isCOD = targetOrder?.payment_method === "cod";
 
-      if (orderError) throw orderError;
+    const confirmationMsg = isCOD
+      ? "Confirm payment collection for this COD order? This will mark the order as PAID."
+      : "Confirm payment verification? This updates payment status to PAID and order to PROCESSING.";
 
-      // 2. Update payments table if it exists
-      const { error: paymentError } = await supabase
-        .from("payments")
-        .update({ status: "approved" })
-        .eq("order_id", orderId);
+    setConfirmModal({
+      title: "Verify Payment",
+      message: confirmationMsg,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setActionLoading(prev => ({ ...prev, [orderId]: true }));
+        try {
+          const nextOrderStatus = (currentStatus === "pending" || currentStatus === "pending_payment")
+            ? "processing"
+            : currentStatus;
 
-      if (paymentError) {
-        console.warn("Could not update corresponding payments row:", paymentError);
+          // 1. Update orders table
+          const { error: orderError } = await supabase
+            .from("orders")
+            .update({ 
+              payment_status: "paid", 
+              order_status: nextOrderStatus 
+            })
+            .eq("id", orderId);
+
+          if (orderError) throw orderError;
+
+          // 2. Update payments table if it exists
+          const { error: paymentError } = await supabase
+            .from("payments")
+            .update({ status: "approved" })
+            .eq("order_id", orderId);
+
+          if (paymentError) {
+            console.warn("Could not update corresponding payments row:", paymentError);
+          }
+
+          // Refresh orders desk
+          await fetchOrders();
+          showToast("Order payment successfully approved.", "success");
+
+        } catch (err) {
+          showToast("Failed to verify payment: " + err.message, "error");
+        } finally {
+          setActionLoading(prev => ({ ...prev, [orderId]: false }));
+        }
       }
-
-      // Refresh orders desk
-      await fetchOrders();
-
-    } catch (err) {
-      alert("Failed to verify payment: " + err.message);
-    } finally {
-      setActionLoading(prev => ({ ...prev, [orderId]: false }));
-    }
+    });
   };
 
   const handleUpdateShipment = async (e, orderId, nextStatus) => {
@@ -126,7 +176,7 @@ export default function AdminOrdersDesk() {
     const tracking = trackingNumber[orderId]?.trim();
 
     if (!carrier || !tracking) {
-      alert("Please enter both Carrier name and Tracking reference.");
+      showToast("Please enter both Carrier name and Tracking reference.", "error");
       return;
     }
 
@@ -143,11 +193,11 @@ export default function AdminOrdersDesk() {
 
       if (shipError) throw shipError;
       
-      alert(`Order successfully marked as ${nextStatus.toUpperCase()}`);
+      showToast(`Order successfully marked as ${nextStatus.toUpperCase()}`, "success");
       await fetchOrders();
 
     } catch (err) {
-      alert("Failed to update shipment details: " + err.message);
+      showToast("Failed to update shipment details: " + err.message, "error");
     } finally {
       setActionLoading(prev => ({ ...prev, [orderId]: false }));
     }
@@ -393,12 +443,18 @@ export default function AdminOrdersDesk() {
                             <span>Shipping Charge</span>
                             <span>{formatPrice(order.shipping_charge)}</span>
                           </div>
-                          <div className="flex justify-between">
-                            <span>GST / Taxes</span>
-                            <span>{formatPrice(order.tax)}</span>
-                          </div>
-                          <div className="flex justify-between text-white font-extrabold border-t border-zinc-900 pt-2 text-[12px]">
-                            <span>Final Total Amount</span>
+                          <div className="flex justify-between text-white font-extrabold border-t border-zinc-900 pt-2 text-[12px] items-start">
+                            <div className="flex flex-col">
+                              <span>Final Total Amount</span>
+                              <span className="text-[9px] text-zinc-500 tracking-wider font-normal mt-0.5 font-sans normal-case">
+                                (Inclusive of 18% GST)
+                              </span>
+                              {gstNumber && (
+                                <span className="text-[9px] text-zinc-600 font-mono tracking-widest uppercase mt-1">
+                                  GSTIN: {gstNumber}
+                                </span>
+                              )}
+                            </div>
                             <span className="text-accent">{formatPrice(order.total_amount)}</span>
                           </div>
                         </div>
@@ -494,7 +550,7 @@ export default function AdminOrdersDesk() {
                         )}
 
                         {/* Dispatch Control Form */}
-                        {order.payment_status === "paid" && (
+                        {(order.payment_status === "paid" || order.payment_method === "cod") && (
                           <form 
                             onSubmit={(e) => handleUpdateShipment(e, order.id, "shipped")}
                             className="border border-zinc-900 bg-zinc-950 p-4 space-y-4"
@@ -577,6 +633,61 @@ export default function AdminOrdersDesk() {
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Custom Confirm Modal Overlay */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative animate-fadeIn duration-300">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
+                {confirmModal.title || "Confirm Action"}
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans">
+                {confirmModal.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Luxury Toast Notifications */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
+          toast.type === "success" 
+            ? "border-green-500/30 text-green-400" 
+            : "border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span className="text-[10px] font-bold tracking-widest uppercase font-mono">{toast.message}</span>
+          <button 
+            type="button"
+            onClick={() => setToast(null)} 
+            className="ml-3 text-zinc-500 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 

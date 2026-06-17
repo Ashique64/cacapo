@@ -70,9 +70,34 @@ export default function AccountPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  const [gstNumber, setGstNumber] = useState("");
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Fetch GST number from settings
+  useEffect(() => {
+    if (mounted) {
+      const fetchGst = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("store_settings")
+            .select("value")
+            .eq("key", "gst_number")
+            .maybeSingle();
+          if (error) throw error;
+          if (data && data.value) {
+            setGstNumber(data.value);
+          }
+        } catch (err) {
+          console.error("Failed to load GST number for account invoice:", err);
+        }
+      };
+      fetchGst();
+    }
+  }, [mounted]);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -235,20 +260,26 @@ export default function AccountPage() {
     }
   };
 
-  const handleDeleteAddress = async (id) => {
-    if (!confirm("Are you sure you want to delete this address?")) return;
-    try {
-      const { error } = await supabase
-        .from("addresses")
-        .delete()
-        .eq("id", id)
-        .eq("user_id", user.id);
+  const handleDeleteAddress = (id) => {
+    setConfirmModal({
+      title: "Delete Address",
+      message: "Are you sure you want to delete this address?",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const { error } = await supabase
+            .from("addresses")
+            .delete()
+            .eq("id", id)
+            .eq("user_id", user.id);
 
-      if (error) throw error;
-      fetchAddresses();
-    } catch (err) {
-      console.error("Failed to delete address:", err);
-    }
+          if (error) throw error;
+          fetchAddresses();
+        } catch (err) {
+          console.error("Failed to delete address:", err);
+        }
+      }
+    });
   };
 
   const handleLogout = async () => {
@@ -698,6 +729,20 @@ export default function AccountPage() {
                         day: "numeric"
                       });
 
+                      const orderDate = new Date(order.created_at);
+                      // Expected delivery window: 4–7 days after order placement
+                      const expectedFrom = new Date(orderDate.getTime() + 4 * 24 * 60 * 60 * 1000);
+                      const expectedTo = new Date(orderDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+                      const expectedFromFormatted = expectedFrom.toLocaleDateString("en-IN", {
+                        month: "short",
+                        day: "numeric"
+                      });
+                      const expectedToFormatted = expectedTo.toLocaleDateString("en-IN", {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric"
+                      });
+
                       return (
                         <div key={order.id} className="border border-zinc-900 bg-black overflow-hidden transition-all duration-300">
                           
@@ -710,14 +755,39 @@ export default function AccountPage() {
                               <div className="flex items-center gap-2.5">
                                 <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                                  order.payment_method === "cod" 
+                                  order.order_status === "delivered"
                                     ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                    : "bg-accent/10 border border-accent/20 text-accent"
+                                    : order.order_status === "shipped"
+                                    ? "bg-orange-500/10 border border-orange-500/20 text-orange-400"
+                                    : order.order_status === "processing"
+                                    ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
+                                    : order.order_status === "cancelled"
+                                    ? "bg-red-500/10 border border-red-500/20 text-red-500"
+                                    : order.payment_method === "cod"
+                                    ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                                    : "bg-amber-500/10 border border-amber-500/20 text-amber-400"
                                 }`}>
-                                  {order.payment_method === "cod" ? "ORDER CONFIRMED" : "AWAITING VERIFICATION"}
+                                  {order.order_status === "delivered"
+                                    ? "DELIVERED"
+                                    : order.order_status === "shipped"
+                                    ? "SHIPPED"
+                                    : order.order_status === "processing"
+                                    ? "PROCESSING"
+                                    : order.order_status === "cancelled"
+                                    ? "CANCELLED"
+                                    : order.payment_method === "cod"
+                                    ? "ORDER CONFIRMED"
+                                    : "AWAITING VERIFICATION"}
                                 </span>
                               </div>
-                              <p className="text-zinc-500 text-[10px]">{dateFormatted}</p>
+                              <p className="text-zinc-500 text-[10px]">
+                                {dateFormatted}
+                                {order.order_status !== "delivered" && order.order_status !== "cancelled" && (
+                                  <span className="text-zinc-400 ml-3 font-semibold">
+                                    • Expected {expectedFromFormatted} – {expectedToFormatted}
+                                  </span>
+                                )}
+                              </p>
                             </div>
 
                             <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
@@ -782,6 +852,18 @@ export default function AccountPage() {
                                     {order.shipping_address?.city}, {order.shipping_address?.state} - {order.shipping_address?.pincode}
                                   </p>
                                   <p className="text-zinc-500 text-[10px] font-bold mt-1">Phone: {order.shipping_address?.phone}</p>
+
+                                  {(order.order_status === "shipped" || order.order_status === "delivered") && order.shipping_carrier && (
+                                    <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 space-y-1">
+                                      <h5 className="text-accent text-[8px] font-bold uppercase tracking-widest">Shipment Details</h5>
+                                      <p className="text-white text-[10px] font-bold uppercase">
+                                        Carrier: {order.shipping_carrier}
+                                      </p>
+                                      <p className="text-zinc-400 text-[10px] font-mono">
+                                        Tracking Reference: {order.tracking_number}
+                                      </p>
+                                    </div>
+                                  )}
                                 </div>
 
                                 <div className="space-y-4">
@@ -802,18 +884,18 @@ export default function AccountPage() {
                                         <span>Shipping</span>
                                         <span>{order.shipping_charge === 0 ? "FREE" : formatPrice(order.shipping_charge)}</span>
                                       </div>
-                                      <div className="flex justify-between">
-                                        <span>Taxes (GST)</span>
-                                        <span>{formatPrice(order.tax)}</span>
-                                      </div>
-                                      <div className="flex justify-between text-white font-bold border-t border-zinc-900 pt-1.5 mt-1">
-                                        <span>Total Paid</span>
+                                      <div className="flex justify-between text-white font-bold border-t border-zinc-900 pt-1.5 mt-1 items-start">
+                                        <div className="flex flex-col">
+                                          <span>Total Paid</span>
+                                          <span className="text-[9px] text-zinc-500 tracking-wider font-normal mt-0.5">
+                                            (Inclusive of 18% GST)
+                                          </span>
+                                        </div>
                                         <span>{formatPrice(order.total_amount)}</span>
                                       </div>
                                     </div>
                                   </div>
-                                  
-                                  <div>
+                                                                    <div>
                                     <h4 className="text-zinc-500 font-bold text-[9px] uppercase tracking-widest mb-1">Transaction Details</h4>
                                     <p className="text-[11px] text-white font-medium uppercase">
                                       Method: {order.payment_method === "upi" ? "UPI Instant" : "Cash on Delivery"}
@@ -825,6 +907,11 @@ export default function AccountPage() {
                                           UTR/Ref Verification Pending
                                         </p>
                                       </div>
+                                    )}
+                                    {gstNumber && (
+                                      <p className="text-[10px] text-zinc-500 font-mono tracking-wider mt-2 uppercase">
+                                        GSTIN: {gstNumber}
+                                      </p>
                                     )}
                                   </div>
                                 </div>
@@ -846,6 +933,38 @@ export default function AccountPage() {
         </div>
       </div>
       
+      {/* Custom Confirm Modal Overlay */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative animate-fadeIn duration-300">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
+                {confirmModal.title || "Confirm Action"}
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans">
+                {confirmModal.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </SmoothScroll>
   );

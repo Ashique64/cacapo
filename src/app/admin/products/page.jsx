@@ -15,7 +15,8 @@ import {
   TrendingUp,
   Tag,
   FolderOpen,
-  Sparkles
+  Sparkles,
+  CheckCircle
 } from "lucide-react";
 
 export default function AdminCatalogDesk() {
@@ -32,6 +33,19 @@ export default function AdminCatalogDesk() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  // Toast State
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4000);
+  };
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
 
   // Form states - Products
   const [editingProductId, setEditingProductId] = useState(null);
@@ -136,7 +150,7 @@ export default function AdminCatalogDesk() {
     if (!file) return;
 
     if (file.size > 5 * 1024 * 1024) {
-      alert("Image size exceeds 5MB limit.");
+      showToast("Image size exceeds 5MB limit.", "error");
       return;
     }
 
@@ -171,7 +185,7 @@ export default function AdminCatalogDesk() {
 
     } catch (err) {
       console.error("Image upload failed:", err);
-      alert(err.message || "Failed to upload image. Make sure storage bucket 'categories' is created and set to public.");
+      showToast(err.message || "Failed to upload image.", "error");
     } finally {
       setUploading(false);
     }
@@ -201,7 +215,7 @@ export default function AdminCatalogDesk() {
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
         if (file.size > 5 * 1024 * 1024) {
-          alert(`Image "${file.name}" exceeds 5MB limit and will be skipped.`);
+          showToast(`Image "${file.name}" exceeds 5MB limit and will be skipped.`, "error");
           continue;
         }
 
@@ -232,7 +246,7 @@ export default function AdminCatalogDesk() {
       setProductImages(uploadedUrls);
     } catch (err) {
       console.error("Product image upload failed:", err);
-      alert(err.message || "Failed to upload image. Make sure storage bucket 'products' is created and set to public.");
+      showToast(err.message || "Failed to upload image.", "error");
     } finally {
       setUploadingProductImage(false);
     }
@@ -433,31 +447,38 @@ export default function AdminCatalogDesk() {
         if (insertVarsError) throw insertVarsError;
       }
 
-      alert("Product successfully updated.");
+      showToast("Product successfully saved.", "success");
       setShowProductModal(false);
       await fetchData();
 
     } catch (err) {
-      alert("Failed to save product: " + err.message);
+      showToast("Failed to save product: " + err.message, "error");
     } finally {
       setSubmitting(false);
     }
   };
 
   // Delete Product
-  const handleDeleteProduct = async (id) => {
-    if (!confirm("Are you sure you want to delete this product? All related images and variants will be deleted automatically.")) return;
-    try {
-      const { error: delErr } = await supabase
-        .from("products")
-        .delete()
-        .eq("id", id);
+  const handleDeleteProduct = (id) => {
+    setConfirmModal({
+      title: "Delete Product",
+      message: "Are you sure you want to delete this product? All related images and variants will be deleted automatically.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const { error: delErr } = await supabase
+            .from("products")
+            .delete()
+            .eq("id", id);
 
-      if (delErr) throw delErr;
-      await fetchData();
-    } catch (err) {
-      alert("Failed to delete product: " + err.message);
-    }
+          if (delErr) throw delErr;
+          showToast("Product successfully deleted.", "success");
+          await fetchData();
+        } catch (err) {
+          showToast("Failed to delete product: " + err.message, "error");
+        }
+      }
+    });
   };
 
   // Open category modal for Add
@@ -518,31 +539,38 @@ export default function AdminCatalogDesk() {
         if (insertErr) throw insertErr;
       }
 
-      alert("Category successfully updated.");
+      showToast("Category successfully saved.", "success");
       setShowCategoryModal(false);
       await fetchData();
 
     } catch (err) {
-      alert("Failed to save category: " + err.message);
+      showToast("Failed to save category: " + err.message, "error");
     } finally {
       setSubmitting(false);
     }
   };
 
   // Delete Category
-  const handleDeleteCategory = async (id) => {
-    if (!confirm("Are you sure you want to delete this category? Products linked to this category will have category set to null.")) return;
-    try {
-      const { error: delErr } = await supabase
-        .from("categories")
-        .delete()
-        .eq("id", id);
+  const handleDeleteCategory = (id) => {
+    setConfirmModal({
+      title: "Delete Category",
+      message: "Are you sure you want to delete this category? Products linked to this category will have category set to null.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const { error: delErr } = await supabase
+            .from("categories")
+            .delete()
+            .eq("id", id);
 
-      if (delErr) throw delErr;
-      await fetchData();
-    } catch (err) {
-      alert("Failed to delete category: " + err.message);
-    }
+          if (delErr) throw delErr;
+          showToast("Category successfully deleted.", "success");
+          await fetchData();
+        } catch (err) {
+          showToast("Failed to delete category: " + err.message, "error");
+        }
+      }
+    });
   };
 
   const formatPrice = (cents) => {
@@ -678,9 +706,17 @@ export default function AdminCatalogDesk() {
                       <td className="p-4 font-bold text-white uppercase">{prod.name}</td>
                       <td className="p-4 text-right font-bold text-accent">{formatPrice(prod.price)}</td>
                       <td className="p-4 text-center font-semibold">
-                        <span className={prod.stock_quantity === 0 ? "text-red-500" : ""}>
-                          {prod.stock_quantity}
-                        </span>
+                        {(() => {
+                          const hasVariants = prod.product_variants && prod.product_variants.length > 0;
+                          const effectiveStock = hasVariants
+                            ? prod.product_variants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)
+                            : prod.stock_quantity;
+                          return (
+                            <span className={effectiveStock === 0 ? "text-red-500" : ""}>
+                              {effectiveStock}
+                            </span>
+                          );
+                        })()}
                       </td>
                       <td className="p-4 text-zinc-400 font-medium uppercase">{catName}</td>
                       <td className="p-4 text-center">
@@ -987,13 +1023,13 @@ export default function AdminCatalogDesk() {
 
                   {/* Product Image Gallery Uploader */}
                   <div className="space-y-2.5">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400 flex items-center gap-1.5 border-b border-zinc-900 pb-1.5">
+                    <label className="flex text-[10px] font-bold uppercase tracking-widest text-zinc-400 items-center gap-1.5 border-b border-zinc-900 pb-1.5">
                       <ImageIcon className="w-4 h-4 text-accent" /> Product Image Gallery
                     </label>
 
                     <div className="grid grid-cols-4 gap-2">
                       {productImages.map((url, index) => (
-                        <div key={index} className="relative aspect-[3/4] bg-zinc-900 border border-zinc-800 overflow-hidden group">
+                        <div key={index} className="relative aspect-3/4 bg-zinc-900 border border-zinc-800 overflow-hidden group">
                           <img src={url} alt={`Gallery ${index}`} className="w-full h-full object-cover" />
                           
                           {/* Primary Badge */}
@@ -1026,7 +1062,7 @@ export default function AdminCatalogDesk() {
                       ))}
 
                       {/* Add Image Upload Card */}
-                      <label className="relative aspect-[3/4] border border-zinc-800 hover:border-accent bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors flex flex-col items-center justify-center cursor-pointer border-dashed group min-h-[90px]">
+                      <label className="relative aspect-3/4 border border-zinc-800 hover:border-accent bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors flex flex-col items-center justify-center cursor-pointer border-dashed group min-h-[90px]">
                         <input
                           type="file"
                           accept="image/*"
@@ -1317,6 +1353,61 @@ export default function AdminCatalogDesk() {
               </div>
 
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Luxury Toast Notifications */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
+          toast.type === "success" 
+            ? "border-green-500/30 text-green-400" 
+            : "border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle className="w-4 h-4 text-green-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span className="text-[10px] font-bold tracking-widest uppercase font-mono">{toast.message}</span>
+          <button 
+            type="button"
+            onClick={() => setToast(null)} 
+            className="ml-3 text-zinc-500 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
+      {/* Custom Confirm Modal Overlay */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative animate-fadeIn duration-300">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
+                {confirmModal.title || "Confirm Action"}
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans">
+                {confirmModal.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
+              >
+                Confirm
+              </button>
+            </div>
           </div>
         </div>
       )}

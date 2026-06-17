@@ -1,0 +1,366 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { supabase } from "@/lib/supabase";
+import {
+  Settings,
+  Save,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Building,
+  CreditCard,
+  Mail,
+  Phone,
+  Store,
+  Upload,
+  Trash2
+} from "lucide-react";
+
+export default function AdminSettingsDesk() {
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [uploadingQr, setUploadingQr] = useState(false);
+  const [error, setError] = useState(null);
+  const [success, setSuccess] = useState(false);
+
+  // Form State with hardcoded fallbacks
+  const [form, setForm] = useState({
+    store_name: "CACAPO",
+    gst_number: "",
+    upi_id: "pay@cacapo",
+    upi_qr_url: "",
+    support_email: "care@cacapo.com",
+    support_phone: "+91 98765 43210"
+  });
+
+  useEffect(() => {
+    fetchSettings();
+  }, []);
+
+  const fetchSettings = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const { data, error: dbError } = await supabase
+        .from("store_settings")
+        .select("*");
+
+      if (dbError) throw dbError;
+
+      if (data && data.length > 0) {
+        const settingsMap = {};
+        data.forEach((item) => {
+          settingsMap[item.key] = item.value;
+        });
+        setForm((prev) => ({
+          ...prev,
+          ...settingsMap
+        }));
+      }
+    } catch (err) {
+      console.error("Failed to load store settings:", err);
+      // We don't block the UI since we have standard local fallbacks
+      setError("Note: Using default local configuration. Run the database migration script to enable settings editing.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleQrUpload = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingQr(true);
+    setError(null);
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `settings-qr-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+      const filePath = `${fileName}`;
+
+      const { data, error: uploadError } = await supabase.storage
+        .from("categories")
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from("categories")
+        .getPublicUrl(filePath);
+
+      setForm((prev) => ({
+        ...prev,
+        upi_qr_url: publicUrl
+      }));
+    } catch (err) {
+      console.error("QR Code upload failed:", err);
+      setError("QR Code upload failed: " + (err.message || "Ensure the 'categories' storage bucket is created and set to public in Supabase."));
+    } finally {
+      setUploadingQr(false);
+    }
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    setSuccess(false);
+
+    try {
+      const updates = Object.keys(form).map((key) => ({
+        key,
+        value: form[key],
+        updated_at: new Date().toISOString()
+      }));
+
+      const { error: dbError } = await supabase
+        .from("store_settings")
+        .upsert(updates, { onConflict: "key" });
+
+      if (dbError) throw dbError;
+      setSuccess(true);
+    } catch (err) {
+      console.error("Failed to save store settings:", err);
+      setError(err.message || "Failed to update configuration settings in Supabase.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
+      
+      {/* Header Desk */}
+      <div className="flex justify-between items-end pb-6 border-b border-zinc-900">
+        <div>
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-accent">
+            System Configuration
+          </span>
+          <h1 className="text-2xl md:text-3xl font-extrabold tracking-wider uppercase text-white mt-1">
+            Store Settings
+          </h1>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="h-64 flex flex-col items-center justify-center gap-3">
+          <Loader2 className="w-8 h-8 text-accent animate-spin" />
+          <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">
+            Retrieving settings...
+          </p>
+        </div>
+      ) : (
+        <form onSubmit={handleSubmit} className="max-w-3xl space-y-6">
+          
+          {error && (
+            <div className="bg-amber-500/10 border border-amber-500/20 px-4 py-3 text-amber-400 text-xs tracking-wider flex items-start gap-2.5">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>{error}</span>
+            </div>
+          )}
+
+          {success && (
+            <div className="bg-green-500/10 border border-green-500/20 px-4 py-3 text-green-400 text-xs tracking-wider flex items-start gap-2.5">
+              <CheckCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <span>Configuration successfully saved to database. All store calculations and displays updated.</span>
+            </div>
+          )}
+
+          {/* Settings Grid Panel */}
+          <div className="bg-zinc-950/45 border border-zinc-900/80 backdrop-blur-md p-6 md:p-8 space-y-8">
+            
+            {/* Store Identification Section */}
+            <div className="space-y-4">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                <Store className="w-4 h-4 text-accent" /> Store Profile
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Store Brand Name
+                  </label>
+                  <input
+                    type="text"
+                    name="store_name"
+                    value={form.store_name}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-black border border-zinc-800 text-xs px-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
+                    placeholder="e.g. CACAPO"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Tax Details Section */}
+            <div className="space-y-4 border-t border-zinc-900/60 pt-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                <Building className="w-4 h-4 text-accent" /> Tax Compliance (GST)
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    GSTIN / Business GST Number
+                  </label>
+                  <input
+                    type="text"
+                    name="gst_number"
+                    value={form.gst_number}
+                    onChange={handleChange}
+                    className="w-full bg-black border border-zinc-800 text-xs px-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
+                    placeholder="Enter GSTIN (e.g. 32ABCDE1234F1Z1)"
+                  />
+                  <p className="text-[10px] text-zinc-500 leading-normal font-medium tracking-wide">
+                    Leave blank if your business is not registered for GST. If set, this number will be displayed on client invoices and receipts.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payment Details Section */}
+            <div className="space-y-4 border-t border-zinc-900/60 pt-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                <CreditCard className="w-4 h-4 text-accent" /> Payment Collection
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Official UPI ID for Pre-Payments
+                  </label>
+                  <input
+                    type="text"
+                    name="upi_id"
+                    value={form.upi_id}
+                    onChange={handleChange}
+                    required
+                    className="w-full bg-black border border-zinc-800 text-xs px-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
+                    placeholder="e.g. pay@upi"
+                  />
+                  <p className="text-[10px] text-zinc-500 leading-normal font-medium tracking-wide">
+                    This UPI ID receives payments made during checkout. Standard orders prompt the customer to transfer funds to this address.
+                  </p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    UPI QR Code Image
+                  </label>
+                  
+                  <div className="flex items-start gap-4 flex-col sm:flex-row">
+                    {form.upi_qr_url ? (
+                      <div className="relative group w-28 h-28 border border-zinc-800 bg-white p-1 flex items-center justify-center shrink-0">
+                        <img src={form.upi_qr_url} alt="QR Code Preview" className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, upi_qr_url: "" }))}
+                          className="absolute -top-2 -right-2 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full transition-colors cursor-pointer border-none"
+                          title="Remove QR Code"
+                        >
+                          <Trash2 className="w-3 h-3" />
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="w-28 h-28 border border-dashed border-zinc-800 flex flex-col items-center justify-center text-zinc-500 hover:border-accent hover:text-accent transition-all cursor-pointer relative shrink-0">
+                        {uploadingQr ? (
+                          <Loader2 className="w-5 h-5 animate-spin text-accent" />
+                        ) : (
+                          <>
+                            <Upload className="w-5 h-5 mb-1.5" />
+                            <span className="text-[9px] font-bold uppercase tracking-widest text-center px-1">Upload QR</span>
+                          </>
+                        )}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleQrUpload}
+                          disabled={uploadingQr}
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                        />
+                      </div>
+                    )}
+                    <div className="text-[10px] text-zinc-500 leading-normal font-medium tracking-wide">
+                      Upload your UPI QR code image (JPEG, PNG). This will be shown to customers choosing the UPI instant transfer option during checkout.
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Support Details Section */}
+            <div className="space-y-4 border-t border-zinc-900/60 pt-6">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-accent flex items-center gap-2">
+                <Mail className="w-4 h-4 text-accent" /> Customer Support Contacts
+              </h3>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Support Phone Number
+                  </label>
+                  <div className="relative flex items-center">
+                    <Phone className="w-3.5 h-3.5 text-zinc-600 absolute left-4" />
+                    <input
+                      type="text"
+                      name="support_phone"
+                      value={form.support_phone}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-black border border-zinc-800 text-xs pl-11 pr-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
+                      placeholder="e.g. +91 98765 43210"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    Support Email Address
+                  </label>
+                  <div className="relative flex items-center">
+                    <Mail className="w-3.5 h-3.5 text-zinc-600 absolute left-4" />
+                    <input
+                      type="email"
+                      name="support_email"
+                      value={form.support_email}
+                      onChange={handleChange}
+                      required
+                      className="w-full bg-black border border-zinc-800 text-xs pl-11 pr-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
+                      placeholder="e.g. care@cacapo.com"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+
+          </div>
+
+          {/* Action button */}
+          <div className="flex justify-end pt-2">
+            <button
+              type="submit"
+              disabled={submitting}
+              className="px-8 py-3.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {submitting ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" /> Saving Changes
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4" /> Save Configuration
+                </>
+              )}
+            </button>
+          </div>
+
+        </form>
+      )}
+    </div>
+  );
+}

@@ -8,6 +8,7 @@ import {
   X,
   Loader2,
   AlertCircle,
+  CheckCircle2,
   Box,
   History,
   TrendingDown,
@@ -32,6 +33,16 @@ export default function AdminInventoryDesk() {
   const [qtyChange, setQtyChange] = useState({});
   const [adjustReason, setAdjustReason] = useState({});
   const [actionLoading, setActionLoading] = useState({});
+
+  // Toast State
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4000);
+  };
 
   useEffect(() => {
     fetchData();
@@ -136,13 +147,13 @@ export default function AdminInventoryDesk() {
     const reason = adjustReason[item.key];
 
     if (isNaN(change) || change === 0) {
-      alert("Please enter a non-zero adjustment quantity.");
+      showToast("Please enter a non-zero adjustment quantity.", "error");
       return;
     }
 
     const nextStock = item.stock + change;
     if (nextStock < 0) {
-      alert(`Invalid adjustment. Stock level cannot fall below 0. Current: ${item.stock}`);
+      showToast(`Invalid adjustment. Stock level cannot fall below 0. Current: ${item.stock}`, "error");
       return;
     }
 
@@ -199,9 +210,10 @@ export default function AdminInventoryDesk() {
       
       // Refresh current table
       await fetchData();
+      showToast("Stock adjusted successfully.", "success");
 
     } catch (err) {
-      alert("Failed to adjust stock: " + err.message);
+      showToast("Failed to adjust stock: " + err.message, "error");
     } finally {
       setActionLoading(prev => ({ ...prev, [item.key]: false }));
     }
@@ -507,6 +519,29 @@ export default function AdminInventoryDesk() {
             </table>
           </div>
         )
+      )}
+
+      {/* Premium Luxury Toast Notifications */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
+          toast.type === "success" 
+            ? "border-green-500/30 text-green-400" 
+            : "border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span className="text-[10px] font-bold tracking-widest uppercase font-mono">{toast.message}</span>
+          <button 
+            type="button"
+            onClick={() => setToast(null)} 
+            className="ml-3 text-zinc-500 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
       )}
 
     </div>

@@ -22,7 +22,9 @@ function ProductCard({ product }) {
 
   const isWishlisted = wishlistItems.some((item) => item.id === product.id);
   const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
-  const isCardOutOfStock = product.status === "draft" || product.stock_quantity <= 0;
+  const hasVariants = product.variants && product.variants.length > 0;
+  const variantHasStock = hasVariants && product.variants.some((v) => v.stock_quantity > 0);
+  const isCardOutOfStock = product.status === "draft" || (hasVariants ? !variantHasStock : product.stock_quantity <= 0);
 
   const activePrice = product.sale_price ? product.sale_price : product.price;
   const originalPrice = product.sale_price ? product.price : null;

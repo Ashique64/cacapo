@@ -10,6 +10,7 @@ import {
   X,
   Loader2,
   AlertCircle,
+  CheckCircle2,
   Ticket,
   Calendar,
   Sparkles,
@@ -40,6 +41,19 @@ export default function AdminCouponsDesk() {
     expires_at: "",
     is_active: true
   });
+
+  // Toast State
+  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4000);
+  };
+
+  // Confirm Modal State
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
 
   useEffect(() => {
     fetchCoupons();
@@ -167,12 +181,12 @@ export default function AdminCouponsDesk() {
         if (insertErr) throw insertErr;
       }
 
-      alert("Coupon successfully saved.");
+      showToast("Coupon successfully saved.", "success");
       setShowModal(false);
       await fetchCoupons();
 
     } catch (err) {
-      alert("Failed to save coupon: " + err.message);
+      showToast("Failed to save coupon: " + err.message, "error");
     } finally {
       setSubmitting(false);
     }
@@ -189,25 +203,33 @@ export default function AdminCouponsDesk() {
       
       // Update local state directly for responsive feedback
       setCoupons(prev => prev.map(c => c.id === coupon.id ? { ...c, is_active: !c.is_active } : c));
+      showToast(`Coupon status set to ${!coupon.is_active ? "ACTIVE" : "INACTIVE"}.`, "success");
 
     } catch (err) {
-      alert("Failed to toggle coupon status: " + err.message);
+      showToast("Failed to toggle coupon status: " + err.message, "error");
     }
   };
 
-  const handleDelete = async (id) => {
-    if (!confirm("Are you sure you want to delete this coupon? This action cannot be undone.")) return;
-    try {
-      const { error: delErr } = await supabase
-        .from("coupons")
-        .delete()
-        .eq("id", id);
+  const handleDelete = (id) => {
+    setConfirmModal({
+      title: "Delete Coupon",
+      message: "Are you sure you want to delete this coupon? This action cannot be undone.",
+      onConfirm: async () => {
+        setConfirmModal(null);
+        try {
+          const { error: delErr } = await supabase
+            .from("coupons")
+            .delete()
+            .eq("id", id);
 
-      if (delErr) throw delErr;
-      await fetchCoupons();
-    } catch (err) {
-      alert("Failed to delete coupon: " + err.message);
-    }
+          if (delErr) throw delErr;
+          await fetchCoupons();
+          showToast("Coupon deleted successfully.", "success");
+        } catch (err) {
+          showToast("Failed to delete coupon: " + err.message, "error");
+        }
+      }
+    });
   };
 
   const formatPrice = (cents) => {
@@ -523,14 +545,15 @@ export default function AdminCouponsDesk() {
                   />
                 </div>
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500 flex items-center gap-1">
-                    <Calendar className="w-3.5 h-3.5 text-accent" /> Expiration Date
+                  <label className="flex text-[10px] font-bold uppercase tracking-widest text-zinc-500 items-center gap-1">
+                    <Calendar className="w-3.5 h-3.5 text-white" /> Expiration Date
                   </label>
                   <input
                     type="datetime-local"
                     value={form.expires_at}
                     onChange={(e) => setForm(prev => ({ ...prev, expires_at: e.target.value }))}
                     className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none font-sans text-xs transition-all"
+                    style={{ colorScheme: "dark" }}
                   />
                 </div>
               </div>
@@ -568,6 +591,61 @@ export default function AdminCouponsDesk() {
 
             </form>
           </div>
+        </div>
+      )}
+
+      {/* Custom Confirm Modal Overlay */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4">
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative animate-fadeIn duration-300">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
+                {confirmModal.title || "Confirm Action"}
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans">
+                {confirmModal.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={confirmModal.onConfirm}
+                className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
+              >
+                Confirm
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Premium Luxury Toast Notifications */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
+          toast.type === "success" 
+            ? "border-green-500/30 text-green-400" 
+            : "border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span className="text-[10px] font-bold tracking-widest uppercase font-mono">{toast.message}</span>
+          <button 
+            type="button"
+            onClick={() => setToast(null)} 
+            className="ml-3 text-zinc-500 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
         </div>
       )}
 
