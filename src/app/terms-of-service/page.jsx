@@ -88,7 +88,7 @@ export default function TermsOfServicePage() {
                   </h3>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  • <strong className="text-white font-semibold">Pricing:</strong> Product prices are displayed in Indian Rupees (INR) and are subject to changes according to fabric and structural customization parameters.
+                  • <strong className="text-white font-semibold">Pricing:</strong> Product prices are displayed in Indian Rupees (INR) and are subject to change without prior notice.
                   <br />
                   • <strong className="text-white font-semibold">Shipping Terms:</strong> Flat delivery rates of <strong className="text-white font-semibold">₹50</strong> are applied on orders below <strong className="text-white font-semibold">₹10,000</strong>. Orders of value ₹10,000 and above qualify for free shipping.
                   <br />
@@ -101,11 +101,11 @@ export default function TermsOfServicePage() {
                 <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
                   <Info className="w-4.5 h-4.5 text-accent" />
                   <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
-                    3. Bespoke Commissions
+                    3. Imported Collections & Archive Sales
                   </h3>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed text-justify">
-                  Bespoke garments are constructed specifically to custom structural inputs provided by the client. Once tailor actions have commenced, bespoke commissions are non-refundable and exempt from standard return/exchange windows. Sizing charts must be reviewed with our digital styling assistant beforehand.
+                  All apparel, footwear, and accessories are premium readymade goods imported from global fashion capitals to Kerala, India. Final sale archive items and select intimate wear are non-refundable and exempt from standard return/exchange windows. Sizing specifications must be reviewed carefully prior to purchase.
                 </p>
               </div>
 

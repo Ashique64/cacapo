@@ -383,7 +383,7 @@ export default function Hero() {
               </span>
             </h2>
             <p className="text-sm sm:text-base md:text-base lg:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
-              Fluid drapery meets architecture-inspired tailoring. Silk, cashmere, and structural cotton engineered to contour.
+              Fluid drapery meets architecture-inspired designs. Silk, cashmere, and structural cotton curated to contour.
             </p>
           </div>
 
@@ -399,7 +399,7 @@ export default function Hero() {
               </span>
             </h2>
             <p className="text-sm sm:text-base md:text-base lg:text-base text-muted-text mt-4 md:mt-6 tracking-wide font-light">
-              Italian calf leather heels and structural metal clasps designed to contour and seal your aesthetic presence.
+              Imported Italian calf leather heels and structural metal accents curated to contour and seal your aesthetic presence.
             </p>
           </div>
 
@@ -416,7 +416,7 @@ export default function Hero() {
             </p>
             <div className="mt-6 md:mt-8 flex gap-4 justify-center md:justify-start">
               <button className="relative overflow-hidden px-8 py-3 bg-white text-black rounded-none font-semibold text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95 pointer-events-auto">
-                <span className="absolute inset-0 bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+                <span className="absolute inset-px bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
                   SHOP COLLECTION
                 </span>

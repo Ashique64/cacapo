@@ -14,16 +14,16 @@ export default function Footer() {
           {/* Atelier Studio Details Column */}
           <div className="col-span-2 md:col-span-6 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">
-              THE ATELIER
+              THE IMPORT HOUSE
             </span>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 uppercase leading-tight">
-              ARCHITECTURAL <br />
+              GLOBAL LUXURY <br />
               <span className="text-accent">
-                TAILORY STUDIO
+                CURATED SELECTIONS
               </span>
             </h3>
             <p className="text-muted-text text-sm tracking-wide font-light max-w-sm mb-4">
-              Designing ready-to-wear luxury and bespoke structures built to contour the body. Crafted with organic materials and structural precision.
+              Curating premium imported ready-to-wear collections, accessories, and sculpted footwear from global fashion capitals, delivered directly from our hub in Kerala.
             </p>
             {/* <div className="border-t border-zinc-900 pt-4 max-w-sm">
               <span className="text-zinc-500 text-[10px] tracking-widest uppercase block font-medium">Flagship Showroom</span>

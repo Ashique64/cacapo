@@ -56,9 +56,9 @@ export default function ShippingInfoPage() {
               <div className="p-5 border border-zinc-900 bg-zinc-950/40 space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Dispatch Location</span>
                 <p className="text-zinc-400 text-[11px] tracking-wider leading-relaxed">
-                  All orders are dispatched directly from our atelier:
+                  All orders are dispatched directly from our import hub:
                   <br />
-                  House of CACAPO Studio • Kerala, India.
+                  House of CACAPO Hub • Kerala, India.
                 </p>
               </div>
             </div>
@@ -81,7 +81,7 @@ export default function ShippingInfoPage() {
                   <br />
                   • <strong className="text-white font-semibold">Express Shipping:</strong> 2 to 3 business days.
                   <br /><br />
-                  For bespoke commissions, dispatch takes 2 to 3 weeks to complete the architectural design process.
+                  All pieces are imported from global fashion capitals and thoroughly checked at our Kerala center before final delivery.
                 </p>
               </div>
 

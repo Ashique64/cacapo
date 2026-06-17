@@ -35,8 +35,8 @@ export default function AboutPage() {
               THE ARCHITECTURE <br />OF <span className="text-accent">COUTURE</span>
             </h1>
             <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl mx-auto tracking-wide font-light leading-relaxed">
-              Founded on the principles of geometric structuralism and minimalist tailory. 
-              We design timeless silhouettes that contour, empower, and redefine the feminine form.
+              Founded on curating international streetwear and architectural designs. 
+              We bring global readymade silhouettes directly to India, hand-selected to contour, empower, and redefine the modern form.
             </p>
           </div>
         </section>
@@ -71,12 +71,12 @@ export default function AboutPage() {
             <div className="space-y-6 text-zinc-400 text-xs sm:text-sm font-light leading-relaxed text-justify">
               <p>
                 At CACAPO, we believe that fashion is an extension of structural art. 
-                Our collections discard transient, loud trends in favor of silent, architectural aesthetics. 
-                Every cowl drape, clean seam, and sharp line is mathematically optimized to drape organically, creating a visual dialogue between fabric and frame.
+                Our curated collections of imported ready-to-wear apparel, footwear, and accessories discard transient, loud trends in favor of silent, architectural aesthetics. 
+                Each line, drape, and silhouette is selected to drape organically, creating a visual dialogue between fabric and frame.
               </p>
               <p>
-                We do not construct clothing; we assemble wearable sculptures. 
-                By working primarily with pure natural fibers like organic mulberry silk, double-faced wool, and hand-combed cashmere, we ensure that tactile luxury matches our visual cleanliness.
+                We do not just select clothing; we curate wearable sculptures. 
+                By sourcing items crafted primarily with pure natural fibers like organic mulberry silk, double-faced wool, and hand-combed cashmere, we ensure that tactile luxury matches our visual cleanliness.
               </p>
             </div>
           </div>
@@ -100,7 +100,7 @@ export default function AboutPage() {
                 {
                   number: "01",
                   title: "ARCHITECTURAL FIT",
-                  desc: "We analyze structural movement to engineer cuts that move seamlessly with the body. True bespoke proportions built into ready-to-wear luxury."
+                  desc: "We source items from international makers who analyze structural movement to ensure cuts move seamlessly with the body. Premium imported fits built into ready-to-wear luxury."
                 },
                 {
                   number: "02",
@@ -110,7 +110,7 @@ export default function AboutPage() {
                 {
                   number: "03",
                   title: "MINIMALIST ESSENTIALS",
-                  desc: "Designing curated wardrobe foundations. Highly cohesive palettes, geometric details, and timeless statements that outlast seasons."
+                  desc: "Sourcing curated wardrobe foundations. Highly cohesive palettes, geometric details, and timeless statements that outlast seasons."
                 }
               ].map((pillar, idx) => (
                 <div 

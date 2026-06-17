@@ -51,7 +51,7 @@ export default function ReturnPolicyPage() {
                 </h2>
               </div>
               <p className="text-zinc-400 text-xs sm:text-sm font-light leading-relaxed text-justify">
-                At House of CACAPO, every silhouette is custom engineered, carefully tailored, and rigorously inspected before dispatch. If a ready-to-wear piece does not sit correctly on your frame, we are fully committed to coordinating exchanges or returns to satisfy your architectural fit.
+                At House of CACAPO, every silhouette is imported from premier international makers, carefully curated, and rigorously inspected at our Kerala hub before dispatch. If a ready-to-wear piece does not sit correctly on your frame, we are fully committed to coordinating exchanges or returns.
               </p>
               <div className="p-5 border border-zinc-900 bg-zinc-950/40 space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Support Hours</span>
@@ -104,7 +104,7 @@ export default function ReturnPolicyPage() {
                   </h3>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  Bespoke commissions, custom alterations ordered via design desk, final sale archive items, and intimate apparel are strictly non-returnable. We encourage you to carefully cross-reference your measurements with our sizing desks before placing customized orders.
+                  Imported final sale archive items, customized size orders, and intimate apparel are strictly non-returnable. We encourage you to carefully cross-reference your measurements with our sizing charts before placing orders.
                 </p>
               </div>
 
