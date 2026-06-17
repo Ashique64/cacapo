@@ -416,7 +416,7 @@ export default function Hero() {
             </p>
             <div className="mt-6 md:mt-8 flex gap-4 justify-center md:justify-start">
               <button className="relative overflow-hidden px-8 py-3 bg-white text-black rounded-none font-semibold text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95 pointer-events-auto">
-                <span className="absolute inset-px bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+                <span className="absolute -inset-px bg-accent transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
                 <span className="relative z-10 transition-colors duration-500 group-hover:text-white">
                   SHOP COLLECTION
                 </span>
