@@ -72,7 +72,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/contact" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                <Link href="/shipping-info" className="hover:text-accent transition-colors cursor-pointer uppercase block">
                   Shipping Info
                 </Link>
               </li>
