@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminPagination from "@/components/ui/AdminPagination";
 import {
   Search,
   Check,
@@ -26,6 +27,14 @@ export default function AdminInventoryDesk() {
   // Search filter
   const [searchTerm, setSearchTerm] = useState("");
   const [showLowStockOnly, setShowLowStockOnly] = useState(false);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, showLowStockOnly]);
 
   // Toast State
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' }
@@ -163,6 +172,13 @@ export default function AdminInventoryDesk() {
     return matchesSearch && matchesLowStock;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredStock.length / itemsPerPage);
+  const paginatedStock = filteredStock.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
       
@@ -260,7 +276,7 @@ export default function AdminInventoryDesk() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900">
-                {filteredStock.map(item => {
+                {paginatedStock.map(item => {
                   const isLow = item.stock < 5;
                   const isOut = item.stock === 0;
 
@@ -316,6 +332,16 @@ export default function AdminInventoryDesk() {
             </table>
           </div>
         )
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
+        </div>
       )}
 
       {/* Premium Luxury Toast Notifications */}

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminPagination from "@/components/ui/AdminPagination";
 import { 
   Search, 
   Filter, 
@@ -29,6 +30,15 @@ export default function AdminOrdersDesk() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, statusFilter]);
 
   // Shipment form states (scoped by order ID)
   const [shippingCarrier, setShippingCarrier] = useState({});
@@ -230,6 +240,13 @@ export default function AdminOrdersDesk() {
     return matchesSearch && matchesStatus;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
       
@@ -310,7 +327,7 @@ export default function AdminOrdersDesk() {
         </div>
       ) : (
         <div className="space-y-4">
-          {filteredOrders.map(order => {
+          {paginatedOrders.map(order => {
             const isExpanded = expandedOrderId === order.id;
             const dateFormatted = new Date(order.created_at).toLocaleDateString("en-IN", {
               year: "numeric",
@@ -627,12 +644,21 @@ export default function AdminOrdersDesk() {
                       </div>
 
                     </div>
-
                   </div>
                 )}
               </div>
             );
           })}
+
+          {totalPages > 1 && (
+            <div className="mt-8">
+              <AdminPagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </div>
+          )}
         </div>
       )}
 

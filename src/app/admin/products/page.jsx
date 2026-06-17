@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminPagination from "@/components/ui/AdminPagination";
 import {
   Search,
   Plus,
@@ -28,6 +29,14 @@ export default function AdminCatalogDesk() {
 
   // Search filter
   const [searchTerm, setSearchTerm] = useState("");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, activeTab]);
 
   // Modals state
   const [showProductModal, setShowProductModal] = useState(false);
@@ -594,6 +603,13 @@ export default function AdminCatalogDesk() {
     c.slug?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // Pagination Logic for Products
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   return (
     <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
       
@@ -676,84 +692,95 @@ export default function AdminCatalogDesk() {
             No products registered in the inventory yet.
           </div>
         ) : (
-          <div className="border border-zinc-900 bg-black overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[800px] text-xs tracking-wider">
-              <thead>
-                <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
-                  <th className="p-4 w-16">Image</th>
-                  <th className="p-4">SKU / Code</th>
-                  <th className="p-4">Name</th>
-                  <th className="p-4 text-right">Price</th>
-                  <th className="p-4 text-center">Stock</th>
-                  <th className="p-4">Category</th>
-                  <th className="p-4 text-center">Status</th>
-                  <th className="p-4 text-center w-24">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-zinc-900">
-                {filteredProducts.map(prod => {
-                  const thumb = prod.product_images?.[0]?.image_url || "/Images/clothing.jpg";
-                  const catName = categories.find(c => c.id === prod.category_id)?.name || "-";
+          <>
+            <div className="border border-zinc-900 bg-black overflow-x-auto">
+              <table className="w-full text-left border-collapse min-w-[800px] text-xs tracking-wider">
+                <thead>
+                  <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
+                    <th className="p-4 w-16">Image</th>
+                    <th className="p-4">SKU / Code</th>
+                    <th className="p-4">Name</th>
+                    <th className="p-4 text-right">Price</th>
+                    <th className="p-4 text-center">Stock</th>
+                    <th className="p-4">Category</th>
+                    <th className="p-4 text-center">Status</th>
+                    <th className="p-4 text-center w-24">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-900">
+                  {paginatedProducts.map(prod => {
+                    const thumb = prod.product_images?.[0]?.image_url || "/Images/clothing.jpg";
+                    const catName = categories.find(c => c.id === prod.category_id)?.name || "-";
 
-                  return (
-                    <tr key={prod.id} className="hover:bg-zinc-950/20 transition-colors">
-                      <td className="p-4">
-                        <div className="w-10 h-12 bg-zinc-900 border border-zinc-800 overflow-hidden relative">
-                          <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
-                        </div>
-                      </td>
-                      <td className="p-4 font-mono font-bold text-zinc-400">{prod.sku || "N/A"}</td>
-                      <td className="p-4 font-bold text-white uppercase">{prod.name}</td>
-                      <td className="p-4 text-right font-bold text-accent">{formatPrice(prod.price)}</td>
-                      <td className="p-4 text-center font-semibold">
-                        {(() => {
-                          const hasVariants = prod.product_variants && prod.product_variants.length > 0;
-                          const effectiveStock = hasVariants
-                            ? prod.product_variants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)
-                            : prod.stock_quantity;
-                          return (
-                            <span className={effectiveStock === 0 ? "text-red-500" : ""}>
-                              {effectiveStock}
-                            </span>
-                          );
-                        })()}
-                      </td>
-                      <td className="p-4 text-zinc-400 font-medium uppercase">{catName}</td>
-                      <td className="p-4 text-center">
-                        <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 font-mono ${
-                          prod.status === "active" 
-                            ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                            : prod.status === "draft"
-                              ? "bg-zinc-800 border border-zinc-700 text-zinc-400"
-                              : "bg-red-500/10 border border-red-500/20 text-red-400"
-                        }`}>
-                          {prod.status?.toUpperCase() || "DRAFT"}
-                        </span>
-                      </td>
-                      <td className="p-4 text-center">
-                        <div className="flex gap-3 justify-center">
-                          <button
-                            onClick={() => handleOpenEditProduct(prod)}
-                            className="text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none cursor-pointer"
-                            title="Edit"
-                          >
-                            <Edit className="w-4 h-4" />
-                          </button>
-                          <button
-                            onClick={() => handleDeleteProduct(prod.id)}
-                            className="text-zinc-500 hover:text-accent transition-colors p-1 bg-transparent border-none cursor-pointer"
-                            title="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                    return (
+                      <tr key={prod.id} className="hover:bg-zinc-950/20 transition-colors">
+                        <td className="p-4">
+                          <div className="w-10 h-12 bg-zinc-900 border border-zinc-800 overflow-hidden relative">
+                            <img src={thumb} alt={prod.name} className="w-full h-full object-cover" />
+                          </div>
+                        </td>
+                        <td className="p-4 font-mono font-bold text-zinc-400">{prod.sku || "N/A"}</td>
+                        <td className="p-4 font-bold text-white uppercase">{prod.name}</td>
+                        <td className="p-4 text-right font-bold text-accent">{formatPrice(prod.price)}</td>
+                        <td className="p-4 text-center font-semibold">
+                          {(() => {
+                            const hasVariants = prod.product_variants && prod.product_variants.length > 0;
+                            const effectiveStock = hasVariants
+                              ? prod.product_variants.reduce((sum, v) => sum + (v.stock_quantity || 0), 0)
+                              : prod.stock_quantity;
+                            return (
+                              <span className={effectiveStock === 0 ? "text-red-500" : ""}>
+                                {effectiveStock}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td className="p-4 text-zinc-400 font-medium uppercase">{catName}</td>
+                        <td className="p-4 text-center">
+                          <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 font-mono ${
+                            prod.status === "active" 
+                              ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                              : prod.status === "draft"
+                                ? "bg-zinc-800 border border-zinc-700 text-zinc-400"
+                                : "bg-red-500/10 border border-red-500/20 text-red-400"
+                          }`}>
+                            {prod.status?.toUpperCase() || "DRAFT"}
+                          </span>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex gap-3 justify-center">
+                            <button
+                              onClick={() => handleOpenEditProduct(prod)}
+                              className="text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none cursor-pointer"
+                              title="Edit"
+                            >
+                              <Edit className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteProduct(prod.id)}
+                              className="text-zinc-500 hover:text-accent transition-colors p-1 bg-transparent border-none cursor-pointer"
+                              title="Delete"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+            {totalPages > 1 && (
+              <div className="mt-8">
+                <AdminPagination
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  onPageChange={setCurrentPage}
+                />
+              </div>
+            )}
+          </>
         )
 
       ) : (

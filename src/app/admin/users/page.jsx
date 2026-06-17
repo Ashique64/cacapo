@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminPagination from "@/components/ui/AdminPagination";
 import { 
   Search, 
   Filter, 
@@ -27,6 +28,14 @@ export default function AdminUsersDesk() {
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, roleFilter]);
 
   // Selected User Drawer Details
   const [selectedUser, setSelectedUser] = useState(null);
@@ -170,6 +179,13 @@ export default function AdminUsersDesk() {
     return matchesSearch && matchesRole;
   });
 
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
+  const paginatedUsers = filteredUsers.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const formatPrice = (cents) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -311,7 +327,7 @@ export default function AdminUsersDesk() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-900 tracking-wider">
-                {filteredUsers.map((user) => {
+                {paginatedUsers.map((user) => {
                   const regDate = new Date(user.created_at).toLocaleDateString("en-IN", {
                     year: "numeric",
                     month: "short",
@@ -377,6 +393,15 @@ export default function AdminUsersDesk() {
                 })}
               </tbody>
             </table>
+          </div>
+        )}
+        {totalPages > 1 && (
+          <div className="mt-8">
+            <AdminPagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
         )}
       </div>

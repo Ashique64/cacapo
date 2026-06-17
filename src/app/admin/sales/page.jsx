@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import AdminPagination from "@/components/ui/AdminPagination";
 import { 
   Search, 
   TrendingUp, 
@@ -27,6 +28,14 @@ export default function SalesReportDesk() {
   const [searchTerm, setSearchTerm] = useState("");
   const [monthFilter, setMonthFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("paid"); // default to paid to show real revenue
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 20;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, monthFilter, statusFilter]);
 
   // Calculation Toggles
   const [deductCoupons, setDeductCoupons] = useState(true);
@@ -116,6 +125,13 @@ export default function SalesReportDesk() {
     acc.totalRevenue += Math.max(0, orderRevenue);
     return acc;
   }, { totalRevenue: 0, ordersCount: 0 });
+
+  // Pagination Logic
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
 
   const formatPrice = (cents) => {
     return new Intl.NumberFormat("en-IN", {
@@ -289,7 +305,7 @@ export default function SalesReportDesk() {
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-900">
-              {filteredOrders.map(order => {
+              {paginatedOrders.map(order => {
                 const d = new Date(order.created_at);
                 const isPaid = order.payment_status === "paid";
                 
@@ -325,6 +341,16 @@ export default function SalesReportDesk() {
               })}
             </tbody>
           </table>
+        </div>
+      )}
+
+      {totalPages > 1 && (
+        <div className="mt-8">
+          <AdminPagination
+            currentPage={currentPage}
+            totalPages={totalPages}
+            onPageChange={setCurrentPage}
+          />
         </div>
       )}
 
