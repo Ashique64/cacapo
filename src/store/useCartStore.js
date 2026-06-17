@@ -191,7 +191,12 @@ export const useCartStore = create(
                 .update({ quantity: newQty })
                 .eq("id", item.id);
               if (updateErr) throw updateErr;
-            } else {
+              console.log("Inserting cart item:", {
+                cart_id: cart.id,
+                product_id: product.id,
+                variant_id: variantId,
+                quantity
+              });
               const { error: insertErr } = await supabase
                 .from("cart_items")
                 .insert({
@@ -200,12 +205,15 @@ export const useCartStore = create(
                   variant_id: variantId,
                   quantity
                 });
-              if (insertErr) throw insertErr;
+              if (insertErr) {
+                console.error("Supabase insert error details:", insertErr.message, insertErr.details, insertErr.hint);
+                throw insertErr;
+              }
             }
             // Refresh state from DB
             await get().fetchCart(userId);
           } catch (err) {
-            console.error("Failed to add item to DB:", err);
+            console.error("Failed to add item to DB:", err?.message || err, err);
           }
         } else {
           // Guest mode or Mock product fallback (localStorage only)

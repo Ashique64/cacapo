@@ -2,56 +2,21 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Heart, ShoppingBag, X, ArrowRight, Check } from "lucide-react";
+import { Heart, X, ArrowRight } from "lucide-react";
 import { useWishlistStore } from "@/store/useWishlistStore";
-import { useCartStore } from "@/store/useCartStore";
-import { useAuthStore } from "@/store/useAuthStore";
 import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 
 export default function WishlistPage() {
-  const { user } = useAuthStore();
   const wishlistItems = useWishlistStore((state) => state.items);
   const removeItem = useWishlistStore((state) => state.removeItem);
-  const addItem = useCartStore((state) => state.addItem);
-  const setCartOpen = useCartStore((state) => state.setCartOpen);
 
   const [mounted, setMounted] = useState(false);
-  const [selectedSizes, setSelectedSizes] = useState({});
-  const [errors, setErrors] = useState({});
-  const [addedStates, setAddedStates] = useState({});
 
   useEffect(() => {
     setMounted(true);
   }, []);
-
-  const handleMoveToBag = (product) => {
-    const hasVariants = product.variants && product.variants.length > 0;
-    const selectedSize = selectedSizes[product.id] || "";
-
-    if (hasVariants && !selectedSize) {
-      setErrors((prev) => ({ ...prev, [product.id]: "CHOOSE SIZE" }));
-      return;
-    }
-
-    setErrors((prev) => ({ ...prev, [product.id]: "" }));
-
-    let variant = null;
-    if (hasVariants) {
-      variant = product.variants.find((v) => v.size === selectedSize);
-    }
-
-    // Add to Zustand Cart Store
-    addItem(product, variant, 1, user?.id);
-    setCartOpen(true);
-
-    // Show visual check confirmation
-    setAddedStates((prev) => ({ ...prev, [product.id]: true }));
-    setTimeout(() => {
-      setAddedStates((prev) => ({ ...prev, [product.id]: false }));
-    }, 2000);
-  };
 
   const wishlistCount = mounted ? wishlistItems.length : 0;
 
@@ -69,7 +34,7 @@ export default function WishlistPage() {
             THE <span className="text-accent">WISHLIST</span>
           </h1>
           <p className="text-xs text-muted-text tracking-wide mt-3 font-light max-w-md leading-relaxed mx-auto md:mx-0">
-            Curated designs saved in your private archives. Select sizing options to add them to your cart, or remove them at any time.
+            Curated designs saved in your private archives. Select designs to view options and sizing details, or remove them at any time.
           </p>
         </div>
 
@@ -104,11 +69,6 @@ export default function WishlistPage() {
                   maximumFractionDigits: 2
                 });
                 const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
-                const sizes = product.variants ? Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean))) : [];
-                const hasVariants = product.variants && product.variants.length > 0;
-                const selectedSize = selectedSizes[product.id] || "";
-                const error = errors[product.id] || "";
-                const isAdded = addedStates[product.id] || false;
 
                 return (
                   <div 
@@ -117,7 +77,7 @@ export default function WishlistPage() {
                   >
                     
                     {/* Image frame with aspect ratio 15/16 on mobile/tablet and square on desktop */}
-                    <div className="w-full overflow-hidden relative aspect-[15/16] lg:aspect-square">
+                    <div className="w-full overflow-hidden relative aspect-15/16 lg:aspect-square">
                       <Link href={`/shop/${product.slug}`} className="block w-full h-full">
                         <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50 z-2 pointer-events-none" />
                         <img 
@@ -144,7 +104,7 @@ export default function WishlistPage() {
                       )}
                     </div>
 
-                    {/* Meta info & Quick Sizing Selection */}
+                    {/* Meta info */}
                     <div className="p-4 flex flex-col justify-between grow">
                       <div>
                         <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
@@ -156,63 +116,16 @@ export default function WishlistPage() {
                           <span className="text-[10px] font-sans font-normal">₹</span>
                           <span>{displayPrice}</span>
                         </div>
-
-                        {/* Size Picker for products with variants */}
-                        {hasVariants && (
-                          <div className="mt-4 pt-4 border-t border-zinc-900/60">
-                            <div className="flex justify-between items-center mb-2">
-                              <span className="text-[9px] tracking-widest text-zinc-500 uppercase">
-                                Select Size
-                              </span>
-                              {error && (
-                                <span className="text-[9px] tracking-widest text-accent font-mono uppercase">
-                                  {error}
-                                </span>
-                              )}
-                            </div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {sizes.map((size) => {
-                                const sizeVariant = product.variants.find((v) => v.size === size);
-                                const isOutOfStock = sizeVariant ? sizeVariant.stock_quantity <= 0 : false;
-                                const isSelected = selectedSize === size;
-                                return (
-                                  <button
-                                    key={size}
-                                    disabled={isOutOfStock}
-                                    onClick={() => {
-                                      setSelectedSizes((prev) => ({ ...prev, [product.id]: size }));
-                                      setErrors((prev) => ({ ...prev, [product.id]: "" }));
-                                    }}
-                                    className={`text-[9px] min-w-[32px] h-7 px-2 border transition-all flex items-center justify-center cursor-pointer ${
-                                      isOutOfStock 
-                                        ? "border-zinc-900/40 text-zinc-800 line-through cursor-not-allowed bg-zinc-950/20" 
-                                        : isSelected 
-                                        ? "border-accent bg-accent/10 text-accent font-bold" 
-                                        : "border-zinc-800 text-zinc-400 hover:border-zinc-600 hover:text-white"
-                                    }`}
-                                  >
-                                    {size}
-                                  </button>
-                                );
-                              })}
-                            </div>
-                          </div>
-                        )}
                       </div>
 
-                      {/* Add to Bag Action CTA */}
+                      {/* View Details CTA */}
                       <div className="mt-6 pt-4 border-t border-zinc-900/60">
-                        <button
-                          onClick={() => handleMoveToBag(product)}
-                          className={`w-full py-2.5 border text-[10px] font-semibold tracking-[0.2em] transition-all duration-300 uppercase flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98] ${
-                            isAdded 
-                              ? "border-accent bg-accent text-white" 
-                              : "border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:bg-white hover:text-black hover:border-white"
-                          }`}
+                        <Link
+                          href={`/shop/${product.slug}`}
+                          className="w-full py-2.5 border border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-semibold tracking-[0.2em] transition-all duration-300 uppercase flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                         >
-                          <ShoppingBag className="w-3.5 h-3.5" />
-                          {isAdded ? "ADDED ✓" : "ADD TO BAG"}
-                        </button>
+                          VIEW DETAILS
+                        </Link>
                       </div>
                     </div>
 
