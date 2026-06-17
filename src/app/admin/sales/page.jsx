@@ -16,7 +16,8 @@ import {
   ToggleLeft,
   ToggleRight,
   RefreshCw,
-  Percent
+  Percent,
+  Download
 } from "lucide-react";
 
 export default function SalesReportDesk() {
@@ -25,8 +26,8 @@ export default function SalesReportDesk() {
   const [error, setError] = useState(null);
 
   // Filters
-  const [searchTerm, setSearchTerm] = useState("");
-  const [monthFilter, setMonthFilter] = useState("all");
+  const [fromDate, setFromDate] = useState("");
+  const [toDate, setToDate] = useState("");
   const [statusFilter, setStatusFilter] = useState("paid"); // default to paid to show real revenue
 
   // Pagination state
@@ -35,7 +36,7 @@ export default function SalesReportDesk() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, monthFilter, statusFilter]);
+  }, [fromDate, toDate, statusFilter]);
 
   // Calculation Toggles
   const [deductCoupons, setDeductCoupons] = useState(true);
@@ -75,26 +76,19 @@ export default function SalesReportDesk() {
     }
   };
 
-  // Extract unique months for the filter
-  const availableMonths = [...new Set(orders.map(order => {
-    const d = new Date(order.created_at);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-  }))].sort().reverse();
-
   // Filter Data
   const filteredOrders = orders.filter(order => {
-    const customerName = order.shipping_address?.full_name?.toLowerCase() || "";
-    const customerEmail = order.shipping_address?.email?.toLowerCase() || "";
-    const matchesSearch = 
-      customerName.includes(searchTerm.toLowerCase()) || 
-      customerEmail.includes(searchTerm.toLowerCase()) || 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase());
+    let matchesDate = true;
+    const orderDate = new Date(order.created_at);
     
-    let matchesMonth = true;
-    if (monthFilter !== "all") {
-      const d = new Date(order.created_at);
-      const orderMonth = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-      matchesMonth = orderMonth === monthFilter;
+    if (fromDate) {
+      matchesDate = matchesDate && orderDate >= new Date(fromDate);
+    }
+    if (toDate) {
+      // To date should include the end of the day
+      const toDateObj = new Date(toDate);
+      toDateObj.setHours(23, 59, 59, 999);
+      matchesDate = matchesDate && orderDate <= toDateObj;
     }
 
     let matchesStatus = true;
@@ -102,7 +96,7 @@ export default function SalesReportDesk() {
       matchesStatus = order.payment_status === statusFilter;
     }
 
-    return matchesSearch && matchesMonth && matchesStatus;
+    return matchesDate && matchesStatus;
   });
 
   // Calculate Revenue
@@ -141,11 +135,96 @@ export default function SalesReportDesk() {
     }).format((cents || 0) / 100);
   };
 
-  const formatMonthLabel = (yyyyMm) => {
-    if (yyyyMm === "all") return "All Time";
-    const [year, month] = yyyyMm.split("-");
-    const d = new Date(year, parseInt(month) - 1);
-    return d.toLocaleDateString("en-US", { month: "long", year: "numeric" });
+  const handleDownloadCSV = () => {
+    let csvContent = "Date,Order Number,Customer Name,Customer Email,Status,Discount (INR),Final Amount (INR)\n";
+
+    filteredOrders.forEach(order => {
+      const d = new Date(order.created_at);
+      const dateStr = d.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
+      const orderNo = order.order_number;
+      const name = (order.shipping_address?.full_name || "").replace(/,/g, " "); // prevent comma splitting
+      const email = (order.shipping_address?.email || "").replace(/,/g, " ");
+      const status = order.payment_status?.toUpperCase() || "N/A";
+      const discount = (order.discount || 0) / 100;
+      const finalAmount = (order.total_amount || 0) / 100;
+
+      csvContent += `${dateStr},${orderNo},${name},${email},${status},${discount},${finalAmount}\n`;
+    });
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `cacapo_sales_report_${new Date().toISOString().split('T')[0]}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const handleDownloadPDF = async () => {
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+      
+      const doc = new jsPDF();
+    
+    // Add title
+    doc.setFontSize(16);
+    doc.text("Sales Report", 14, 20);
+    
+    // Add date range info
+    doc.setFontSize(10);
+    doc.text(`Generated on: ${new Date().toLocaleDateString("en-IN")}`, 14, 28);
+    
+    if (fromDate || toDate) {
+      doc.text(`Date Range: ${fromDate || 'Start'} to ${toDate || 'End'}`, 14, 34);
+    }
+    
+    // Generate Table Data
+    const tableColumn = ["Date", "Order No.", "Customer", "Status", "Discount", "Final Amount"];
+    const tableRows = [];
+
+    filteredOrders.forEach(order => {
+      const d = new Date(order.created_at);
+      const dateStr = d.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' });
+      const orderNo = order.order_number;
+      const name = order.shipping_address?.full_name || "N/A";
+      const status = order.payment_status?.toUpperCase() || "N/A";
+      const discount = (order.discount || 0) / 100;
+      const finalAmount = (order.total_amount || 0) / 100;
+
+      tableRows.push([
+        dateStr,
+        orderNo,
+        name,
+        status,
+        `Rs. ${discount.toFixed(2)}`,
+        `Rs. ${finalAmount.toFixed(2)}`
+      ]);
+    });
+
+    // Add table to PDF
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 40,
+      theme: 'grid',
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [0, 0, 0], textColor: [255, 255, 255] }
+    });
+
+    // Add Totals
+    const finalY = doc.lastAutoTable?.finalY || 40;
+    doc.setFontSize(10);
+    doc.text(`Total Orders: ${metrics.ordersCount}`, 14, finalY + 10);
+    doc.text(`Total Revenue: Rs. ${(metrics.totalRevenue / 100).toFixed(2)}`, 14, finalY + 16);
+
+    // Save PDF
+    doc.save(`cacapo_sales_report_${new Date().toISOString().split('T')[0]}.pdf`);
+    } catch (err) {
+      console.error("Failed to generate PDF", err);
+    }
   };
 
   return (
@@ -162,13 +241,29 @@ export default function SalesReportDesk() {
           </h1>
         </div>
 
-        <button 
-          onClick={fetchSalesData}
-          disabled={loading}
-          className="px-4 py-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer"
-        >
-          <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Sync Data
-        </button>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={handleDownloadCSV}
+            disabled={filteredOrders.length === 0}
+            className="px-4 py-2 border border-accent hover:bg-accent/10 text-accent text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-3.5 h-3.5" /> CSV
+          </button>
+          <button 
+            onClick={handleDownloadPDF}
+            disabled={filteredOrders.length === 0}
+            className="px-4 py-2 border border-blue-500 hover:bg-blue-500/10 text-blue-500 text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <Download className="w-3.5 h-3.5" /> PDF
+          </button>
+          <button 
+            onClick={fetchSalesData}
+            disabled={loading}
+            className="px-4 py-2 border border-zinc-800 hover:border-zinc-700 bg-zinc-950 text-zinc-400 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} /> Sync Data
+          </button>
+        </div>
       </div>
 
       {/* Metrics Cards */}
@@ -205,31 +300,26 @@ export default function SalesReportDesk() {
         
         {/* Left: Standard Filters */}
         <div className="flex-1 space-y-4">
-          <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-2">Search & Filter</h4>
+          <h4 className="text-[10px] font-bold tracking-widest uppercase text-zinc-500 mb-2">Filter by Date & Status</h4>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="relative">
+            <div className="relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-accent transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-4 absolute pointer-events-none">From:</span>
               <input
-                type="text"
-                placeholder="Search user, email, order..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 focus:border-accent text-white px-4 py-2.5 pl-10 text-xs tracking-wider outline-none transition-all rounded-none"
+                type="date"
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="w-full bg-transparent text-white px-4 py-2.5 pl-14 text-xs tracking-wider outline-none rounded-none appearance-none cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
               />
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
             </div>
 
-            <div className="relative">
-              <select
-                value={monthFilter}
-                onChange={(e) => setMonthFilter(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 focus:border-accent text-white px-4 py-2.5 pl-10 text-xs tracking-wider outline-none transition-all rounded-none appearance-none"
-              >
-                <option value="all">All Time</option>
-                {availableMonths.map(m => (
-                  <option key={m} value={m}>{formatMonthLabel(m)}</option>
-                ))}
-              </select>
-              <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <div className="relative flex items-center bg-zinc-950 border border-zinc-800 focus-within:border-accent transition-all">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 ml-4 absolute pointer-events-none">To:</span>
+              <input
+                type="date"
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="w-full bg-transparent text-white px-4 py-2.5 pl-10 text-xs tracking-wider outline-none rounded-none appearance-none cursor-pointer [&::-webkit-calendar-picker-indicator]:invert"
+              />
             </div>
 
             <div className="relative">
