@@ -84,25 +84,18 @@ function ProductCard({ product }) {
 
           {/* Sold Out Overlay */}
           {isCardOutOfStock && (
-            <span className="absolute top-2.5 left-2.5 bg-black/85 border border-zinc-800/80 text-zinc-400 text-[8px] font-extrabold tracking-widest px-2 py-0.5 uppercase z-10 font-mono">
+            <span className="absolute top-2.5 left-2.5 bg-black/85 border border-red-500/30 text-red-500 text-[8px] font-extrabold tracking-widest px-2 py-0.5 uppercase z-10 font-mono">
               Sold Out
             </span>
           )}
 
-          {/* Hover overlay with ADD TO BAG — hidden on mobile, visible on hover for md+ */}
+          {/* Hover overlay with VIEW DETAILS — hidden on mobile, visible on hover for md+ */}
           <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-300 hidden md:flex items-end justify-center pb-5 z-10">
-            <button
-              onClick={handleAddBag}
-              disabled={isCardOutOfStock}
-              className={`px-5 py-2 text-[10px] font-semibold tracking-[0.2em] uppercase flex items-center gap-1.5 transition-all duration-300 ${
-                isCardOutOfStock
-                  ? "bg-zinc-800 text-zinc-500 cursor-not-allowed border border-zinc-700"
-                  : "bg-white text-black hover:bg-accent hover:text-white"
-              }`}
+            <span
+              className="px-5 py-2 text-[10px] font-semibold tracking-[0.2em] uppercase transition-all duration-300 bg-white text-black hover:bg-accent hover:text-white"
             >
-              <ShoppingBag className="w-3 h-3" />
-              {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
-            </button>
+              {isCardOutOfStock ? "VIEW DETAILS" : "VIEW DETAILS"}
+            </span>
           </div>
         </Link>
 
@@ -132,19 +125,13 @@ function ProductCard({ product }) {
           )}
         </div>
 
-        {/* ADD TO BAG — mobile only, below price */}
-        <button
-          onClick={handleAddBag}
-          disabled={isCardOutOfStock}
-          className={`mt-2 w-full py-1.5 text-[9px] font-semibold tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer md:hidden ${
-            isCardOutOfStock
-              ? "bg-zinc-950 border border-zinc-900 text-zinc-600 cursor-not-allowed"
-              : "bg-zinc-900 border border-zinc-800 text-white active:bg-white active:text-black"
-          }`}
+        {/* VIEW DETAILS — mobile only, below price */}
+        <Link
+          href={`/shop/${product.slug}`}
+          className="mt-2 w-full py-1.5 text-[9px] font-semibold tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer md:hidden bg-zinc-900 border border-zinc-800 text-white active:bg-white active:text-black text-center"
         >
-          <ShoppingBag className="w-2.5 h-2.5" />
-          {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
-        </button>
+          {isCardOutOfStock ? "VIEW DETAILS" : "VIEW DETAILS"}
+        </Link>
       </div>
     </div>
   );

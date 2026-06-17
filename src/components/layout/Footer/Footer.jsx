@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa6";
 
 export default function Footer() {
@@ -10,20 +11,24 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-12 gap-x-6 gap-y-12 md:gap-12 mb-10 lg:mb-20">
-          {/* Newsletter Column */}
+          {/* Atelier Studio Details Column */}
           <div className="col-span-2 md:col-span-6 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">
-              NEWSLETTER
+              THE ATELIER
             </span>
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 uppercase">
-              Stay tuned <br />
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 uppercase leading-tight">
+              ARCHITECTURAL <br />
               <span className="text-accent">
-                to the Atelier
+                TAILORY STUDIO
               </span>
             </h3>
-            <p className="text-muted-text text-sm tracking-wide font-light max-w-sm">
-              Receive private invitations to new collection previews, physical pop-up salons, and brand editorials.
+            <p className="text-muted-text text-sm tracking-wide font-light max-w-sm mb-4">
+              Designing ready-to-wear luxury and bespoke structures built to contour the body. Crafted with organic materials and structural precision.
             </p>
+            {/* <div className="border-t border-zinc-900 pt-4 max-w-sm">
+              <span className="text-zinc-500 text-[10px] tracking-widest uppercase block font-medium">Flagship Showroom</span>
+              <span className="text-zinc-300 text-xs tracking-wider block mt-1 uppercase">Malappuram, Kerala — By Appointment Only</span>
+            </div> */}
           </div>
 
           {/* Links Column 1 */}
@@ -33,13 +38,19 @@ export default function Footer() {
             </span>
             <ul className="flex flex-col gap-3 text-xs tracking-widest text-muted-text font-light">
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Atelier Apparel</span>
+                <Link href="/shop?category=clothing" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Atelier Apparel
+                </Link>
               </li>
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Sculpted Footwear</span>
+                <Link href="/shop?category=footwear" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Sculpted Footwear
+                </Link>
               </li>
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Couture Accents</span>
+                <Link href="/shop?category=accessories" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Couture Accents
+                </Link>
               </li>
             </ul>
           </div>
@@ -51,16 +62,24 @@ export default function Footer() {
             </span>
             <ul className="flex flex-col gap-3 text-xs tracking-widest text-muted-text font-light">
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">About Us</span>
+                <Link href="/about" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  About Us
+                </Link>
               </li>
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Return Policy</span>
+                <Link href="/return-policy" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Return Policy
+                </Link>
               </li>
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Shipping Info</span>
+                <Link href="/contact" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Shipping Info
+                </Link>
               </li>
               <li>
-                <span className="hover:text-accent transition-colors cursor-pointer uppercase">Help & Support</span>
+                <Link href="/contact" className="hover:text-accent transition-colors cursor-pointer uppercase block">
+                  Help & Support
+                </Link>
               </li>
             </ul>
           </div>
@@ -93,8 +112,12 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-zinc-900/60 flex flex-col md:flex-row justify-between items-center text-[10px] tracking-[0.2em] text-muted-text font-light">
           <span>© 2026 CACAPO. ALL RIGHTS RESERVED.</span>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <span className="hover:text-white transition-colors cursor-pointer">TERMS OF SERVICE</span>
-            <span className="hover:text-white transition-colors cursor-pointer">PRIVACY POLICY</span>
+            <Link href="/contact" className="hover:text-white transition-colors cursor-pointer">
+              TERMS OF SERVICE
+            </Link>
+            <Link href="/contact" className="hover:text-white transition-colors cursor-pointer">
+              PRIVACY POLICY
+            </Link>
           </div>
         </div>
       </div>

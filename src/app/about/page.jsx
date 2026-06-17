@@ -45,12 +45,12 @@ export default function AboutPage() {
         <section className="max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
           {/* Left: Beautiful Image Box with border details */}
-          <div className="relative group aspect-[4/5] bg-zinc-950 border border-zinc-900 overflow-hidden">
+          <div className="relative group aspect-[4/3] bg-zinc-950 border border-zinc-900 overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent z-10" />
             <img 
               src="/Images/clothing.jpg" 
               alt="Tailoring process" 
-              className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105"
+              className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-105"
             />
             {/* Structural corner accents */}
             <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-accent/60" />

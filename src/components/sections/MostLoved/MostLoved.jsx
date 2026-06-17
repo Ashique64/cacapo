@@ -94,7 +94,7 @@ function ProductCard({ product }) {
 
         {/* Sold Out Overlay */}
         {isCardOutOfStock && (
-          <span className="absolute top-4 left-4 bg-black/85 border border-zinc-800/80 text-zinc-400 text-[8px] font-extrabold tracking-widest px-2.5 py-1 uppercase z-10 font-mono">
+          <span className="absolute top-4 left-4 bg-black/85 border border-red-500/30 text-red-500 text-[8px] font-extrabold tracking-widest px-2.5 py-1 uppercase z-10 font-mono">
             Sold Out
           </span>
         )}
@@ -140,18 +140,12 @@ function ProductCard({ product }) {
 
         {/* Purchase Button */}
         <div className="mt-3 lg:mt-6">
-          <button
-            onClick={handleAddBag}
-            disabled={isCardOutOfStock}
-            className={`w-full py-2.5 md:py-3 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] ${
-              isCardOutOfStock
-                ? "bg-zinc-950 border border-zinc-900 text-zinc-600 cursor-not-allowed"
-                : "bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black hover:border-transparent"
-            }`}
+          <Link
+            href={`/shop/${product.slug}`}
+            className="w-full py-2.5 md:py-3 text-[10px] sm:text-xs font-semibold tracking-[0.2em] rounded-none transition-all duration-500 flex items-center justify-center gap-2 cursor-pointer active:scale-[0.98] bg-zinc-900 border border-zinc-800 text-white hover:bg-white hover:text-black hover:border-transparent"
           >
-            <ShoppingBag className="w-3.5 h-3.5 md:w-4 md:h-4" />
-            {isCardOutOfStock ? "SOLD OUT" : "ADD TO BAG"}
-          </button>
+            {isCardOutOfStock ? "VIEW DETAILS (SOLD OUT)" : "VIEW DETAILS"}
+          </Link>
         </div>
       </div>
     </div>
