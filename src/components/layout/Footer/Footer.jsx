@@ -112,10 +112,10 @@ export default function Footer() {
         <div className="mt-12 pt-6 border-t border-zinc-900/60 flex flex-col md:flex-row justify-between items-center text-[10px] tracking-[0.2em] text-muted-text font-light">
           <span>© 2026 CACAPO. ALL RIGHTS RESERVED.</span>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <Link href="/contact" className="hover:text-white transition-colors cursor-pointer">
+            <Link href="/terms-of-service" className="hover:text-white transition-colors cursor-pointer">
               TERMS OF SERVICE
             </Link>
-            <Link href="/contact" className="hover:text-white transition-colors cursor-pointer">
+            <Link href="/privacy-policy" className="hover:text-white transition-colors cursor-pointer">
               PRIVACY POLICY
             </Link>
           </div>
