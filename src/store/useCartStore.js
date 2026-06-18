@@ -191,12 +191,7 @@ export const useCartStore = create(
                 .update({ quantity: newQty })
                 .eq("id", item.id);
               if (updateErr) throw updateErr;
-              console.log("Inserting cart item:", {
-                cart_id: cart.id,
-                product_id: product.id,
-                variant_id: variantId,
-                quantity
-              });
+            } else {
               const { error: insertErr } = await supabase
                 .from("cart_items")
                 .insert({

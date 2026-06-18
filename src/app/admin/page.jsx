@@ -96,11 +96,14 @@ export default function AdminDashboardPage() {
         .select("id", { count: "exact", head: true });
       if (usersError) throw usersError;
 
+      // Filter out return/exchange requested orders from standard metrics calculation
+      const activeOrders = orders ? orders.filter(o => !o.shipping_address?.return_request) : [];
+
       // Process Metrics
-      const totalOrders = orders ? orders.length : 0;
-      const paidOrders = orders ? orders.filter(o => o.payment_status === "paid") : [];
+      const totalOrders = activeOrders.length;
+      const paidOrders = activeOrders.filter(o => o.payment_status === "paid");
       const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
-      const pendingCount = orders ? orders.filter(o => o.order_status === "pending" || o.order_status === "pending_payment").length : 0;
+      const pendingCount = activeOrders.filter(o => o.order_status === "pending" || o.order_status === "pending_payment").length;
       const aovVal = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       setStats({
@@ -114,7 +117,7 @@ export default function AdminDashboardPage() {
       });
 
       // Recent Orders (last 5)
-      setRecentOrders(orders ? orders.slice(0, 5) : []);
+      setRecentOrders(activeOrders.slice(0, 5));
 
       // Low Stock Alert (Variants or products with stock <= 5)
       // Since variants are relational, let's fetch product_variants for inventory
@@ -137,8 +140,8 @@ export default function AdminDashboardPage() {
 
       // Calculate Top Selling Products
       const productSalesMap = {};
-      if (orders) {
-        orders.forEach(order => {
+      if (activeOrders) {
+        activeOrders.forEach(order => {
           if (order.order_items) {
             order.order_items.forEach(item => {
               if (item.product) {
@@ -181,7 +184,7 @@ export default function AdminDashboardPage() {
       setCategorySales(Object.values(catSalesMap).filter(c => c.count > 0));
 
       // Calculate Sales Chart data
-      buildChartData(orders || []);
+      buildChartData(activeOrders);
 
     } catch (err) {
       console.error("Dashboard database load error, fallback to sandbox:", err);
@@ -283,7 +286,10 @@ export default function AdminDashboardPage() {
         // Find existing orders from local state if loaded
         supabase.from("orders").select("*").order("created_at", { ascending: false })
           .then(({ data }) => {
-            if (data) buildChartData(data);
+            if (data) {
+              const active = data.filter(o => !o.shipping_address?.return_request);
+              buildChartData(active);
+            }
           });
       }
     }
@@ -368,7 +374,7 @@ export default function AdminDashboardPage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {/* Metric Card 1: Gross Revenue */}
             <div className="group border border-zinc-900 bg-zinc-950/20 p-6 space-y-4 hover:border-accent/20 hover:shadow-[0_0_30px_rgba(255,77,77,0.02)] transition-all duration-500 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-[40px] rounded-full pointer-events-none group-hover:bg-accent/5 transition-all" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-2xl rounded-full pointer-events-none group-hover:bg-accent/5 transition-all" />
               <div className="flex justify-between items-center text-zinc-500">
                 <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase">Gross Revenue</span>
                 <div className="p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-sm">
@@ -388,7 +394,7 @@ export default function AdminDashboardPage() {
 
             {/* Metric Card 2: Total Orders */}
             <div className="group border border-zinc-900 bg-zinc-950/20 p-6 space-y-4 hover:border-accent/20 hover:shadow-[0_0_30px_rgba(255,77,77,0.02)] transition-all duration-500 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-[40px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-2xl rounded-full pointer-events-none" />
               <div className="flex justify-between items-center text-zinc-500">
                 <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase">Total Orders</span>
                 <div className="p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-sm">
@@ -407,7 +413,7 @@ export default function AdminDashboardPage() {
 
             {/* Metric Card 3: Average Order Value (AOV) */}
             <div className="group border border-zinc-900 bg-zinc-950/20 p-6 space-y-4 hover:border-accent/20 hover:shadow-[0_0_30px_rgba(255,77,77,0.02)] transition-all duration-500 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-[40px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-2xl rounded-full pointer-events-none" />
               <div className="flex justify-between items-center text-zinc-500">
                 <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase">Average Order Value</span>
                 <div className="p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-sm">
@@ -426,7 +432,7 @@ export default function AdminDashboardPage() {
 
             {/* Metric Card 4: Catalog Size */}
             <div className="group border border-zinc-900 bg-zinc-950/20 p-6 space-y-4 hover:border-accent/20 hover:shadow-[0_0_30px_rgba(255,77,77,0.02)] transition-all duration-500 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-[40px] rounded-full pointer-events-none" />
+              <div className="absolute top-0 right-0 w-24 h-24 bg-accent/2 blur-2xl rounded-full pointer-events-none" />
               <div className="flex justify-between items-center text-zinc-500">
                 <span className="text-[9px] font-extrabold tracking-[0.2em] uppercase">Active Catalog</span>
                 <div className="p-1.5 bg-zinc-900/50 border border-zinc-800 rounded-sm">

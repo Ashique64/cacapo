@@ -227,6 +227,11 @@ export default function AdminOrdersDesk() {
 
   // Filter & Search computations
   const filteredOrders = orders.filter(order => {
+    // Exclude return/exchange requested orders from standard order desk listing
+    if (order.shipping_address?.return_request) {
+      return false;
+    }
+
     const matchesSearch = 
       order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.shipping_address?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||

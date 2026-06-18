@@ -17,7 +17,8 @@ import {
   AlertCircle,
   Lock,
   Eye,
-  EyeOff
+  EyeOff,
+  RefreshCw
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { supabase } from "@/lib/supabase";
@@ -70,8 +71,180 @@ export default function AccountPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
 
+  // Return & Exchange State
+  const [showReturnForm, setShowReturnForm] = useState({});
+  const [returnType, setReturnType] = useState({});
+  const [returnReason, setReturnReason] = useState({});
+  const [exchangeSize, setExchangeSize] = useState({});
+  const [selectedReturnItems, setSelectedReturnItems] = useState({});
+  const [submittingReturn, setSubmittingReturn] = useState({});
+  const [bankName, setBankName] = useState({});
+  const [accountHolder, setAccountHolder] = useState({});
+  const [accountNumber, setAccountNumber] = useState({});
+  const [ifscCode, setIfscCode] = useState({});
+
+  const handleToggleReturnForm = (orderId, items) => {
+    setShowReturnForm(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+    const initialSelected = {};
+    items.forEach(item => {
+      initialSelected[item.id] = true;
+    });
+    setSelectedReturnItems(prev => ({ ...prev, [orderId]: initialSelected }));
+    setReturnType(prev => ({ ...prev, [orderId]: "return" }));
+    setReturnReason(prev => ({ ...prev, [orderId]: "" }));
+    setExchangeSize(prev => ({ ...prev, [orderId]: "" }));
+    setBankName(prev => ({ ...prev, [orderId]: "" }));
+    setAccountHolder(prev => ({ ...prev, [orderId]: "" }));
+    setAccountNumber(prev => ({ ...prev, [orderId]: "" }));
+    setIfscCode(prev => ({ ...prev, [orderId]: "" }));
+  };
+
+  const handleReturnCheckboxChange = (orderId, itemId) => {
+    setSelectedReturnItems(prev => {
+      const orderItems = prev[orderId] || {};
+      return {
+        ...prev,
+        [orderId]: {
+          ...orderItems,
+          [itemId]: !orderItems[itemId]
+        }
+      };
+    });
+  };
+
+  const handleSubmitReturn = async (order) => {
+    const orderId = order.id;
+    const type = returnType[orderId] || "return";
+    const reason = returnReason[orderId]?.trim() || "";
+    const size = exchangeSize[orderId]?.trim() || "";
+    const itemsMap = selectedReturnItems[orderId] || {};
+    const selectedItemIds = Object.keys(itemsMap).filter(id => itemsMap[id]);
+
+    if (selectedItemIds.length === 0) {
+      setCustomAlert({
+        title: "Selection Required",
+        message: "Please select at least one item to return/exchange.",
+        type: "error"
+      });
+      return;
+    }
+
+    if (!reason) {
+      setCustomAlert({
+        title: "Reason Required",
+        message: "Please provide a reason for the request.",
+        type: "error"
+      });
+      return;
+    }
+
+    if (type === "exchange" && !size) {
+      setCustomAlert({
+        title: "Size Required",
+        message: "Please specify the desired size for exchange.",
+        type: "error"
+      });
+      return;
+    }
+
+    const holder = accountHolder[orderId]?.trim() || "";
+    const bName = bankName[orderId]?.trim() || "";
+    const accNum = accountNumber[orderId]?.trim() || "";
+    const ifsc = ifscCode[orderId]?.trim() || "";
+
+    if (type === "return") {
+      if (!holder || !bName || !accNum || !ifsc) {
+        setCustomAlert({
+          title: "Bank Details Required",
+          message: "Please fill in all bank details to receive your refund.",
+          type: "error"
+        });
+        return;
+      }
+    }
+
+    setSubmittingReturn(prev => ({ ...prev, [orderId]: true }));
+
+    try {
+      const selectedItemsDetails = order.order_items
+        .filter(item => itemsMap[item.id])
+        .map(item => ({
+          order_item_id: item.id,
+          product_id: item.product_id,
+          variant_id: item.variant_id,
+          quantity: item.quantity,
+          name: item.product?.name,
+          size: item.variant?.size,
+          color: item.variant?.color
+        }));
+
+      const returnRequest = {
+        type,
+        status: "pending",
+        reason,
+        exchange_size: type === "exchange" ? size : null,
+        bank_details: type === "return" ? {
+          account_holder: holder,
+          bank_name: bName,
+          account_number: accNum,
+          ifsc_code: ifsc
+        } : null,
+        items: selectedItemsDetails,
+        created_at: new Date().toISOString()
+      };
+
+      const updatedShippingAddress = {
+        ...order.shipping_address,
+        return_request: returnRequest
+      };
+
+      // Try using secure RPC function to bypass RLS UPDATE restrictions on delivered orders
+      const { error: rpcError } = await supabase.rpc("submit_return_request", {
+        order_id: orderId,
+        return_req: returnRequest
+      });
+
+      if (rpcError) {
+        console.warn("RPC failed, falling back to direct table update:", rpcError.message);
+        
+        // Fallback: direct table update (requires custom RLS policies to be configured)
+        const { data, error: updateError } = await supabase
+          .from("orders")
+          .update({
+            shipping_address: updatedShippingAddress
+          })
+          .eq("id", orderId)
+          .select();
+
+        if (updateError) throw updateError;
+        
+        if (!data || data.length === 0) {
+          throw new Error("Unable to save return request. Please execute the SQL script in your Supabase SQL Editor to enable return request submissions.");
+        }
+      }
+
+      setCustomAlert({
+        title: "Request Submitted",
+        message: `Your ${type} request has been submitted successfully.`,
+        type: "success"
+      });
+      setShowReturnForm(prev => ({ ...prev, [orderId]: false }));
+      await fetchOrders();
+    } catch (err) {
+      console.error("Failed to submit return request:", err);
+      setCustomAlert({
+        title: "Error",
+        message: "Error submitting return request: " + err.message,
+        type: "error"
+      });
+    } finally {
+      setSubmittingReturn(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
   const [gstNumber, setGstNumber] = useState("");
   const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
+  const [customAlert, setCustomAlert] = useState(null); // { title, message, type }
 
   useEffect(() => {
     setMounted(true);
@@ -158,6 +331,8 @@ export default function AccountPage() {
           *,
           order_items (
             id,
+            product_id,
+            variant_id,
             quantity,
             price,
             product:products (id, name, slug, price, product_images(image_url)),
@@ -755,7 +930,19 @@ export default function AccountPage() {
                               <div className="flex items-center gap-2.5">
                                 <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                                  order.order_status === "delivered"
+                                  order.shipping_address?.return_request
+                                    ? order.shipping_address.return_request.status === "approved"
+                                      ? order.shipping_address.return_request.type === "exchange"
+                                        ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
+                                        : "bg-red-500/10 border border-red-500/20 text-red-500"
+                                      : order.shipping_address.return_request.status === "rejected"
+                                      ? "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
+                                      : order.shipping_address.return_request.status === "received"
+                                      ? "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
+                                      : order.shipping_address.return_request.type === "exchange"
+                                      ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
+                                      : "bg-red-500/10 border border-red-500/20 text-red-400"
+                                    : order.order_status === "delivered"
                                     ? "bg-green-500/10 border border-green-500/20 text-green-500"
                                     : order.order_status === "shipped"
                                     ? "bg-orange-500/10 border border-orange-500/20 text-orange-400"
@@ -767,7 +954,21 @@ export default function AccountPage() {
                                     ? "bg-green-500/10 border border-green-500/20 text-green-500"
                                     : "bg-amber-500/10 border border-amber-500/20 text-amber-400"
                                 }`}>
-                                  {order.order_status === "delivered"
+                                  {order.shipping_address?.return_request
+                                    ? order.shipping_address.return_request.status === "approved"
+                                      ? order.shipping_address.return_request.type === "exchange"
+                                        ? "EXCHANGED"
+                                        : "RETURNED"
+                                      : order.shipping_address.return_request.status === "rejected"
+                                      ? order.shipping_address.return_request.type === "exchange"
+                                        ? "EXCHANGE DECLINED"
+                                        : "RETURN DECLINED"
+                                      : order.shipping_address.return_request.status === "received"
+                                      ? "ITEMS RECEIVED"
+                                      : order.shipping_address.return_request.type === "exchange"
+                                      ? "EXCHANGE REQUESTED"
+                                      : "RETURN REQUESTED"
+                                    : order.order_status === "delivered"
                                     ? "DELIVERED"
                                     : order.order_status === "shipped"
                                     ? "SHIPPED"
@@ -917,6 +1118,232 @@ export default function AccountPage() {
                                 </div>
                               </div>
 
+                              {/* Returns & Exchanges Management Section */}
+                              <div className="pt-6 border-t border-zinc-900 space-y-4">
+                                <div className="flex items-center gap-2">
+                                  <RefreshCw className="w-4 h-4 text-accent" />
+                                  <h4 className="text-zinc-300 font-bold text-xs uppercase tracking-widest">
+                                    Returns & Exchanges Desk
+                                  </h4>
+                                </div>
+
+                                {order.shipping_address?.return_request ? (
+                                  // Request Submitted: Display current request status
+                                  <div className="p-4 bg-zinc-950/40 border border-zinc-900/80 rounded-none space-y-3">
+                                    <div className="flex flex-wrap items-center justify-between gap-3">
+                                      <div className="space-y-1">
+                                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                          Request Submitted
+                                        </p>
+                                        <div className="flex items-center gap-2.5">
+                                          <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                                            {order.shipping_address.return_request.type === "exchange"
+                                              ? `Size Exchange (Desired Size: ${order.shipping_address.return_request.exchange_size})`
+                                              : "Product Return (Refund)"}
+                                          </span>
+                                          <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
+                                            order.shipping_address.return_request.status === "approved"
+                                              ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                                              : order.shipping_address.return_request.status === "rejected"
+                                              ? "bg-red-500/10 border border-red-500/20 text-red-500"
+                                              : order.shipping_address.return_request.status === "received"
+                                              ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                                              : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
+                                          }`}>
+                                            {order.shipping_address.return_request.status === "received"
+                                              ? "ITEMS RECEIVED"
+                                              : order.shipping_address.return_request.status?.toUpperCase() || "PENDING REVIEW"}
+                                          </span>
+                                        </div>
+                                      </div>
+                                      
+                                      <span className="text-[10px] text-zinc-500 font-mono">
+                                        {new Date(order.shipping_address.return_request.created_at).toLocaleDateString("en-IN", {
+                                          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                                        })}
+                                      </span>
+                                    </div>
+
+                                    <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
+                                      <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>
+                                      "{order.shipping_address.return_request.reason}"
+                                    </div>
+
+                                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                      <span className="text-zinc-500 font-bold block text-[9px] mb-1">Items Requested:</span>
+                                      <ul className="list-disc pl-4 space-y-1">
+                                        {order.shipping_address.return_request.items?.map((item, idx) => (
+                                          <li key={idx} className="text-zinc-400">
+                                            {item.name} {item.size && `(${item.size} / ${item.color || "Default"})`} x {item.quantity}
+                                          </li>
+                                        ))}
+                                      </ul>
+                                    </div>
+                                  </div>
+                                ) : order.order_status === "delivered" ? (
+                                  // Request Eligible: Allow submitting new request
+                                  <div className="space-y-4">
+                                    {!showReturnForm[order.id] ? (
+                                      <button
+                                        onClick={() => handleToggleReturnForm(order.id, order.order_items || [])}
+                                        className="px-5 py-2.5 border border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
+                                      >
+                                        Request Return / Exchange
+                                      </button>
+                                    ) : (
+                                      <div className="p-5 bg-zinc-950/40 border border-zinc-900 space-y-5 rounded-none max-w-xl">
+                                        <h5 className="text-[10px] font-bold text-white uppercase tracking-widest">
+                                          Submit Request Details
+                                        </h5>
+
+                                        {/* Item Selectors (Checkboxes) */}
+                                        <div className="space-y-2.5">
+                                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                                            Select Items to Return/Exchange *
+                                          </label>
+                                          <div className="space-y-2 border-l-2 border-zinc-800 pl-3">
+                                            {order.order_items?.map((item) => (
+                                              <label key={item.id} className="flex items-center gap-3 text-[11px] text-zinc-300 cursor-pointer hover:text-white transition-colors">
+                                                <input
+                                                  type="checkbox"
+                                                  checked={!!selectedReturnItems[order.id]?.[item.id]}
+                                                  onChange={() => handleReturnCheckboxChange(order.id, item.id)}
+                                                  className="accent-accent w-4 h-4 cursor-pointer"
+                                                />
+                                                <span>
+                                                  {item.product?.name} {item.variant?.size && `(${item.variant.size})`} x {item.quantity}
+                                                </span>
+                                              </label>
+                                            ))}
+                                          </div>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                          {/* Type Selector */}
+                                          <div className="space-y-1">
+                                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                                              Request Type *
+                                            </label>
+                                            <select
+                                              value={returnType[order.id] || "return"}
+                                              onChange={(e) => setReturnType(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                              className="custom-input text-xs tracking-wide py-2 px-3 appearance-none rounded-none focus:border-accent"
+                                            >
+                                              <option value="return">Return for Refund</option>
+                                              <option value="exchange">Size Exchange</option>
+                                            </select>
+                                          </div>
+
+                                          {/* Exchange Size Selector (Visible only for exchange) */}
+                                          {(returnType[order.id] || "return") === "exchange" && (
+                                            <div className="space-y-1">
+                                              <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                                                Desired Size *
+                                              </label>
+                                              <input
+                                                type="text"
+                                                value={exchangeSize[order.id] || ""}
+                                                onChange={(e) => setExchangeSize(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                className="custom-input text-xs tracking-wide py-2 px-3"
+                                                placeholder="e.g. 40, M, L"
+                                              />
+                                            </div>
+                                          )}
+                                        </div>
+
+                                        {/* Bank Details Inputs for Refund */}
+                                        {(returnType[order.id] || "return") === "return" && (
+                                          <div className="space-y-3 pt-2 border-t border-zinc-900">
+                                            <span className="block text-[9px] font-bold uppercase tracking-widest text-accent">
+                                              Bank Account Details (For Refund Cash) *
+                                            </span>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                                              <div className="space-y-1">
+                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Account Holder Name *</label>
+                                                <input
+                                                  type="text"
+                                                  value={accountHolder[order.id] || ""}
+                                                  onChange={(e) => setAccountHolder(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
+                                                  placeholder="e.g. Muhammed Ashik"
+                                                />
+                                              </div>
+                                              <div className="space-y-1">
+                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Bank Name *</label>
+                                                <input
+                                                  type="text"
+                                                  value={bankName[order.id] || ""}
+                                                  onChange={(e) => setBankName(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
+                                                  placeholder="e.g. State Bank of India"
+                                                />
+                                              </div>
+                                              <div className="space-y-1">
+                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Account Number *</label>
+                                                <input
+                                                  type="text"
+                                                  value={accountNumber[order.id] || ""}
+                                                  onChange={(e) => setAccountNumber(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
+                                                  placeholder="Account Number"
+                                                />
+                                              </div>
+                                              <div className="space-y-1">
+                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">IFSC Code *</label>
+                                                <input
+                                                  type="text"
+                                                  value={ifscCode[order.id] || ""}
+                                                  onChange={(e) => setIfscCode(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
+                                                  placeholder="IFSC Code"
+                                                />
+                                              </div>
+                                            </div>
+                                          </div>
+                                        )}
+
+                                        {/* Reason Input */}
+                                        <div className="space-y-1">
+                                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
+                                            Reason for Return / Exchange *
+                                          </label>
+                                          <textarea
+                                            value={returnReason[order.id] || ""}
+                                            onChange={(e) => setReturnReason(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                            className="custom-input text-xs tracking-wide py-2 px-3 h-20 resize-none rounded-none focus:border-accent"
+                                            placeholder="Please describe why you are requesting a return or exchange..."
+                                          />
+                                        </div>
+
+                                        {/* Buttons */}
+                                        <div className="flex gap-3 pt-2">
+                                          <button
+                                            type="button"
+                                            onClick={() => setShowReturnForm(prev => ({ ...prev, [order.id]: false }))}
+                                            className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+                                          >
+                                            Cancel
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSubmitReturn(order)}
+                                            disabled={submittingReturn[order.id]}
+                                            className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none flex items-center justify-center gap-1.5 cursor-pointer border-none"
+                                          >
+                                            {submittingReturn[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Submit Request"}
+                                          </button>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </div>
+                                ) : (
+                                  // Not Eligible: Show placeholder note
+                                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                    Return window opens only upon successful delivery.
+                                  </p>
+                                )}
+                              </div>
+
                             </div>
                           )}
 
@@ -933,32 +1360,27 @@ export default function AccountPage() {
         </div>
       </div>
       
-      {/* Custom Confirm Modal Overlay */}
-      {confirmModal && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4">
+      {/* Custom Alert Modal Overlay */}
+      {customAlert && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-99999 flex items-center justify-center p-4">
           <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative animate-fadeIn duration-300">
             <div className="space-y-2">
-              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
-                {confirmModal.title || "Confirm Action"}
+              <h3 className={`text-sm font-bold uppercase tracking-widest ${
+                customAlert.type === "error" ? "text-accent" : "text-white"
+              }`}>
+                {customAlert.title || "Message"}
               </h3>
               <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans">
-                {confirmModal.message}
+                {customAlert.message}
               </p>
             </div>
-            <div className="flex gap-3 pt-2">
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={() => setConfirmModal(null)}
-                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
+                onClick={() => setCustomAlert(null)}
+                className="w-full py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
               >
-                Cancel
-              </button>
-              <button
-                type="button"
-                onClick={confirmModal.onConfirm}
-                className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
-              >
-                Confirm
+                OK
               </button>
             </div>
           </div>

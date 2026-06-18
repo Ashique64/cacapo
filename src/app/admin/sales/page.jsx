@@ -86,6 +86,11 @@ export default function SalesReportDesk() {
 
   // Filter Data by Date & Status (for computing top products dynamically)
   const dateStatusFilteredOrders = orders.filter(order => {
+    // Exclude return/exchange requested orders from sales reports completely
+    if (order.shipping_address?.return_request) {
+      return false;
+    }
+
     let matchesDate = true;
     const orderDate = new Date(order.created_at);
     
