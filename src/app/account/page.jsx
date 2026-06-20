@@ -929,7 +929,7 @@ export default function AccountPage() {
                             <div className="space-y-1.5 tracking-wider text-xs">
                               <div className="flex items-center gap-2.5">
                                 <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
-                                <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
+                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
                                   order.shipping_address?.return_request
                                     ? order.shipping_address.return_request.status === "approved"
                                       ? order.shipping_address.return_request.type === "exchange"
@@ -939,6 +939,8 @@ export default function AccountPage() {
                                       ? "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
                                       : order.shipping_address.return_request.status === "received"
                                       ? "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
+                                      : order.shipping_address.return_request.status === "pickup_confirmed"
+                                      ? "bg-blue-500/10 border border-blue-500/20 text-blue-400 animate-pulse"
                                       : order.shipping_address.return_request.type === "exchange"
                                       ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
                                       : "bg-red-500/10 border border-red-500/20 text-red-400"
@@ -965,6 +967,8 @@ export default function AccountPage() {
                                         : "RETURN DECLINED"
                                       : order.shipping_address.return_request.status === "received"
                                       ? "ITEMS RECEIVED"
+                                      : order.shipping_address.return_request.status === "pickup_confirmed"
+                                      ? "PICKUP SCHEDULED"
                                       : order.shipping_address.return_request.type === "exchange"
                                       ? "EXCHANGE REQUESTED"
                                       : "RETURN REQUESTED"
@@ -1148,10 +1152,14 @@ export default function AccountPage() {
                                               ? "bg-red-500/10 border border-red-500/20 text-red-500"
                                               : order.shipping_address.return_request.status === "received"
                                               ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
+                                              : order.shipping_address.return_request.status === "pickup_confirmed"
+                                              ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
                                               : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
                                           }`}>
                                             {order.shipping_address.return_request.status === "received"
                                               ? "ITEMS RECEIVED"
+                                              : order.shipping_address.return_request.status === "pickup_confirmed"
+                                              ? "PICKUP SCHEDULED"
                                               : order.shipping_address.return_request.status?.toUpperCase() || "PENDING REVIEW"}
                                           </span>
                                         </div>
@@ -1163,6 +1171,32 @@ export default function AccountPage() {
                                         })}
                                       </span>
                                     </div>
+
+                                    {order.shipping_address.return_request.status === "pickup_confirmed" && order.shipping_address.return_request.expected_pickup_date && (
+                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
+                                        <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
+                                          Expected Pickup Date
+                                        </span>
+                                        <span className="text-accent font-extrabold text-[11px] uppercase">
+                                          {new Date(order.shipping_address.return_request.expected_pickup_date).toLocaleDateString("en-IN", {
+                                            weekday: "long", day: "numeric", month: "long"
+                                          })}
+                                        </span>
+                                      </div>
+                                    )}
+
+                                    {order.shipping_address.return_request.type === "return" && (order.shipping_address.return_request.status === "received" || order.shipping_address.return_request.status === "approved") && (
+                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
+                                        <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
+                                          Estimated Refund Processing
+                                        </span>
+                                        <span className="text-green-500 font-extrabold text-[11px] uppercase">
+                                          {order.shipping_address.return_request.status === "approved"
+                                            ? "Refund Approved. Credited in 1–2 business days"
+                                            : "Items Received. Refund processed within 3–5 business days"}
+                                        </span>
+                                      </div>
+                                    )}
 
                                     <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
                                       <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>

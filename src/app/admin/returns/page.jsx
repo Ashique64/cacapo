@@ -145,6 +145,39 @@ export default function AdminReturnsDesk() {
     }
   };
 
+  const handleConfirmPickup = async (order) => {
+    const orderId = order.id;
+    const request = order.shipping_address?.return_request;
+    if (!request) return;
+
+    setActionLoading(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const expectedPickup = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
+      const updatedRequest = { 
+        ...request, 
+        status: "pickup_confirmed",
+        expected_pickup_date: expectedPickup
+      };
+      const updatedAddress = { ...order.shipping_address, return_request: updatedRequest };
+
+      const { error: updateErr } = await supabase
+        .from("orders")
+        .update({
+          shipping_address: updatedAddress
+        })
+        .eq("id", orderId);
+
+      if (updateErr) throw updateErr;
+
+      showToast(`Pickup scheduled for ${new Date(expectedPickup).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })}.`, "success");
+      await fetchReturnsData();
+    } catch (err) {
+      showToast(`Pickup scheduling failed: ${err.message}`, "error");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
   const handleReceivePickup = async (order) => {
     const orderId = order.id;
     const request = order.shipping_address?.return_request;
@@ -164,7 +197,7 @@ export default function AdminReturnsDesk() {
 
       if (updateErr) throw updateErr;
 
-      showToast(`Pickup confirmed. Request status updated to received.`, "success");
+      showToast(`Items received successfully.`, "success");
       await fetchReturnsData();
     } catch (err) {
       showToast(`Pickup confirmation failed: ${err.message}`, "error");
@@ -172,6 +205,7 @@ export default function AdminReturnsDesk() {
       setActionLoading(prev => ({ ...prev, [orderId]: false }));
     }
   };
+
 
   const handleApproveRequest = async (order) => {
     const orderId = order.id;
@@ -401,9 +435,17 @@ export default function AdminReturnsDesk() {
                           ? "bg-green-500/10 border border-green-500/20 text-green-500"
                           : req.status === "rejected"
                           ? "bg-red-500/10 border border-red-500/20 text-red-500"
+                          : req.status === "received"
+                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-500"
+                          : req.status === "pickup_confirmed"
+                          ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
                           : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
                       }`}>
-                        {req.status?.toUpperCase() || "PENDING"}
+                        {req.status === "pickup_confirmed"
+                          ? "PICKUP SCHEDULED"
+                          : req.status === "received"
+                          ? "ITEMS RECEIVED"
+                          : req.status?.toUpperCase() || "PENDING"}
                       </span>
                     </div>
 
@@ -484,11 +526,33 @@ export default function AdminReturnsDesk() {
                     {req.status === "pending" && (
                       <div className="space-y-2.5 w-full">
                         <button
+                          onClick={() => handleConfirmPickup(order)}
+                          disabled={actionLoading[order.id]}
+                          className="w-full py-2.5 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none flex items-center justify-center gap-1.5 cursor-pointer border-none"
+                        >
+                          {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm for Pickup"}
+                        </button>
+                        <button
+                          onClick={() => handleRejectRequest(order)}
+                          disabled={actionLoading[order.id]}
+                          className="w-full py-2.5 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white hover:border-accent transition-all duration-300 rounded-none flex items-center justify-center gap-1.5 cursor-pointer bg-transparent"
+                        >
+                          {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Decline Request"}
+                        </button>
+                      </div>
+                    )}
+
+                    {req.status === "pickup_confirmed" && (
+                      <div className="space-y-2.5 w-full">
+                        <span className="block text-[8px] bg-blue-500/10 border border-blue-500/20 text-blue-400 font-bold tracking-widest text-center px-2 py-1 rounded-none font-mono mb-2 uppercase">
+                          Pickup Scheduled ({new Date(req.expected_pickup_date).toLocaleDateString("en-IN", { day: 'numeric', month: 'short' })})
+                        </span>
+                        <button
                           onClick={() => handleReceivePickup(order)}
                           disabled={actionLoading[order.id]}
                           className="w-full py-2.5 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none flex items-center justify-center gap-1.5 cursor-pointer border-none"
                         >
-                          {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm Pickup & Receive"}
+                          {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Confirm Items Received"}
                         </button>
                         <button
                           onClick={() => handleRejectRequest(order)}
@@ -522,7 +586,7 @@ export default function AdminReturnsDesk() {
                       </div>
                     )}
 
-                    {req.status !== "pending" && req.status !== "received" && (
+                    {req.status !== "pending" && req.status !== "pickup_confirmed" && req.status !== "received" && (
                       <div className="flex items-center gap-2 text-zinc-500 font-semibold uppercase text-[10px] pt-2">
                         {req.status === "approved" ? (
                           <>
