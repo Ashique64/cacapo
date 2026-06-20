@@ -116,7 +116,11 @@ export default function CartSidebar() {
             items.map((item) => {
               const product = item.product || {};
               const variant = item.variant || {};
-              const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
+              
+              const dbImages = product.product_images ? product.product_images.map(img => img.image_url) : [];
+              const images = product.images && product.images.length > 0 
+                ? product.images 
+                : (dbImages.length > 0 ? dbImages : ["/Images/clothing.jpg"]);
               const activePrice = variant.price ? variant.price : product.price || 0;
               const displayItemPrice = (activePrice / 100).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,

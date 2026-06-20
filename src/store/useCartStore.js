@@ -39,7 +39,7 @@ export const useCartStore = create(
 
           if (!cart) throw new Error("Cart record is missing");
 
-          // Fetch cart items
+          // Fetch cart items with product_images nested relation
           const { data: dbItems, error: itemsError } = await supabase
             .from("cart_items")
             .select(`
@@ -47,7 +47,7 @@ export const useCartStore = create(
               product_id,
               variant_id,
               quantity,
-              product:products(*),
+              product:products(*, product_images(image_url, sort_order)),
               variant:product_variants(*)
             `)
             .eq("cart_id", cart.id);

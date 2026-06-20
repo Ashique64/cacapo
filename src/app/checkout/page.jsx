@@ -81,7 +81,7 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
 
   // Payment State
-  const [paymentMethod, setPaymentMethod] = useState("upi"); // upi or cod
+  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // razorpay or cod
   const [utrCode, setUtrCode] = useState("");
   const [utrError, setUtrError] = useState("");
   const [copiedUpi, setCopiedUpi] = useState(false);
@@ -101,6 +101,16 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     setMounted(true);
+
+    // Dynamically load Razorpay checkout script
+    const script = document.createElement("script");
+    script.src = "https://checkout.razorpay.com/v1/checkout.js";
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      document.body.removeChild(script);
+    };
   }, []);
 
   // Fetch settings dynamically from database
@@ -348,19 +358,7 @@ export default function CheckoutPage() {
   };
 
   const handlePlaceOrder = async () => {
-    if (paymentMethod === "upi") {
-      if (!utrCode.trim()) {
-        setUtrError("UTR / Transaction Reference Number is required for UPI transfers");
-        return;
-      }
-      if (!/^[0-9]{12}$/.test(utrCode.trim())) {
-        setUtrError("UPI UTR/Reference number must be exactly 12 digits");
-        return;
-      }
-    }
-
     setOrderLoading(true);
-    setUtrError("");
     setCheckoutError(null);
 
     const orderNumber = `CCP-${Math.floor(100000 + Math.random() * 900000)}`;
@@ -388,154 +386,238 @@ export default function CheckoutPage() {
       if (hasMockItems) {
         // Simulate order placement for demo/mock products
         generatedOrderId = crypto.randomUUID();
-      } else {
-        // 1. Save Address to profile if user selected so and address is new
-        let addressId = selectedAddressId && selectedAddressId !== "new" ? selectedAddressId : null;
-        if (user && saveAddressToProfile && (!selectedAddressId || selectedAddressId === "new")) {
-          const { data: savedAddr, error: addrErr } = await supabase
-            .from("addresses")
-            .insert({
-              user_id: user.id,
-              full_name: shippingDetails.fullName,
-              phone: shippingDetails.phone,
-              address_line1: shippingDetails.addressLine1,
-              address_line2: shippingDetails.addressLine2 || null,
-              city: shippingDetails.city,
-              state: shippingDetails.state,
-              country: shippingDetails.country,
-              pincode: shippingDetails.pincode,
-              is_default: shippingDetails.isDefault
-            })
-            .select()
-            .single();
+        setPlacedOrder({
+          orderId: generatedOrderId,
+          orderNumber: orderNumber,
+          totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
+          paymentMethod,
+          utr: "pay_mock_" + Math.floor(Math.random() * 1000000),
+          shippingAddress: finalAddressJson,
+          items: [...cartItems]
+        });
+        await clearCart(user?.id);
+        setStep(2);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        setOrderLoading(false);
+        return;
+      }
 
-          if (!addrErr && savedAddr) {
-            addressId = savedAddr.id;
-          }
+      // 1. Save Address to profile if user selected so and address is new
+      let addressId = selectedAddressId && selectedAddressId !== "new" ? selectedAddressId : null;
+      if (user && saveAddressToProfile && (!selectedAddressId || selectedAddressId === "new")) {
+        const { data: savedAddr, error: addrErr } = await supabase
+          .from("addresses")
+          .insert({
+            user_id: user.id,
+            full_name: shippingDetails.fullName,
+            phone: shippingDetails.phone,
+            address_line1: shippingDetails.addressLine1,
+            address_line2: shippingDetails.addressLine2 || null,
+            city: shippingDetails.city,
+            state: shippingDetails.state,
+            country: shippingDetails.country,
+            pincode: shippingDetails.pincode,
+            is_default: shippingDetails.isDefault
+          })
+          .select()
+          .single();
+
+        if (!addrErr && savedAddr) {
+          addressId = savedAddr.id;
+        }
+      }
+
+      // 2. Insert Order
+      if (user) {
+        const { data: dbOrder, error: orderErr } = await supabase
+          .from("orders")
+          .insert({
+            user_id: user.id,
+            address_id: addressId,
+            shipping_address: finalAddressJson,
+            order_number: orderNumber,
+            subtotal: subtotal,
+            discount: discount,
+            shipping_charge: shippingCharge,
+            tax: tax,
+            total_amount: totalAmount,
+            payment_status: "unpaid",
+            order_status: "pending",
+            payment_method: paymentMethod === "razorpay" ? "upi" : paymentMethod,
+            applied_coupon_id: appliedCoupon?.id || null
+          })
+          .select()
+          .single();
+
+        if (orderErr) throw orderErr;
+        generatedOrderId = dbOrder.id;
+
+        // 3. Insert Order Items
+        const itemsToInsert = cartItems.map(item => ({
+          order_id: generatedOrderId,
+          product_id: item.product_id,
+          variant_id: item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null,
+          quantity: item.quantity,
+          price: item.variant?.price || item.product?.price || 0
+        }));
+
+        const { error: itemsErr } = await supabase
+          .from("order_items")
+          .insert(itemsToInsert);
+
+        if (itemsErr) throw itemsErr;
+
+        // 4. Deduct stock for each ordered item via SECURITY DEFINER function
+        for (const item of cartItems) {
+          const qty = item.quantity || 1;
+          const variantId = item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null;
+          const productId = item.product_id && uuidRegex.test(item.product_id) ? item.product_id : null;
+
+          await supabase.rpc("deduct_stock", {
+            p_variant_id: variantId,
+            p_product_id: variantId ? null : productId,
+            p_quantity: qty
+          });
         }
 
-        // 2. Insert Order
-        if (user) {
-          const { data: dbOrder, error: orderErr } = await supabase
-            .from("orders")
-            .insert({
-              user_id: user.id,
-              address_id: addressId,
-              shipping_address: finalAddressJson,
-              order_number: orderNumber,
-              subtotal: subtotal,
-              discount: discount,
-              shipping_charge: shippingCharge,
-              tax: tax,
-              total_amount: totalAmount,
-              payment_status: paymentMethod === "upi" ? "unpaid" : "unpaid",
-              order_status: "pending",
-              payment_method: paymentMethod,
-              applied_coupon_id: appliedCoupon?.id || null
-            })
-            .select()
-            .single();
-
-          if (orderErr) throw orderErr;
-          generatedOrderId = dbOrder.id;
-
-          // 3. Insert Order Items
-          const itemsToInsert = cartItems.map(item => ({
-            order_id: generatedOrderId,
-            product_id: item.product_id,
-            variant_id: item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null,
-            quantity: item.quantity,
-            price: item.variant?.price || item.product?.price || 0
-          }));
-
-          const { error: itemsErr } = await supabase
-            .from("order_items")
-            .insert(itemsToInsert);
-
-          if (itemsErr) throw itemsErr;
-
-          // 4. Deduct stock for each ordered item via SECURITY DEFINER function (bypasses RLS)
-          for (const item of cartItems) {
-            const qty = item.quantity || 1;
-            const variantId = item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null;
-            const productId = item.product_id && uuidRegex.test(item.product_id) ? item.product_id : null;
-
-            await supabase.rpc("deduct_stock", {
-              p_variant_id: variantId,
-              p_product_id: variantId ? null : productId,
-              p_quantity: qty
-            });
-          }
-
-          // 5. Insert Payment record
+        // 5. COD vs Razorpay flow logic
+        if (paymentMethod === "cod") {
           const { error: payErr } = await supabase
             .from("payments")
             .insert({
               order_id: generatedOrderId,
-              payment_gateway: paymentMethod,
-              transaction_id: paymentMethod === "upi" ? utrCode : null,
+              payment_gateway: "cod",
+              transaction_id: null,
               amount: totalAmount,
               status: "pending"
             });
 
           if (payErr) throw payErr;
-        } else {
-          // Handle guest order placement via API route if available
-          const response = await fetch("/api/orders", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              shipping_address: finalAddressJson,
-              order_number: orderNumber,
-              subtotal,
-              discount,
-              shipping_charge: shippingCharge,
-              tax,
-              total_amount: totalAmount,
-              payment_method: paymentMethod,
-              payment_reference: paymentMethod === "upi" ? utrCode : null,
-              items: cartItems.map(i => ({
-                product_id: i.product_id,
-                variant_id: i.variant_id && uuidRegex.test(i.variant_id) ? i.variant_id : null,
-                quantity: i.quantity,
-                price: i.variant?.price || i.product?.price || 0
-              }))
-            })
+
+          // Update COD order status to processing directly
+          await supabase
+            .from("orders")
+            .update({ order_status: "processing" })
+            .eq("id", generatedOrderId);
+
+          setPlacedOrder({
+            orderId: generatedOrderId,
+            orderNumber: orderNumber,
+            totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
+            paymentMethod: "cod",
+            utr: null,
+            shippingAddress: finalAddressJson,
+            items: [...cartItems]
           });
 
-          if (response.ok) {
-            const resData = await response.json();
-            generatedOrderId = resData.order_id;
-          } else {
-            const resErr = await response.json().catch(() => ({}));
-            throw new Error(resErr.error || "Guest checkout API request failed.");
+          await clearCart(user?.id);
+          setStep(2);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+          setOrderLoading(false);
+
+        } else {
+          // Call API to create order
+          const orderCreateRes = await fetch("/api/payments/razorpay/create-order", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ amount: totalAmount, orderNumber })
+          });
+
+          if (!orderCreateRes.ok) {
+            const errJson = await orderCreateRes.json().catch(() => ({}));
+            throw new Error(errJson.error || "Failed to initiate Razorpay order.");
           }
+
+          const rzpOrderData = await orderCreateRes.json();
+
+          // Insert pending payment record
+          const { error: payErr } = await supabase
+            .from("payments")
+            .insert({
+              order_id: generatedOrderId,
+              payment_gateway: rzpOrderData.mock ? "razorpay_mock" : "razorpay",
+              transaction_id: rzpOrderData.id,
+              amount: totalAmount,
+              status: "pending"
+            });
+
+          if (payErr) throw payErr;
+
+
+
+          if (typeof window.Razorpay === "undefined") {
+            throw new Error("Razorpay SDK failed to load. Please refresh the page.");
+          }
+
+          const rzpOptions = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: rzpOrderData.amount,
+            currency: rzpOrderData.currency,
+            name: "CACAPO",
+            description: `Order #${orderNumber}`,
+            order_id: rzpOrderData.id,
+            handler: async function (response) {
+              setOrderLoading(true);
+              try {
+                const verifyRes = await fetch("/api/payments/razorpay/verify-payment", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    razorpay_order_id: response.razorpay_order_id,
+                    razorpay_payment_id: response.razorpay_payment_id,
+                    razorpay_signature: response.razorpay_signature,
+                    order_id: generatedOrderId
+                  })
+                });
+
+                if (!verifyRes.ok) {
+                  const verifyErr = await verifyRes.json().catch(() => ({}));
+                  throw new Error(verifyErr.error || "Payment verification failed.");
+                }
+
+                setPlacedOrder({
+                  orderId: generatedOrderId,
+                  orderNumber: orderNumber,
+                  totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
+                  paymentMethod: "razorpay",
+                  utr: response.razorpay_payment_id,
+                  shippingAddress: finalAddressJson,
+                  items: [...cartItems]
+                });
+
+                await clearCart(user?.id);
+                setStep(2);
+                window.scrollTo({ top: 0, behavior: "smooth" });
+              } catch (err) {
+                setCheckoutError(err.message || "Payment verification failed. Please contact support.");
+              } finally {
+                setOrderLoading(false);
+              }
+            },
+            modal: {
+              ondismiss: function () {
+                setOrderLoading(false);
+              }
+            },
+            prefill: {
+              name: finalAddressJson.full_name,
+              contact: finalAddressJson.phone,
+              email: user?.email || ""
+            },
+            theme: {
+              color: "#000000"
+            }
+          };
+
+          const rzp = new window.Razorpay(rzpOptions);
+          rzp.open();
         }
       }
     } catch (err) {
-      console.error("Database order save failed:", err);
-      setCheckoutError(err.message || "Failed to save order to database. Please check RLS policies.");
+      console.error("Payment flow failed:", err);
+      setCheckoutError(err.message || "An unexpected error occurred. Please try again.");
       setOrderLoading(false);
-      return;
     }
-
-    // Capture final details
-    setPlacedOrder({
-      orderId: generatedOrderId || crypto.randomUUID(),
-      orderNumber: orderNumber,
-      totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
-      paymentMethod,
-      utr: paymentMethod === "upi" ? utrCode : null,
-      shippingAddress: finalAddressJson,
-      items: [...cartItems]
-    });
-
-    // Clear cart in state and local storage
-    await clearCart(user?.id);
-
-    setStep(2);
-    window.scrollTo({ top: 0, behavior: "smooth" });
-    setOrderLoading(false);
   };
 
   if (!mounted) {
@@ -873,23 +955,23 @@ export default function CheckoutPage() {
                         <button
                           type="button"
                           onClick={() => {
-                            setPaymentMethod("upi");
+                            setPaymentMethod("razorpay");
                             setUtrError("");
                           }}
                           className={`flex items-center gap-4 p-5 border text-left rounded-none transition-all duration-300 bg-transparent ${
-                            paymentMethod === "upi"
+                            paymentMethod === "razorpay"
                               ? "border-accent bg-accent/5"
                               : "border-zinc-800 hover:border-zinc-700"
                           }`}
                         >
                           <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            paymentMethod === "upi" ? "border-accent" : "border-zinc-700"
+                            paymentMethod === "razorpay" ? "border-accent" : "border-zinc-700"
                           }`}>
-                            {paymentMethod === "upi" && <div className="w-2 h-2 rounded-full bg-accent"></div>}
+                            {paymentMethod === "razorpay" && <div className="w-2 h-2 rounded-full bg-accent"></div>}
                           </div>
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-white">Instant UPI Transfer</p>
-                            <p className="text-[11px] text-muted-text mt-1 tracking-wider">Pay using UPI QR or address</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-white">Online Payment</p>
+                            <p className="text-[11px] text-muted-text mt-1 tracking-wider">Cards, UPI, Netbanking, Wallets via Razorpay</p>
                           </div>
                         </button>
 
@@ -917,125 +999,18 @@ export default function CheckoutPage() {
                         </button>
                       </div>
 
-                      {/* UPI Payment Flow */}
-                      {paymentMethod === "upi" && (
-                        <div className="space-y-6 animate-fadeIn duration-500">
-                          {/* Pre-payment warning note */}
-                          <div className="p-4 bg-accent/10 border border-accent/30 flex gap-3.5">
-                            <Info className="w-5 h-5 text-accent shrink-0 mt-0.5" />
-                            <div className="space-y-1.5 text-xs text-zinc-300 tracking-wide leading-relaxed">
-                              <p className="font-bold text-accent uppercase tracking-wider">IMPORTANT UPI NOTICE</p>
-                              <p>
-                                Your order will only be processed and confirmed after the administrator verifies your UPI payment reference number (UTR).
-                                Transfer the exact total to the UPI ID or scan the QR code, copy the 12-digit transaction ID, and paste it below.
-                              </p>
-                            </div>
-                          </div>
-
-                          {/* UPI Detail Display Box */}
-                          <div className="border border-zinc-800 bg-zinc-950/40 p-6 flex flex-col md:flex-row gap-8 items-center justify-center">
-                            
-                            {/* SVG QR Code design */}
-                            <div className="relative w-44 h-44 border border-zinc-800 p-2 bg-white flex items-center justify-center select-none">
-                              {/* SCAN LINE ANIMATION */}
-                              <div className="animate-scan"></div>
-                              {storeSettings.upi_qr_url ? (
-                                <img
-                                  src={storeSettings.upi_qr_url}
-                                  alt="UPI Payment QR Code"
-                                  className="w-40 h-40 object-contain select-none"
-                                />
-                              ) : (
-                                <svg className="w-40 h-40" viewBox="0 0 100 100" fill="black">
-                                  {/* Simulated luxury high-end QR matrix */}
-                                  <rect x="0" y="0" width="25" height="25" />
-                                  <rect x="5" y="5" width="15" height="15" fill="white" />
-                                  <rect x="9" y="9" width="7" height="7" />
-                                  
-                                  <rect x="75" y="0" width="25" height="25" />
-                                  <rect x="80" y="5" width="15" height="15" fill="white" />
-                                  <rect x="84" y="9" width="7" height="7" />
-
-                                  <rect x="0" y="75" width="25" height="25" />
-                                  <rect x="5" y="80" width="15" height="15" fill="white" />
-                                  <rect x="9" y="84" width="7" height="7" />
-
-                                  <rect x="35" y="5" width="5" height="15" />
-                                  <rect x="50" y="10" width="10" height="5" />
-                                  <rect x="65" y="5" width="5" height="10" />
-
-                                  <rect x="30" y="30" width="15" height="5" />
-                                  <rect x="35" y="45" width="20" height="10" />
-                                  <rect x="60" y="30" width="10" height="15" />
-                                  
-                                  <rect x="5" y="35" width="10" height="10" />
-                                  <rect x="20" y="45" width="5" height="15" />
-
-                                  <rect x="75" y="35" width="15" height="5" />
-                                  <rect x="85" y="45" width="10" height="15" />
-
-                                  <rect x="35" y="65" width="15" height="15" />
-                                  <rect x="30" y="85" width="10" height="5" />
-                                  <rect x="50" y="80" width="15" height="10" />
-
-                                  <rect x="70" y="70" width="10" height="5" />
-                                  <rect x="85" y="75" width="5" height="10" />
-                                  <rect x="75" y="90" width="15" height="5" />
-                                </svg>
-                              )}
-                            </div>
-
-                            {/* Payment details text */}
-                            <div className="flex-1 space-y-4 text-center md:text-left w-full">
-                              <div>
-                                <p className="text-zinc-500 text-xs font-bold uppercase tracking-widest">Amount to Pay</p>
-                                <p className="text-3xl font-extrabold tracking-wide text-white mt-1">
-                                  {formatPrice(totalAmount)}
-                                </p>
-                              </div>
-
-                              <div className="space-y-1.5">
-                                <p className="text-zinc-500 text-[11px] font-bold uppercase tracking-widest">Cacapo Official UPI ID</p>
-                                <div className="flex items-center justify-center md:justify-start gap-2">
-                                  <code className="bg-zinc-900 border border-zinc-800 text-white font-mono px-3 py-1.5 text-xs tracking-wider">
-                                    {storeSettings.upi_id}
-                                  </code>
-                                  <button
-                                    type="button"
-                                    onClick={handleCopyUpi}
-                                    className="p-1.5 border border-zinc-800 bg-zinc-900 hover:border-zinc-700 transition-colors text-white"
-                                  >
-                                    {copiedUpi ? <Check className="w-3.5 h-3.5 text-green-500" /> : <Copy className="w-3.5 h-3.5" />}
-                                  </button>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-
-                          {/* UTR Input Form */}
-                          <div className="space-y-2 max-w-md">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
-                              UPI Transaction ID / UTR *
-                            </label>
-                            <input
-                              type="text"
-                              value={utrCode}
-                              onChange={(e) => {
-                                setUtrCode(e.target.value.replace(/[^0-9]/g, ""));
-                                if (utrError) setUtrError("");
-                              }}
-                              maxLength={12}
-                              className="custom-input text-sm font-mono tracking-widest"
-                              placeholder="12-digit transaction ID (UTR)"
-                            />
-                            {utrError ? (
-                              <p className="text-accent text-[11px] tracking-wider font-medium">{utrError}</p>
-                            ) : (
-                              <p className="text-zinc-500 text-[10px] tracking-wider leading-relaxed">
-                                Submit the 12-digit reference number provided by your payment app (GPay, PhonePe, Paytm, etc.).
-                              </p>
-                            )}
-                          </div>
+                      {/* Razorpay Payment Flow */}
+                      {paymentMethod === "razorpay" && (
+                        <div className="p-5 border border-zinc-800 bg-zinc-950/40 space-y-3 animate-fadeIn duration-500">
+                          <p className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-accent" /> Secure Razorpay Checkout Selected
+                          </p>
+                          <p className="text-xs text-muted-text tracking-wider leading-relaxed pt-1">
+                            Upon clicking "Place Order", a secure Razorpay payment window will open where you can pay instantly using your preferred UPI app, Credit/Debit card, Netbanking, or mobile wallets.
+                          </p>
+                          <p className="text-[11px] text-zinc-500 italic">
+                            Do not close or refresh the window while payment is processing.
+                          </p>
                         </div>
                       )}
 
@@ -1101,7 +1076,8 @@ export default function CheckoutPage() {
                     <div className="max-h-60 overflow-y-auto divide-y divide-zinc-900 pr-1 no-scrollbar">
                       {cartItems.map((item) => {
                         const itemPrice = item.variant?.price || item.product?.price || 0;
-                        const mainImage = item.product?.images?.[0] || "/Images/clothing.jpg";
+                        const dbImages = item.product?.product_images ? item.product.product_images.map(img => img.image_url) : [];
+                        const mainImage = item.product?.images?.[0] || (dbImages.length > 0 ? dbImages[0] : "/Images/clothing.jpg");
                         return (
                           <div key={item.id} className="flex gap-4 py-3 first:pt-0 last:pb-0 items-center">
                             <div className="w-12 h-14 bg-zinc-900 relative shrink-0 border border-zinc-800 overflow-hidden">
@@ -1258,6 +1234,15 @@ export default function CheckoutPage() {
                       Your order has been registered successfully. Our administrative desk will verify your UPI Transaction UTR Reference (<strong>{placedOrder.utr}</strong>) within 24 hours to confirm your shipment.
                     </p>
                   </>
+                ) : placedOrder?.paymentMethod === "razorpay" ? (
+                  <>
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white text-green-500">
+                      ORDER PAID SUCCESSFULLY
+                    </h2>
+                    <p className="text-zinc-400 text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
+                      Thank you for your purchase. Your payment reference (<strong>{placedOrder.utr}</strong>) has been verified. Your order is confirmed and is being processed for dispatch.
+                    </p>
+                  </>
                 ) : (
                   <>
                     <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white">
@@ -1298,11 +1283,11 @@ export default function CheckoutPage() {
                     <div>
                       <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Billing Mode</h4>
                       <p className="text-xs text-white font-bold uppercase tracking-wider mt-1.5">
-                        {placedOrder?.paymentMethod === "upi" ? "UPI Transfer" : "Cash on Delivery"}
+                        {placedOrder?.paymentMethod === "upi" ? "UPI Transfer" : placedOrder?.paymentMethod === "razorpay" ? "Online Payment (Razorpay)" : "Cash on Delivery"}
                       </p>
-                      {placedOrder?.paymentMethod === "upi" && (
+                      {(placedOrder?.paymentMethod === "upi" || placedOrder?.paymentMethod === "razorpay") && (
                         <p className="text-[10px] text-accent font-mono mt-1 tracking-widest font-semibold">
-                          UTR: {placedOrder.utr}
+                          REF ID: {placedOrder.utr}
                         </p>
                       )}
                     </div>
