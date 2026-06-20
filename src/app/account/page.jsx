@@ -1185,7 +1185,7 @@ export default function AccountPage() {
                                       </div>
                                     )}
 
-                                    {order.shipping_address.return_request.type === "return" && (order.shipping_address.return_request.status === "received" || order.shipping_address.return_request.status === "approved") && (
+                                    {order.shipping_address.return_request.type === "return" && (order.shipping_address.return_request.status === "received" || order.shipping_address.return_request.status === "approved") && !order.shipping_address.return_request.refund_transfer_details && (
                                       <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
                                         <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
                                           Estimated Refund Processing
@@ -1195,6 +1195,23 @@ export default function AccountPage() {
                                             ? "Refund Approved. Credited in 1–2 business days"
                                             : "Items Received. Refund processed within 3–5 business days"}
                                         </span>
+                                      </div>
+                                    )}
+
+                                    {order.shipping_address.return_request.refund_transfer_details && (
+                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1.5 tracking-wider">
+                                        <span className="text-green-500 font-bold uppercase text-[9px] tracking-widest">
+                                          Refund Disbursed Successfully
+                                        </span>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                                          Txn Reference: <span className="text-white font-mono normal-case">{order.shipping_address.return_request.refund_transfer_details.transaction_id}</span>
+                                        </p>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                                          Amount Credited: <span className="text-white">{formatPrice(order.shipping_address.return_request.refund_transfer_details.amount)}</span>
+                                        </p>
+                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                                          Disbursed Date: <span className="text-white">{new Date(order.shipping_address.return_request.refund_transfer_details.transferred_at).toLocaleDateString("en-IN")}</span>
+                                        </p>
                                       </div>
                                     )}
 

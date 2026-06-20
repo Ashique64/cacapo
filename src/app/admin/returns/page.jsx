@@ -32,6 +32,11 @@ export default function AdminReturnsDesk() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
+  // Refund transfer states
+  const [refundTxnId, setRefundTxnId] = useState({});
+  const [refundAmount, setRefundAmount] = useState({});
+  const [showRefundForm, setShowRefundForm] = useState({});
+
   // Toast State
   const [toast, setToast] = useState(null);
 
@@ -173,6 +178,50 @@ export default function AdminReturnsDesk() {
       await fetchReturnsData();
     } catch (err) {
       showToast(`Pickup scheduling failed: ${err.message}`, "error");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handleRecordRefund = async (order) => {
+    const orderId = order.id;
+    const request = order.shipping_address?.return_request;
+    if (!request) return;
+
+    const txnId = refundTxnId[orderId]?.trim();
+    const amountVal = refundAmount[orderId];
+
+    if (!txnId) {
+      showToast("Please enter a transaction ID or reference number.", "error");
+      return;
+    }
+
+    setActionLoading(prev => ({ ...prev, [orderId]: true }));
+    try {
+      const refundDetails = {
+        status: "completed",
+        transaction_id: txnId,
+        amount: amountVal || order.total_amount,
+        transferred_at: new Date().toISOString()
+      };
+
+      const updatedRequest = { ...request, refund_transfer_details: refundDetails };
+      const updatedAddress = { ...order.shipping_address, return_request: updatedRequest };
+
+      const { error: updateErr } = await supabase
+        .from("orders")
+        .update({
+          shipping_address: updatedAddress
+        })
+        .eq("id", orderId);
+
+      if (updateErr) throw updateErr;
+
+      showToast(`Refund transfer successfully recorded.`, "success");
+      setShowRefundForm(prev => ({ ...prev, [orderId]: false }));
+      await fetchReturnsData();
+    } catch (err) {
+      showToast(`Failed to record refund: ${err.message}`, "error");
     } finally {
       setActionLoading(prev => ({ ...prev, [orderId]: false }));
     }
@@ -502,12 +551,81 @@ export default function AdminReturnsDesk() {
                       </p>
                     </div>
                     {req.bank_details && (
-                      <div className="p-4 bg-zinc-950/60 border border-zinc-900/60 rounded-none space-y-1">
-                        <h4 className="text-accent text-[8.5px] font-bold uppercase tracking-widest mb-1.5">Bank Refund Details</h4>
-                        <p className="text-[10px] text-zinc-400 uppercase font-bold">Holder: <span className="text-white normal-case">{req.bank_details.account_holder}</span></p>
-                        <p className="text-[10px] text-zinc-400 uppercase font-bold">Bank: <span className="text-white normal-case">{req.bank_details.bank_name}</span></p>
-                        <p className="text-[10px] text-zinc-400 uppercase font-bold">A/C Number: <span className="text-white font-mono">{req.bank_details.account_number}</span></p>
-                        <p className="text-[10px] text-zinc-400 uppercase font-bold">IFSC Code: <span className="text-white font-mono">{req.bank_details.ifsc_code}</span></p>
+                      <div className="p-4 bg-zinc-950/60 border border-zinc-900/60 rounded-none space-y-3">
+                        <div>
+                          <h4 className="text-accent text-[8.5px] font-bold uppercase tracking-widest mb-1.5">Bank Refund Details</h4>
+                          <p className="text-[10px] text-zinc-400 uppercase font-bold">Holder: <span className="text-white normal-case">{req.bank_details.account_holder}</span></p>
+                          <p className="text-[10px] text-zinc-400 uppercase font-bold">Bank: <span className="text-white normal-case">{req.bank_details.bank_name}</span></p>
+                          <p className="text-[10px] text-zinc-400 uppercase font-bold">A/C Number: <span className="text-white font-mono">{req.bank_details.account_number}</span></p>
+                          <p className="text-[10px] text-zinc-400 uppercase font-bold">IFSC Code: <span className="text-white font-mono">{req.bank_details.ifsc_code}</span></p>
+                        </div>
+
+                        {req.refund_transfer_details ? (
+                          <div className="pt-2.5 border-t border-zinc-900 space-y-1">
+                            <span className="text-green-500 text-[8.5px] font-bold uppercase tracking-widest block mb-1">
+                              Refund Disbursed
+                            </span>
+                            <p className="text-[9.5px] text-zinc-400 uppercase font-bold">Ref ID: <span className="text-white font-mono normal-case">{req.refund_transfer_details.transaction_id}</span></p>
+                            <p className="text-[9.5px] text-zinc-400 uppercase font-bold">Amount: <span className="text-white font-mono">{formatPrice(req.refund_transfer_details.amount)}</span></p>
+                            <p className="text-[9.5px] text-zinc-400 uppercase font-bold">Date: <span className="text-white font-mono">{new Date(req.refund_transfer_details.transferred_at).toLocaleDateString("en-IN", { day: "numeric", month: "short" })}</span></p>
+                          </div>
+                        ) : showRefundForm[order.id] ? (
+                          <div className="pt-2.5 border-t border-zinc-900 space-y-2">
+                            <span className="text-zinc-400 text-[8.5px] font-bold uppercase tracking-widest block">
+                              Record Cash Transfer
+                            </span>
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Transaction ID / Reference Reference *</label>
+                              <input
+                                type="text"
+                                value={refundTxnId[order.id] || ""}
+                                onChange={(e) => setRefundTxnId(prev => ({ ...prev, [order.id]: e.target.value }))}
+                                className="w-full bg-zinc-900 border border-zinc-800 text-white px-2.5 py-1 text-[10px] outline-none focus:border-accent"
+                                placeholder="e.g. TXN998877123"
+                              />
+                            </div>
+                            <div className="space-y-1">
+                              <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Refund Amount (INR Cents)</label>
+                              <input
+                                type="number"
+                                value={refundAmount[order.id] !== undefined ? refundAmount[order.id] : order.total_amount}
+                                onChange={(e) => setRefundAmount(prev => ({ ...prev, [order.id]: parseInt(e.target.value) || 0 }))}
+                                className="w-full bg-zinc-900 border border-zinc-800 text-white px-2.5 py-1 text-[10px] outline-none focus:border-accent"
+                                placeholder="Amount in cents"
+                              />
+                            </div>
+                            <div className="flex gap-2 pt-1">
+                              <button
+                                type="button"
+                                onClick={() => setShowRefundForm(prev => ({ ...prev, [order.id]: false }))}
+                                className="w-1/2 py-1 border border-zinc-800 text-white text-[9px] font-bold tracking-widest uppercase hover:border-zinc-650 bg-transparent cursor-pointer"
+                              >
+                                Cancel
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleRecordRefund(order)}
+                                disabled={actionLoading[order.id]}
+                                className="w-1/2 py-1 bg-white text-black text-[9px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all cursor-pointer border-none flex items-center justify-center"
+                              >
+                                Save
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="pt-2 border-t border-zinc-900">
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setShowRefundForm(prev => ({ ...prev, [order.id]: true }));
+                                setRefundAmount(prev => ({ ...prev, [order.id]: order.total_amount }));
+                              }}
+                              className="w-full py-1.5 border border-zinc-850 hover:border-accent hover:text-accent bg-zinc-900 text-white text-[9px] font-bold tracking-widest uppercase transition-all cursor-pointer"
+                            >
+                              Transfer Cash / Mark Refunded
+                            </button>
+                          </div>
+                        )}
                       </div>
                     )}
                     <div>
