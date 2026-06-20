@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import AdminPagination from "@/components/ui/AdminPagination";
+import { requestReturnPickup } from "@/lib/delivery";
 import { 
   RefreshCw,
   Search,
@@ -157,11 +158,19 @@ export default function AdminReturnsDesk() {
 
     setActionLoading(prev => ({ ...prev, [orderId]: true }));
     try {
+      // Call reverse logistics API
+      const result = await requestReturnPickup(order, request);
+      if (!result.status) {
+        throw new Error(result.error || "Failed to book reverse pickup with Shiprocket");
+      }
+
       const expectedPickup = new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString();
       const updatedRequest = { 
         ...request, 
         status: "pickup_confirmed",
-        expected_pickup_date: expectedPickup
+        expected_pickup_date: expectedPickup,
+        return_order_id: result.return_order_id,
+        return_shipment_id: result.return_shipment_id
       };
       const updatedAddress = { ...order.shipping_address, return_request: updatedRequest };
 

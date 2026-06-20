@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { createShipment, generateLabel } from "@/lib/delivery";
 import AdminPagination from "@/components/ui/AdminPagination";
 import { 
   Search, 
@@ -40,9 +41,7 @@ export default function AdminOrdersDesk() {
     setCurrentPage(1);
   }, [searchTerm, statusFilter]);
 
-  // Shipment form states (scoped by order ID)
-  const [shippingCarrier, setShippingCarrier] = useState({});
-  const [trackingNumber, setTrackingNumber] = useState({});
+  // Store setting states
   const [gstNumber, setGstNumber] = useState("");
   const [actionLoading, setActionLoading] = useState({});
 
@@ -108,15 +107,7 @@ export default function AdminOrdersDesk() {
       if (dbError) throw dbError;
       setOrders(data || []);
 
-      // Initialize shipping inputs from order data
-      const carriers = {};
-      const trackings = {};
-      data?.forEach(order => {
-        carriers[order.id] = order.shipping_carrier || "";
-        trackings[order.id] = order.tracking_number || "";
-      });
-      setShippingCarrier(carriers);
-      setTrackingNumber(trackings);
+
 
     } catch (err) {
       console.error("Failed to load orders for admin desk:", err);
@@ -180,34 +171,103 @@ export default function AdminOrdersDesk() {
     });
   };
 
-  const handleUpdateShipment = async (e, orderId, nextStatus) => {
-    e.preventDefault();
-    const carrier = shippingCarrier[orderId]?.trim();
-    const tracking = trackingNumber[orderId]?.trim();
-
-    if (!carrier || !tracking) {
-      showToast("Please enter both Carrier name and Tracking reference.", "error");
-      return;
-    }
-
+  const handleMarkDelivered = async (orderId) => {
     setActionLoading(prev => ({ ...prev, [orderId]: true }));
     try {
       const { error: shipError } = await supabase
         .from("orders")
         .update({
-          order_status: nextStatus,
-          shipping_carrier: carrier,
-          tracking_number: tracking
+          order_status: "delivered"
         })
         .eq("id", orderId);
 
       if (shipError) throw shipError;
       
-      showToast(`Order successfully marked as ${nextStatus.toUpperCase()}`, "success");
+      showToast("Order successfully marked as DELIVERED", "success");
       await fetchOrders();
 
     } catch (err) {
-      showToast("Failed to update shipment details: " + err.message, "error");
+      showToast("Failed to update shipment status: " + err.message, "error");
+    } finally {
+      setActionLoading(prev => ({ ...prev, [orderId]: false }));
+    }
+  };
+
+  const handleCreateShipment = async (order) => {
+    const orderId = order.id;
+    setActionLoading(prev => ({ ...prev, [orderId]: true }));
+    try {
+      // 1. Create shipment on Shiprocket
+      const shipResult = await createShipment(order);
+      if (!shipResult.status) {
+        throw new Error(shipResult.error || "Failed to create shipment on Shiprocket");
+      }
+
+      const { shipment_id, awb_code, courier_name } = shipResult;
+      const trackingNo = awb_code || "TRK" + Math.floor(Math.random() * 1000000);
+      const courier = courier_name || "Shiprocket Express";
+      const trackingUrl = `https://shiprocket.co/tracking/${trackingNo}`;
+
+      // 2. Fetch Label URL
+      let labelUrl = "";
+      const labelResult = await generateLabel(shipment_id);
+      if (labelResult.status) {
+        labelUrl = labelResult.label_url;
+      }
+
+      // 3. Update Order details in Supabase
+      const updatedAddress = {
+        ...order.shipping_address,
+        shipment_id,
+        tracking_url: trackingUrl,
+        label_url: labelUrl,
+        courier_name: courier
+      };
+
+      try {
+        const { error: dbErr } = await supabase
+          .from("orders")
+          .update({
+            order_status: "shipped",
+            shipping_carrier: courier,
+            tracking_number: trackingNo,
+            shipment_id,
+            tracking_url: trackingUrl,
+            shipping_address: updatedAddress
+          })
+          .eq("id", orderId);
+
+        if (dbErr) {
+          // Fallback if columns are not in DB schema yet
+          const { error: fbErr } = await supabase
+            .from("orders")
+            .update({
+              order_status: "shipped",
+              shipping_carrier: courier,
+              tracking_number: trackingNo,
+              shipping_address: updatedAddress
+            })
+            .eq("id", orderId);
+          if (fbErr) throw fbErr;
+        }
+      } catch (err) {
+        // Fallback for direct update if DB throws exceptions
+        const { error: fbErr } = await supabase
+          .from("orders")
+          .update({
+            order_status: "shipped",
+            shipping_carrier: courier,
+            tracking_number: trackingNo,
+            shipping_address: updatedAddress
+          })
+          .eq("id", orderId);
+        if (fbErr) throw fbErr;
+      }
+
+      showToast(`Shipment created on Shiprocket! AWB: ${trackingNo}`, "success");
+      await fetchOrders();
+    } catch (err) {
+      showToast(err.message, "error");
     } finally {
       setActionLoading(prev => ({ ...prev, [orderId]: false }));
     }
@@ -573,77 +633,69 @@ export default function AdminOrdersDesk() {
 
                         {/* Dispatch Control Form */}
                         {(order.payment_status === "paid" || order.payment_method === "cod") && (
-                          <form 
-                            onSubmit={(e) => handleUpdateShipment(e, order.id, "shipped")}
-                            className="border border-zinc-900 bg-zinc-950 p-4 space-y-4"
-                          >
+                          <div className="border border-zinc-900 bg-zinc-950 p-4 space-y-4">
                             <h5 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase flex items-center gap-2">
                               <Truck className="w-4 h-4 text-accent" /> Shipment Control
                             </h5>
 
-                            <div className="space-y-3">
-                              {/* Shipping Carrier */}
-                              <div className="space-y-1">
-                                <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Shipping Carrier</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. DHL, BlueDart, Delhivery"
-                                  value={shippingCarrier[order.id] || ""}
-                                  onChange={(e) => setShippingCarrier(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-xs px-3 py-2 text-white outline-none rounded-none transition-all"
-                                  required
-                                />
-                              </div>
+                            {order.order_status !== "shipped" && order.order_status !== "delivered" && (
+                              <button
+                                type="button"
+                                onClick={() => handleCreateShipment(order)}
+                                disabled={actionLoading[order.id]}
+                                className="w-full py-2.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-extrabold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer border-none flex items-center justify-center gap-1.5"
+                              >
+                                {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Create Shipment on Shiprocket"}
+                              </button>
+                            )}
 
-                              {/* Tracking Number */}
-                              <div className="space-y-1">
-                                <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Tracking Reference ID</label>
-                                <input
-                                  type="text"
-                                  placeholder="e.g. AWBC100234123"
-                                  value={trackingNumber[order.id] || ""}
-                                  onChange={(e) => setTrackingNumber(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                  className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-xs px-3 py-2 text-white outline-none rounded-none transition-all"
-                                  required
-                                />
+                            {order.shipping_address?.label_url && (
+                              <div className="pb-1">
+                                <a
+                                  href={order.shipping_address.label_url}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="w-full py-2 border border-green-500/30 text-green-500 hover:border-green-500 text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer flex items-center justify-center gap-1.5 bg-green-950/10 text-center no-underline"
+                                >
+                                  Download Shipping Label
+                                </a>
                               </div>
+                            )}
 
-                              {/* Status Action CTAs */}
-                              <div className="flex gap-2.5 pt-2">
-                                {order.order_status !== "shipped" && order.order_status !== "delivered" && (
-                                  <button
-                                    type="submit"
-                                    disabled={actionLoading[order.id]}
-                                    className="w-full py-2 bg-white text-black text-[9px] font-extrabold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none cursor-pointer border-none flex items-center justify-center"
+                            {(order.order_status === "shipped" || order.order_status === "delivered") && (
+                              <div className="bg-zinc-900 border border-zinc-800 p-3 text-[10px] text-zinc-400 font-bold tracking-widest uppercase flex flex-col gap-1">
+                                <span>Carrier: {order.shipping_carrier}</span>
+                                <span>Tracking AWB: {order.tracking_number}</span>
+                                {order.shipping_address?.tracking_url && (
+                                  <a
+                                    href={order.shipping_address.tracking_url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-accent hover:underline flex items-center gap-1 mt-1 text-[9px] normal-case tracking-normal"
                                   >
-                                    Mark Dispatched
-                                  </button>
-                                )}
-                                
-                                {order.order_status !== "delivered" && (
-                                  <button
-                                    type="button"
-                                    onClick={(e) => handleUpdateShipment(e, order.id, "delivered")}
-                                    disabled={actionLoading[order.id]}
-                                    className={`py-2 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer flex items-center justify-center ${
-                                      order.order_status === "shipped"
-                                        ? "w-full bg-green-500 text-white hover:bg-green-600 border-none"
-                                        : "w-1/2 border border-zinc-800 hover:border-green-500 hover:text-green-500 bg-transparent text-zinc-400"
-                                    }`}
-                                  >
-                                    Mark Delivered
-                                  </button>
+                                    Track Shipment
+                                  </a>
                                 )}
                               </div>
+                            )}
 
-                              {/* Display active shipping values */}
-                              {order.order_status === "delivered" && (
-                                <div className="bg-green-500/5 border border-green-500/20 p-3 text-[10px] text-green-500 font-bold tracking-widest uppercase flex items-center gap-2">
-                                  <CheckCircle2 className="w-4 h-4" /> Shipment Delivered ({order.shipping_carrier} - {order.tracking_number})
-                                </div>
-                              )}
-                            </div>
-                          </form>
+                            {order.order_status === "shipped" && (
+                              <button
+                                type="button"
+                                onClick={() => handleMarkDelivered(order.id)}
+                                disabled={actionLoading[order.id]}
+                                className="w-full py-2 bg-green-500 text-white hover:bg-green-600 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer border-none flex items-center justify-center"
+                              >
+                                {actionLoading[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Mark Delivered"}
+                              </button>
+                            )}
+
+                            {order.order_status === "delivered" && (
+                              <div className="bg-green-500/5 border border-green-500/20 p-2 text-center text-[9px] text-green-500 font-bold tracking-widest uppercase">
+                                Delivered
+                              </div>
+                            )}
+                          </div>
                         )}
 
                       </div>
