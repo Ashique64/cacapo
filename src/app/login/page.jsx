@@ -162,6 +162,10 @@ function LoginContent() {
         
         setSuccessMessage("Password updated successfully! Redirecting to sign in...");
         setTimeout(() => {
+          setAuthTab("signin");
+          setSuccessMessage(null);
+          setPassword("");
+          setConfirmPassword("");
           router.push("/login");
         }, 2500);
       } catch (err) {
