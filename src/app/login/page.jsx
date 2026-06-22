@@ -230,10 +230,20 @@ function LoginContent() {
           }
         }
       } else {
-        const { data, error: signUpErr } = await signUp(email, password, {
-          full_name: fullName.trim(),
-          phone: phone.trim()
-        });
+        const siteUrl = window.location.origin.includes("localhost")
+          ? "https://cacapo.vercel.app"
+          : window.location.origin;
+        const emailRedirectTo = `${siteUrl}/login`;
+
+        const { data, error: signUpErr } = await signUp(
+          email, 
+          password, 
+          {
+            full_name: fullName.trim(),
+            phone: phone.trim()
+          },
+          emailRedirectTo
+        );
         if (signUpErr) throw signUpErr;
 
         if (data && !data.session) {

@@ -38,13 +38,14 @@ export const useAuthStore = create((set, get) => ({
     };
   },
 
-  signUp: async (email, password, metadata) => {
+  signUp: async (email, password, metadata, emailRedirectTo) => {
     set({ loading: true });
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         data: metadata,
+        emailRedirectTo,
       },
     });
     set({ loading: false });
