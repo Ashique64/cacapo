@@ -122,7 +122,10 @@ function LoginContent() {
 
       setSubmitting(true);
       try {
-        const resetRedirect = `${window.location.origin}/login?type=recovery`;
+        const siteUrl = window.location.origin.includes("localhost")
+          ? "https://cacapo.vercel.app"
+          : window.location.origin;
+        const resetRedirect = `${siteUrl}/login?type=recovery`;
         const { error: resetErr } = await useAuthStore.getState().resetPasswordForEmail(email.trim(), resetRedirect);
         if (resetErr) throw resetErr;
         setVerificationSent(true);
