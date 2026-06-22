@@ -1327,15 +1327,6 @@ export default function CheckoutPage() {
                 >
                   CONTINUE SHOPPING
                 </Link>
-
-                <a
-                  href={`https://wa.me/919876543210?text=Hello%20Cacapo%2C%20I%20just%20placed%20order%20${placedOrder?.orderNumber}%20and%20would%20like%20to%20query%20details.`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="w-full md:w-auto px-8 py-3 bg-green-600 hover:bg-green-700 text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 rounded-none text-center flex items-center justify-center gap-2"
-                >
-                  CONTACT SUPPORT via WHATSAPP
-                </a>
               </div>
 
             </div>
