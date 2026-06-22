@@ -46,10 +46,11 @@ export default async function ProductDetailsPage({ params }) {
     notFound();
   }
 
-  // 2. Fetch related products from the same category
+  // 2. Fetch related products from the same category with fallback to other products if < 4
   try {
+    let relatedData = [];
     if (product.category_id) {
-      const { data: relatedData } = await supabase
+      const { data } = await supabase
         .from("products")
         .select(`
           id, name, slug, price,
@@ -60,26 +61,45 @@ export default async function ProductDetailsPage({ params }) {
         .in("status", ["active", "draft"])
         .neq("id", product.id)
         .limit(4);
+      relatedData = data || [];
+    }
 
-      if (relatedData && relatedData.length > 0) {
-        relatedProducts = relatedData.map((p) => ({
-          ...p,
-          images: p.product_images && p.product_images.length > 0
-            ? p.product_images
-                .sort((a, b) => a.sort_order - b.sort_order)
-                .map((img) => img.image_url)
-            : ["/Images/clothing.jpg"],
-          variants: p.product_variants || []
-        }));
+    // If we have fewer than 4 related products from the same category, fill the rest with other active products
+    if (relatedData.length < 4) {
+      const excludedIds = [product.id, ...relatedData.map(p => p.id)];
+      // Format array of UUIDs for Supabase 'in' filter
+      const filterString = `(${excludedIds.join(",")})`;
+      const needed = 4 - relatedData.length;
+
+      const { data: fallbackData } = await supabase
+        .from("products")
+        .select(`
+          id, name, slug, price,
+          product_images(image_url, sort_order),
+          product_variants(id, size, color, price, stock_quantity)
+        `)
+        .in("status", ["active", "draft"])
+        .not("id", "in", filterString)
+        .limit(needed);
+
+      if (fallbackData && fallbackData.length > 0) {
+        relatedData = [...relatedData, ...fallbackData];
       }
+    }
+
+    if (relatedData && relatedData.length > 0) {
+      relatedProducts = relatedData.map((p) => ({
+        ...p,
+        images: p.product_images && p.product_images.length > 0
+          ? p.product_images
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map((img) => img.image_url)
+          : ["/Images/clothing.jpg"],
+        variants: p.product_variants || []
+      }));
     }
   } catch (err) {
     console.error("Error fetching related products on server:", err);
-  }
-
-  // No fallback related products from mock data
-  if (relatedProducts.length === 0) {
-    relatedProducts = [];
   }
 
   return (
