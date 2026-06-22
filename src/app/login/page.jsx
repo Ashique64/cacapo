@@ -38,6 +38,41 @@ function LoginContent() {
   const [successMessage, setSuccessMessage] = useState(null);
   const [verificationSent, setVerificationSent] = useState(false);
 
+  const [failedAttempts, setFailedAttempts] = useState(0);
+  const [lockoutTime, setLockoutTime] = useState(0);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const storedLockout = localStorage.getItem("login_lockout_until");
+      if (storedLockout) {
+        const remaining = Math.ceil((parseInt(storedLockout) - Date.now()) / 1000);
+        if (remaining > 0) {
+          setLockoutTime(remaining);
+          setError(`Too many failed attempts. Locked out. Try again in ${remaining}s.`);
+        } else {
+          localStorage.removeItem("login_lockout_until");
+        }
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    if (lockoutTime <= 0) return;
+    const timer = setInterval(() => {
+      setLockoutTime((prev) => {
+        if (prev <= 1) {
+          localStorage.removeItem("login_lockout_until");
+          setFailedAttempts(0);
+          setError(null);
+          return 0;
+        }
+        setError(`Too many failed attempts. Locked out. Try again in ${prev - 1}s.`);
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [lockoutTime]);
+
   // If user is already logged in, redirect away (except when in recovery flow)
   useEffect(() => {
     const handleRedirect = async () => {
@@ -67,6 +102,11 @@ function LoginContent() {
     e.preventDefault();
     setError(null);
     setSuccessMessage(null);
+
+    if (lockoutTime > 0) {
+      setError(`Too many failed attempts. Locked out. Try again in ${lockoutTime}s.`);
+      return;
+    }
 
     // 1. Forgot password request flow
     if (authTab === "forgot") {
@@ -201,7 +241,20 @@ function LoginContent() {
       }
       router.push(redirectUrl);
     } catch (err) {
-      setError(err.message || "Authentication failed. Please verify credentials.");
+      if (authTab === "signin") {
+        const nextAttempts = failedAttempts + 1;
+        setFailedAttempts(nextAttempts);
+        if (nextAttempts >= 5) {
+          const lockoutUntil = Date.now() + 60 * 1000;
+          localStorage.setItem("login_lockout_until", lockoutUntil.toString());
+          setLockoutTime(60);
+          setError("Too many failed attempts. You have been locked out for 60 seconds.");
+        } else {
+          setError(err.message || "Authentication failed. Please verify credentials.");
+        }
+      } else {
+        setError(err.message || "Authentication failed. Please verify credentials.");
+      }
     } finally {
       setSubmitting(false);
     }
@@ -401,8 +454,9 @@ function LoginContent() {
                     required
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    className="custom-input text-xs tracking-wider py-2.5 px-3"
+                    className="custom-input text-xs tracking-wider py-2.5 px-3 disabled:opacity-50"
                     placeholder="e.g. customer@cacapo.com"
+                    disabled={submitting || lockoutTime > 0}
                     suppressHydrationWarning
                   />
                 </div>
@@ -420,7 +474,8 @@ function LoginContent() {
                       required
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
-                      className="custom-input text-xs tracking-wider py-2.5 px-3 pr-10"
+                      className="custom-input text-xs tracking-wider py-2.5 px-3 pr-10 disabled:opacity-50"
+                      disabled={submitting || lockoutTime > 0}
                       placeholder={authTab === "recovery" ? "Min 6 characters" : "Minimum 6 characters"}
                     />
                     <button
@@ -477,10 +532,12 @@ function LoginContent() {
 
               <button
                 type="submit"
-                disabled={submitting}
-                className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-800 disabled:text-zinc-500 cursor-pointer"
+                disabled={submitting || lockoutTime > 0}
+                className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 disabled:cursor-not-allowed cursor-pointer"
               >
-                {submitting ? (
+                {lockoutTime > 0 ? (
+                  `LOCKED OUT (${lockoutTime}S)`
+                ) : submitting ? (
                   <>
                     <Loader2 className="w-3.5 h-3.5 animate-spin" /> PROCESSING...
                   </>
