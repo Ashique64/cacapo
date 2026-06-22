@@ -305,7 +305,7 @@ function LoginContent() {
                     ? "FORGOT PASSWORD" 
                     : "UPDATE PASSWORD")}
           </h1>
-          <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-[0.1em]">
+          <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-widest">
             {verificationSent 
               ? (authTab === "forgot" ? "Please check your inbox to proceed." : "Confirm your email address to activate your account.")
               : (authTab === "forgot" 
