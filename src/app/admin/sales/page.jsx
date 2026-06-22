@@ -18,13 +18,15 @@ import {
   RefreshCw,
   Percent,
   Download,
-  Tag
+  Tag,
+  Shield
 } from "lucide-react";
 
 export default function SalesReportDesk() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
 
   // Filters
   const [fromDate, setFromDate] = useState("");
@@ -45,11 +47,42 @@ export default function SalesReportDesk() {
   const [deductGst, setDeductGst] = useState(false);
 
   useEffect(() => {
-    fetchSalesData();
+    checkRoleAndFetch();
   }, []);
 
-  const fetchSalesData = async () => {
+  const checkRoleAndFetch = async () => {
     setLoading(true);
+    setError(null);
+    try {
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) {
+        setError("Authentication required.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: adminData, error: adminErr } = await supabase
+        .from("admin_users")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (adminErr || !adminData || adminData.role !== "super_admin") {
+        setCurrentUserRole(adminData?.role || "unauthorized");
+        setLoading(false);
+        return;
+      }
+
+      setCurrentUserRole("super_admin");
+      await fetchSalesData();
+    } catch (err) {
+      console.error(err);
+      setError("An unexpected error occurred during role validation.");
+      setLoading(false);
+    }
+  };
+
+  const fetchSalesData = async () => {
     setError(null);
     try {
       const { data, error: dbError } = await supabase
@@ -276,7 +309,28 @@ export default function SalesReportDesk() {
   };
 
   return (
-    <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
+    currentUserRole && currentUserRole !== "super_admin" ? (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 select-none font-sans px-4 text-white">
+        <div className="p-4 bg-red-950/20 border border-red-500/20 rounded-none text-red-500 animate-pulse">
+          <Shield className="w-12 h-12" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white">
+            Access Restricted
+          </h1>
+          <p className="text-zinc-500 text-xs tracking-wider max-w-md mx-auto leading-relaxed">
+            The Sales Report Desk is reserved for system owners. You require <strong className="text-red-400 font-mono">super_admin</strong> authorization to access these records.
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.href = "/admin/orders"}
+          className="px-6 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300"
+        >
+          Return to Orders Desk
+        </button>
+      </div>
+    ) : (
+      <div className="space-y-8 select-none font-sans text-white animate-fadeIn duration-300">
       
       {/* Header */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 pb-6 border-b border-zinc-900">
@@ -549,5 +603,6 @@ export default function SalesReportDesk() {
       )}
 
     </div>
+    )
   );
 }

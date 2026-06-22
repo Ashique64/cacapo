@@ -24,6 +24,7 @@ export default function AdminUsersDesk() {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentUserRole, setCurrentUserRole] = useState(null);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -44,11 +45,42 @@ export default function AdminUsersDesk() {
   const [detailsLoading, setDetailsLoading] = useState(false);
 
   useEffect(() => {
-    fetchUsers();
+    checkRoleAndFetch();
   }, []);
 
-  const fetchUsers = async () => {
+  const checkRoleAndFetch = async () => {
     setLoading(true);
+    setError(null);
+    try {
+      const { data: { user }, error: authErr } = await supabase.auth.getUser();
+      if (authErr || !user) {
+        setError("Authentication required.");
+        setLoading(false);
+        return;
+      }
+
+      const { data: adminData, error: adminErr } = await supabase
+        .from("admin_users")
+        .select("role")
+        .eq("id", user.id)
+        .maybeSingle();
+
+      if (adminErr || !adminData || adminData.role !== "super_admin") {
+        setCurrentUserRole(adminData?.role || "unauthorized");
+        setLoading(false);
+        return;
+      }
+
+      setCurrentUserRole("super_admin");
+      await fetchUsers();
+    } catch (err) {
+      console.error(err);
+      setError("An unexpected error occurred during role validation.");
+      setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
     setError(null);
     try {
       // Fetch profiles
@@ -223,7 +255,28 @@ export default function AdminUsersDesk() {
   const totalCustomers = users.filter((u) => u.role === "customer").length;
 
   return (
-    <div className="space-y-10 pb-12 font-sans select-none animate-fadeIn duration-500 relative min-h-screen">
+    currentUserRole && currentUserRole !== "super_admin" ? (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 select-none font-sans px-4">
+        <div className="p-4 bg-red-950/20 border border-red-500/20 rounded-none text-red-500 animate-pulse">
+          <Shield className="w-12 h-12" />
+        </div>
+        <div className="space-y-2">
+          <h1 className="text-xl md:text-2xl font-black uppercase tracking-widest text-white">
+            Access Restricted
+          </h1>
+          <p className="text-zinc-500 text-xs tracking-wider max-w-md mx-auto leading-relaxed">
+            The Users & Roles Desk is reserved for system owners. You require <strong className="text-red-400 font-mono">super_admin</strong> authorization to access these records.
+          </p>
+        </div>
+        <button
+          onClick={() => window.location.href = "/admin/orders"}
+          className="px-6 py-2.5 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300"
+        >
+          Return to Orders Desk
+        </button>
+      </div>
+    ) : (
+      <div className="space-y-10 pb-12 font-sans select-none animate-fadeIn duration-500 relative min-h-screen">
       
       {/* Title Header */}
       <div className="flex flex-col md:flex-row md:justify-between md:items-end gap-6 border-b border-zinc-900 pb-6">
@@ -592,5 +645,6 @@ export default function AdminUsersDesk() {
       `}</style>
 
     </div>
+    )
   );
 }

@@ -41,7 +41,7 @@ export default async function AdminLayout({ children }) {
   return (
     <div className="h-screen bg-black text-white font-sans flex flex-col md:flex-row overflow-hidden antialiased">
       {/* Admin Sidebar */}
-      <AdminSidebar />
+      <AdminSidebar role={adminUser?.role} />
 
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col min-w-0 bg-black overflow-hidden">

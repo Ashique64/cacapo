@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings, TrendingUp, RefreshCw } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 
-export default function AdminSidebar() {
+export default function AdminSidebar({ role }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
@@ -24,14 +24,16 @@ export default function AdminSidebar() {
 
   const navItems = [
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
-    { name: "Sales Report", path: "/admin/sales", icon: TrendingUp },
     { name: "Orders Desk", path: "/admin/orders", icon: ShoppingBag },
     { name: "Returns Desk", path: "/admin/returns", icon: RefreshCw },
     { name: "Catalog CRUD", path: "/admin/products", icon: Database },
     { name: "Coupons Desk", path: "/admin/coupons", icon: Ticket },
     { name: "Inventory Desk", path: "/admin/inventory", icon: Box },
-    { name: "Users Desk", path: "/admin/users", icon: Users },
-    { name: "Store Settings", path: "/admin/settings", icon: Settings },
+    ...(role === "super_admin" ? [
+      { name: "Sales Report", path: "/admin/sales", icon: TrendingUp },
+      { name: "Users Desk", path: "/admin/users", icon: Users },
+      { name: "Store Settings", path: "/admin/settings", icon: Settings },
+    ] : []),
   ];
 
   return (

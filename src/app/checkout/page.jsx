@@ -1236,7 +1236,7 @@ export default function CheckoutPage() {
                   </>
                 ) : placedOrder?.paymentMethod === "razorpay" ? (
                   <>
-                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white text-green-500">
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-green-500">
                       ORDER PAID SUCCESSFULLY
                     </h2>
                     <p className="text-zinc-400 text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
