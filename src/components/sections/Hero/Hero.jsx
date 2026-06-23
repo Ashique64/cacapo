@@ -54,7 +54,7 @@ export default function Hero() {
         }
       };
       for (let i = 1; i <= totalFrames; i++) {
-        const img = new Image();
+        const img = new window.Image();
         img.src = getFramePath(i);
         img.onload = handleImageLoad;
         img.onerror = handleImageLoad;
@@ -179,7 +179,7 @@ export default function Hero() {
     // (Entrance animations now handled internally by <Preloader /> on mount)
 
     for (let i = 1; i <= totalFrames; i++) {
-      const img = new Image();
+      const img = new window.Image();
       img.src = getFramePath(i);
       img.onload = handleImageLoad;
       img.onerror = handleImageError;
