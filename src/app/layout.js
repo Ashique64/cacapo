@@ -1,6 +1,7 @@
 import { Outfit, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CartSidebar from "@/components/layout/CartSidebar";
+import { Analytics } from "@vercel/analytics/react";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -85,6 +86,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-full flex flex-col">
         {children}
         <CartSidebar />
+        <Analytics />
       </body>
     </html>
   );
