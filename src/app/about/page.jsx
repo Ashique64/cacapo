@@ -4,8 +4,19 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Link from "next/link";
 
 export const metadata = {
-  title: "About | House of CACAPO",
-  description: "Discover the architectural lines, sustainable luxury philosophy, and structural couture that define the minimalist design ethos of CACAPO.",
+  title: "About — The Architecture of Couture",
+  description:
+    "Discover the architectural lines, sustainable luxury philosophy, and structural couture that define the minimalist design ethos of CACAPO. Founded to bring global ready-to-wear silhouettes to India.",
+  alternates: {
+    canonical: "https://cacapoclothing.com/about",
+  },
+  openGraph: {
+    title: "About | House of CACAPO",
+    description:
+      "Discover the architectural lines, sustainable luxury philosophy, and structural couture that define the minimalist design ethos of CACAPO.",
+    url: "https://cacapoclothing.com/about",
+    type: "website",
+  },
 };
 
 export default function AboutPage() {
@@ -45,7 +56,7 @@ export default function AboutPage() {
         <section className="max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
           {/* Left: Beautiful Image Box with border details */}
-          <div className="relative group aspect-[4/3] bg-zinc-950 border border-zinc-900 overflow-hidden">
+          <div className="relative group aspect-4/3 bg-zinc-950 border border-zinc-900 overflow-hidden">
             <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent z-10" />
             <img 
               src="/Images/clothing.jpg" 

@@ -5,8 +5,19 @@ import Link from "next/link";
 import { ArrowRight, Truck, Plane, Sparkles, MapPin } from "lucide-react";
 
 export const metadata = {
-  title: "Shipping & Delivery | House of CACAPO",
-  description: "Learn about ready-to-wear shipping rates, international delivery timelines, order dispatch schedules, and premium sustainable packaging at House of CACAPO.",
+  title: "Shipping & Delivery Information",
+  description:
+    "Learn about CACAPO's ready-to-wear shipping rates, delivery timelines (5–7 days standard, 2–3 days express), order dispatch schedules, and premium atelier packaging.",
+  alternates: {
+    canonical: "https://cacapoclothing.com/shipping-info",
+  },
+  openGraph: {
+    title: "Shipping & Delivery | CACAPO",
+    description:
+      "CACAPO ships across India. Standard delivery 5–7 days. Express 2–3 days. Free shipping on orders above ₹10,000.",
+    url: "https://cacapoclothing.com/shipping-info",
+    type: "website",
+  },
 };
 
 export default function ShippingInfoPage() {
@@ -20,7 +31,7 @@ export default function ShippingInfoPage() {
           <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/55 to-black z-10" />
           
           {/* Subtle Ambient Background Light */}
-          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-[6000ms]" />
+          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-6000" />
           
           <div className="max-w-4xl mx-auto px-6 text-center relative z-20 space-y-4">
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
@@ -29,7 +40,7 @@ export default function ShippingInfoPage() {
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-wider uppercase text-white font-sans leading-none">
               SHIPPING & <span className="text-accent">DELIVERY</span>
             </h1>
-            <div className="w-16 h-[1px] bg-accent mx-auto mt-6" />
+            <div className="w-16 h-px bg-accent mx-auto mt-6" />
             <p className="text-zinc-500 text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
               Bespoke packaging and premium courier logistics for structural protection.
             </p>

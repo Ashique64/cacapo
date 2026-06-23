@@ -5,8 +5,19 @@ import Link from "next/link";
 import { ArrowRight, Eye, ShieldAlert, Cpu, Lock } from "lucide-react";
 
 export const metadata = {
-  title: "Privacy Policy | House of CACAPO",
-  description: "Review the Privacy Policy governing personal data collection, data usage, security protocols, and cookies at House of CACAPO.",
+  title: "Privacy Policy",
+  description:
+    "Review CACAPO's Privacy Policy governing personal data collection, data usage, Row Level Security protocols, and cookies at House of CACAPO.",
+  alternates: {
+    canonical: "https://cacapoclothing.com/privacy-policy",
+  },
+  openGraph: {
+    title: "Privacy Policy | CACAPO",
+    description:
+      "Review CACAPO's Privacy Policy governing personal data, security, and cookies.",
+    url: "https://cacapoclothing.com/privacy-policy",
+    type: "website",
+  },
 };
 
 export default function PrivacyPolicyPage() {
@@ -20,7 +31,7 @@ export default function PrivacyPolicyPage() {
           <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/55 to-black z-10" />
           
           {/* Subtle Ambient Background Light */}
-          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-[6000ms]" />
+          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-6000" />
           
           <div className="max-w-4xl mx-auto px-6 text-center relative z-20 space-y-4">
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
@@ -29,7 +40,7 @@ export default function PrivacyPolicyPage() {
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-wider uppercase text-white font-sans leading-none">
               PRIVACY <span className="text-accent">POLICY</span>
             </h1>
-            <div className="w-16 h-[1px] bg-accent mx-auto mt-6" />
+            <div className="w-16 h-px bg-accent mx-auto mt-6" />
             <p className="text-zinc-500 text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
               Commitment to structural data security, user profiles, and order processing privacy.
             </p>

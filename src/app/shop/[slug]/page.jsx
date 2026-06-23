@@ -7,6 +7,68 @@ import ProductDetailsClient from "./ProductDetailsClient";
 
 export const revalidate = 60;
 
+export async function generateMetadata({ params }) {
+  const { slug } = await params;
+
+  const { data: product } = await supabase
+    .from("products")
+    .select("name, description, short_description, price, product_images(image_url, sort_order)")
+    .eq("slug", slug)
+    .in("status", ["active", "draft"])
+    .maybeSingle();
+
+  if (!product) {
+    return {
+      title: "Product Not Found",
+      description: "This product could not be found.",
+    };
+  }
+
+  const images = product.product_images
+    ? product.product_images.sort((a, b) => a.sort_order - b.sort_order).map((img) => img.image_url)
+    : [];
+
+  const ogImage = images[0] || "/og-image.jpg";
+  const isAbsoluteUrl = ogImage.startsWith("http");
+
+  const title = product.name;
+  const description =
+    product.short_description ||
+    product.description ||
+    `Shop ${product.name} at CACAPO. Premium luxury fashion available now.`;
+  const priceStr = product.price ? `Starting from ₹${product.price.toLocaleString("en-IN")}` : "";
+  const fullDescription = priceStr ? `${description} ${priceStr}.` : description;
+
+  return {
+    title,
+    description: fullDescription,
+    alternates: {
+      canonical: `/shop/${slug}`,
+    },
+    openGraph: {
+      title: `${title} | CACAPO`,
+      description: fullDescription,
+      url: `/shop/${slug}`,
+      type: "website",
+      images: [
+        {
+          url: isAbsoluteUrl ? ogImage : `https://cacapoclothing.com${ogImage}`,
+          width: 800,
+          height: 800,
+          alt: title,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title: `${title} | CACAPO`,
+      description: fullDescription,
+      images: [isAbsoluteUrl ? ogImage : `https://cacapoclothing.com${ogImage}`],
+    },
+  };
+}
+
+
 export default async function ProductDetailsPage({ params }) {
   const { slug } = await params;
 

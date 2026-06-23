@@ -5,8 +5,19 @@ import Link from "next/link";
 import { ArrowRight, RefreshCw, ShieldAlert, Clock, HelpCircle } from "lucide-react";
 
 export const metadata = {
-  title: "Returns & Exchanges | House of CACAPO",
-  description: "Review the return window, eligibility guidelines, and exchange process for ready-to-wear luxury garments and bespoke creations at House of CACAPO.",
+  title: "Returns & Exchanges Policy",
+  description:
+    "Review the 7-day return window, eligibility guidelines, and size exchange process for ready-to-wear luxury garments and bespoke creations at House of CACAPO.",
+  alternates: {
+    canonical: "https://cacapoclothing.com/return-policy",
+  },
+  openGraph: {
+    title: "Returns & Exchanges | CACAPO",
+    description:
+      "Review CACAPO's 7-day return window, eligibility guidelines, and size exchange process.",
+    url: "https://cacapoclothing.com/return-policy",
+    type: "website",
+  },
 };
 
 export default function ReturnPolicyPage() {

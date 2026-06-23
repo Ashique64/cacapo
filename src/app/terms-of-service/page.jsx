@@ -5,8 +5,19 @@ import Link from "next/link";
 import { ArrowRight, ShieldCheck, Scale, FileText, Info } from "lucide-react";
 
 export const metadata = {
-  title: "Terms of Service | House of CACAPO",
-  description: "Read the Terms of Service governing product purchases, intellectual property, account security, and logistics guidelines at House of CACAPO.",
+  title: "Terms of Service",
+  description:
+    "Read CACAPO's Terms of Service governing product purchases, intellectual property, account security, UPI payment verification, and logistics guidelines.",
+  alternates: {
+    canonical: "https://cacapoclothing.com/terms-of-service",
+  },
+  openGraph: {
+    title: "Terms of Service | CACAPO",
+    description:
+      "Read CACAPO's Terms of Service governing purchases, intellectual property, and account security.",
+    url: "https://cacapoclothing.com/terms-of-service",
+    type: "website",
+  },
 };
 
 export default function TermsOfServicePage() {
@@ -20,7 +31,7 @@ export default function TermsOfServicePage() {
           <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/55 to-black z-10" />
           
           {/* Subtle Ambient Background Light */}
-          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-[6000ms]" />
+          <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-6000" />
           
           <div className="max-w-4xl mx-auto px-6 text-center relative z-20 space-y-4">
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
@@ -29,7 +40,7 @@ export default function TermsOfServicePage() {
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-wider uppercase text-white font-sans leading-none">
               TERMS OF <span className="text-accent">SERVICE</span>
             </h1>
-            <div className="w-16 h-[1px] bg-accent mx-auto mt-6" />
+            <div className="w-16 h-px bg-accent mx-auto mt-6" />
             <p className="text-zinc-500 text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
               Agreement governing access, platform purchases, and design ownership.
             </p>
