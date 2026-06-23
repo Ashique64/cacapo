@@ -14,7 +14,7 @@ export async function POST(request) {
     // Sandbox/Mock fallback if RESEND_API_KEY is not configured
     if (!apiKey || apiKey.includes("mock")) {
       console.log(`[Contact Sandbox Alert] Email to ${recipientEmail} with contents:`, {
-        from: "Cacapo Contact Desk <onboarding@resend.dev>",
+        from: "Cacapo Contact Desk <contact@cacapoclothing.com>",
         senderName: name,
         senderEmail: email,
         subject: `New Contact Inquiry: ${subject}`,
@@ -35,7 +35,7 @@ export async function POST(request) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        from: "Cacapo Contact Desk <onboarding@resend.dev>",
+        from: "Cacapo Contact Desk <contact@cacapoclothing.com>",
         to: recipientEmail,
         reply_to: email,
         subject: `New Contact Inquiry: ${subject}`,
