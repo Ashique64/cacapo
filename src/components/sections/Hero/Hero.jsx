@@ -114,63 +114,69 @@ export default function Hero() {
       };
     }
 
-    let loadedCount = 0;
+    const requiredFrames = 15;
+    let requiredLoadedCount = 0;
+    let hasCompleted = false;
     const imagesArray = [];
 
-    const handleImageLoad = () => {
-      loadedCount++;
-      const progress = Math.round((loadedCount / totalFrames) * 100);
-      setLoadingProgress(progress);
+    const handleImageLoad = (index) => {
+      if (index <= requiredFrames) {
+        requiredLoadedCount++;
+        const progress = Math.min(100, Math.round((requiredLoadedCount / requiredFrames) * 100));
+        setLoadingProgress(progress);
 
-      if (loadedCount === totalFrames) {
-        // Draw the first frame on the canvas immediately under the preloader
-        if (imagesArray[0]) {
-          drawImage(imagesArray[0]);
-        }
-
-        setTimeout(() => {
-          // Luxury unmounting sequence
-          if (preloaderRef.current) {
-            setIsLoaded(true); // Trigger canvas triggers and ScrollTrigger initializations immediately as panels start opening
-
-            // Kill any running entry animations to prevent conflicts
-            gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui");
-
-            const tl = gsap.timeline({
-              onComplete: () => {
-                setIsPreloaderRemoved(true);
-                sessionStorage.setItem("cacapo_preloader_done", "true");
-                // Allow scroll on body
-                document.body.style.overflow = "auto";
-              }
-            });
-
-            // 1. Fade/slide out text and UI overlays
-            tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
-              opacity: 0,
-              y: -20,
-              duration: 0.8,
-              ease: "power3.in"
-            })
-            // 2. Split panels slide off screen
-            .to(".preloader-top-panel", {
-              y: "-100%",
-              duration: 1.2,
-              ease: "power4.inOut"
-            }, "-=0.4")
-            .to(".preloader-bottom-panel", {
-              y: "100%",
-              duration: 1.2,
-              ease: "power4.inOut"
-            }, "<"); // Starts at same time
+        if (requiredLoadedCount >= requiredFrames && !hasCompleted) {
+          hasCompleted = true;
+          // Draw the first frame on the canvas immediately under the preloader
+          if (imagesArray[0]) {
+            drawImage(imagesArray[0]);
           }
-        }, 800);
+
+          setTimeout(() => {
+            // Luxury unmounting sequence
+            if (preloaderRef.current) {
+              setIsLoaded(true); // Trigger canvas triggers and ScrollTrigger initializations immediately as panels start opening
+
+              // Kill any running entry animations to prevent conflicts
+              gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui");
+
+              const tl = gsap.timeline({
+                onComplete: () => {
+                  setIsPreloaderRemoved(true);
+                  sessionStorage.setItem("cacapo_preloader_done", "true");
+                  // Allow scroll on body
+                  document.body.style.overflow = "auto";
+                }
+              });
+
+              // 1. Fade/slide out text and UI overlays
+              tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
+                opacity: 0,
+                y: -20,
+                duration: 0.8,
+                ease: "power3.in"
+              })
+              // 2. Split panels slide off screen
+              .to(".preloader-top-panel", {
+                y: "-100%",
+                duration: 1.2,
+                ease: "power4.inOut"
+              }, "-=0.4")
+              .to(".preloader-bottom-panel", {
+                y: "100%",
+                duration: 1.2,
+                ease: "power4.inOut"
+              }, "<"); // Starts at same time
+            }
+          }, 800);
+        }
       }
     };
 
-    const handleImageError = () => {
-      // Still count failures to prevent blocking the loader
-      handleImageLoad();
+    const handleImageError = (index) => {
+      if (index <= requiredFrames) {
+        handleImageLoad(index);
+      }
     };
 
     // Lock scroll and reset viewport during preloading
@@ -181,8 +187,8 @@ export default function Hero() {
     for (let i = 1; i <= totalFrames; i++) {
       const img = new window.Image();
       img.src = getFramePath(i);
-      img.onload = handleImageLoad;
-      img.onerror = handleImageError;
+      img.onload = () => handleImageLoad(i);
+      img.onerror = () => handleImageError(i);
       imagesArray.push(img);
     }
 
