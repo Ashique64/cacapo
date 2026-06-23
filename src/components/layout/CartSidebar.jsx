@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -132,10 +133,13 @@ export default function CartSidebar() {
                   
                   {/* Thumbnail frame with aspect ratio 15/16 */}
                   <div className="w-20 overflow-hidden border border-zinc-900 shrink-0 relative bg-zinc-950" style={{ aspectRatio: "15/16" }}>
-                    <img
+                    <Image
                       src={images[0]}
                       alt={product.name || "Product"}
-                      className="w-full h-full object-cover"
+                      fill
+                      sizes="80px"
+                      className="object-cover"
+                      loading="lazy"
                     />
                   </div>
 
@@ -149,7 +153,7 @@ export default function CartSidebar() {
                         <button
                           onClick={() => removeItem(item.id, user?.id)}
                           className="text-zinc-600 hover:text-accent transition-colors p-0.5"
-                          title="Remove Item"
+                          aria-label={`Remove ${product.name || "item"} from cart`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
@@ -173,11 +177,12 @@ export default function CartSidebar() {
                       <div className="flex items-center border border-zinc-900 bg-zinc-950/20 w-fit">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1, user?.id)}
+                          aria-label="Decrease quantity"
                           className="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
-                        <span className="w-8 text-center text-[10px] font-mono font-bold text-zinc-200">
+                        <span className="w-8 text-center text-[10px] font-mono font-bold text-zinc-200" aria-label={`Quantity: ${item.quantity}`}>
                           {item.quantity}
                         </span>
                         <button
@@ -185,6 +190,7 @@ export default function CartSidebar() {
                             const maxStock = variant.stock_quantity || 99;
                             updateQuantity(item.id, Math.min(maxStock, item.quantity + 1), user?.id);
                           }}
+                          aria-label="Increase quantity"
                           className="w-7 h-7 flex items-center justify-center text-zinc-500 hover:text-white transition-colors cursor-pointer"
                         >
                           <Plus className="w-2.5 h-2.5" />

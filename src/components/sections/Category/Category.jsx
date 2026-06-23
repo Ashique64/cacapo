@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { ArrowUpRight, Loader2 } from "lucide-react";
@@ -134,11 +135,18 @@ export default function Collections({ initialCategories }) {
                 {/* Card Image with Parallax & Hover Zoom */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
                   <div className="absolute inset-0 bg-linear-to-b from-zinc-900/10 via-zinc-950/40 to-black z-1" />
-                  <img
-                    src={item.image_url}
-                    alt={item.name}
-                    className="w-full h-full object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-75 lg:opacity-60 lg:group-hover:opacity-85"
-                  />
+                  {item.image_url ? (
+                    <Image
+                      src={item.image_url}
+                      alt={item.name}
+                      fill
+                      sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                      className="object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-75 lg:opacity-60 lg:group-hover:opacity-85"
+                      loading="lazy"
+                    />
+                  ) : (
+                    <div className="w-full h-full bg-zinc-900" />
+                  )}
                 </div>
 
                 {/* Glassmorphic border glow line on top */}

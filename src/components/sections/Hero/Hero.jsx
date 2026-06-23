@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import LoadingScreen from "@/components/ui/LoadingScreen";
@@ -329,10 +330,14 @@ export default function Hero() {
       <div className="hero-sticky-layer w-full h-screen overflow-hidden z-10 relative">
         {isMobile ? (
           <div className="absolute inset-0 w-full h-full bg-zinc-950 overflow-hidden">
-            <img
+            <Image
               src="/Images/mobile_hero_bg.png"
-              alt="CACAPO Couture Streetwear"
-              className="w-full h-full object-cover opacity-60 scale-110 animate-swing"
+              alt="CACAPO Couture — House of Modern Luxury Fashion"
+              fill
+              sizes="100vw"
+              className="object-cover opacity-60 scale-110 animate-swing"
+              priority
+              quality={85}
             />
           </div>
         ) : (

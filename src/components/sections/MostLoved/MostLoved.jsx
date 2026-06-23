@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 import { ShoppingBag, Sparkles, Heart, Loader2 } from "lucide-react";
@@ -77,19 +78,24 @@ function ProductCard({ product }) {
       <div className="w-full h-[62%] lg:h-1/2 rounded-none overflow-hidden relative border border-zinc-900">
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/60 z-2 pointer-events-none" />
 
-        <Link href={`/shop/${product.slug}`} className="block w-full h-full">
+        <Link href={`/shop/${product.slug}`} className="block w-full h-full" aria-label={`View ${product.name}`}>
           {/* Sliding Images Container */}
           <div
             className="flex h-full w-full transition-transform duration-700 ease-in-out z-0"
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
           >
             {images.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                alt={product.name}
-                className="w-full h-full object-cover shrink-0 transform scale-100 group-hover:scale-105 transition-transform duration-1000"
-              />
+              <div key={i} className="relative w-full h-full shrink-0">
+                <Image
+                  src={img}
+                  alt={`${product.name} — view ${i + 1}`}
+                  fill
+                  sizes="(max-width: 1024px) 80vw, 32vw"
+                  className="object-cover transform scale-100 group-hover:scale-105 transition-transform duration-1000"
+                  loading={i === 0 ? "eager" : "lazy"}
+                  priority={i === 0}
+                />
+              </div>
             ))}
           </div>
         </Link>
@@ -104,6 +110,7 @@ function ProductCard({ product }) {
         {/* Wishlist Button */}
         <button
           onClick={handleWishlist}
+          aria-label={isWishlisted ? `Remove ${product.name} from wishlist` : `Add ${product.name} to wishlist`}
           className="absolute top-4 right-4 z-10 p-2.5 bg-black/60 border border-white/10 hover:border-accent/40 hover:bg-black/80 rounded-full text-white hover:text-accent transition-all duration-300 pointer-events-auto cursor-pointer group/wishlist active:scale-90"
         >
           <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-accent text-accent" : "fill-transparent"} group-hover/wishlist:fill-accent transition-all`} />

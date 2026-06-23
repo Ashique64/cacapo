@@ -77,6 +77,7 @@ export default function Navbar() {
   return (
     <>
       <nav
+        aria-label="Main navigation"
         className={`fixed top-0 left-0 w-full z-40 select-none transition-all duration-300 ${
           isVisible ? "translate-y-0" : "-translate-y-full"
         } ${
@@ -109,23 +110,35 @@ export default function Navbar() {
 
         {/* Desktop Actions */}
         <div className="hidden md:flex items-center gap-4 text-white">
-          <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer p-1">
+          <Link
+            href={user ? "/account" : "/login"}
+            aria-label={user ? "My Account" : "Sign In"}
+            className="hover:text-accent transition-colors cursor-pointer p-1"
+          >
             <User className="w-5 h-5" />
           </Link>
-          <Link href="/wishlist" className="hover:text-accent transition-colors cursor-pointer p-1 relative animate-none">
+          <Link
+            href="/wishlist"
+            aria-label={`Wishlist${wishlistCount > 0 ? ` (${wishlistCount} items)` : ""}`}
+            className="hover:text-accent transition-colors cursor-pointer p-1 relative animate-none"
+          >
             <Heart className="w-5 h-5" />
             {wishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono" aria-hidden="true">
                 {wishlistCount}
               </span>
             )}
           </Link>
           <button 
             onClick={() => setCartOpen(true)}
+            aria-label={`Shopping bag${cartCount > 0 ? `, ${cartCount} items` : ", empty"}`}
             className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
           >
             <ShoppingBag className="w-5 h-5" />
-            <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
+            <span
+              className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono"
+              aria-hidden="true"
+            >
               {cartCount}
             </span>
           </button>
@@ -133,16 +146,21 @@ export default function Navbar() {
 
         {/* Mobile Right Controls */}
         <div className="flex items-center gap-4 md:hidden">
-          <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer p-1 text-white">
+          <Link
+            href={user ? "/account" : "/login"}
+            aria-label={user ? "My Account" : "Sign In"}
+            className="hover:text-accent transition-colors cursor-pointer p-1 text-white"
+          >
             <User className="w-5 h-5" />
           </Link>
           <button 
             onClick={() => setCartOpen(true)}
+            aria-label={`Shopping bag${cartCount > 0 ? `, ${cartCount} items` : ", empty"}`}
             className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
           >
             <ShoppingBag className="w-5 h-5 text-white" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono">
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono" aria-hidden="true">
                 {cartCount}
               </span>
             )}
