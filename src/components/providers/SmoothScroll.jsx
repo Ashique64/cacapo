@@ -7,6 +7,11 @@ import { ScrollTrigger } from "gsap/dist/ScrollTrigger";
 
 export default function SmoothScroll({ children }) {
   useEffect(() => {
+    const isTouchDevice = "ontouchstart" in window || navigator.maxTouchPoints > 0;
+    if (isTouchDevice) {
+      return;
+    }
+
     gsap.registerPlugin(ScrollTrigger);
 
     // Initialize Lenis
