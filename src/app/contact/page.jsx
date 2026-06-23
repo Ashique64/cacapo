@@ -15,17 +15,34 @@ export default function ContactPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitting(true);
+    setError(null);
     
-    // Simulate API request
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    
-    setSubmitting(false);
-    setSuccess(true);
-    setForm({ name: "", email: "", subject: "", message: "" });
+    try {
+      const res = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(form)
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error || "Failed to deliver message. Please check parameters.");
+      }
+
+      setSuccess(true);
+      setForm({ name: "", email: "", subject: "", message: "" });
+    } catch (err) {
+      setError(err.message || "An unexpected network error occurred.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (
@@ -72,7 +89,7 @@ export default function ContactPage() {
                 {
                   icon: <Mail className="w-4 h-4 text-accent" />,
                   title: "EDITORIAL & GENERAL INQUIRIES",
-                  detail: "concierge@cacapoclothing.com"
+                  detail: "support@cacapoclothing.com"
                 },
                 {
                   icon: <Phone className="w-4 h-4 text-accent" />,
@@ -129,6 +146,12 @@ export default function ContactPage() {
                 <h3 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase border-b border-zinc-900 pb-3 flex items-center gap-2">
                   CONCIERGE DIRECT INQUIRY
                 </h3>
+                
+                {error && (
+                  <div className="p-3.5 border border-accent/25 bg-accent/5 text-accent text-xs font-semibold leading-relaxed tracking-wider text-center">
+                    {error}
+                  </div>
+                )}
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {/* Name input */}
