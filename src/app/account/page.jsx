@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -457,14 +457,14 @@ export default function AccountPage() {
     });
   };
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       await signOut();
       router.push("/");
     } catch (err) {
       console.error("Failed to sign out:", err);
     }
-  };
+  }, [signOut, router]);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -502,17 +502,17 @@ export default function AccountPage() {
     }
   };
 
-  const toggleOrderExpand = (id) => {
+  const toggleOrderExpand = useCallback((id) => {
     setExpandedOrderId(prev => (prev === id ? null : id));
-  };
+  }, []);
 
-  const formatPrice = (cents) => {
+  const formatPrice = useCallback((cents) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 0
     }).format(cents / 100);
-  };
+  }, []);
 
   if (!mounted || authLoading || !user) {
     return (

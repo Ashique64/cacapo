@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback, memo } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import gsap from "gsap";
@@ -51,19 +51,19 @@ function ProductCard({ product }) {
     return () => clearInterval(interval);
   }, [isHovered, images]);
 
-  const handleAddBag = (e) => {
+  const handleAddBag = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     if (isCardOutOfStock) return;
     const defaultVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
     addItem(product, defaultVariant, 1, user?.id);
-  };
+  }, [isCardOutOfStock, product, addItem, user?.id]);
 
-  const handleWishlist = (e) => {
+  const handleWishlist = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     toggleWishlist(product);
-  };
+  }, [toggleWishlist, product]);
 
   return (
     <div
@@ -160,6 +160,8 @@ function ProductCard({ product }) {
     </div>
   );
 }
+
+const MemoizedProductCard = memo(ProductCard);
 
 export default function ProductShowcase({ initialProducts }) {
   const triggerRef = useRef(null);
@@ -307,7 +309,7 @@ export default function ProductShowcase({ initialProducts }) {
             >
               {products.map((product, idx) => (
                 <div key={product.id || idx} className="snap-center shrink-0 w-[80vw] sm:w-[50vw] md:w-[45vw]">
-                  <ProductCard product={product} />
+                  <MemoizedProductCard product={product} />
                 </div>
               ))}
             </div>
@@ -357,7 +359,7 @@ export default function ProductShowcase({ initialProducts }) {
             {/* Product Cards */}
             {products.map((product, idx) => (
               <div key={product.id || idx} className="lg:shrink-0 lg:w-[32vw]">
-                <ProductCard product={product} />
+                <MemoizedProductCard product={product} />
               </div>
             ))}
 

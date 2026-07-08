@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
 import { 
@@ -295,32 +295,31 @@ export default function AdminDashboardPage() {
     }
   }, [timeframe]);
 
-  const formatPrice = (cents) => {
+  const formatPrice = useCallback((cents) => {
     return new Intl.NumberFormat("en-IN", {
       style: "currency",
       currency: "INR",
       maximumFractionDigits: 0
     }).format(cents / 100);
-  };
+  }, []);
 
-  // SVG Chart Computations
+  // Memoized SVG Chart Computations — only recompute when chartData changes
   const chartWidth = 550;
   const chartHeight = 220;
-  const maxVal = chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 1;
 
-  const points = chartData.map((d, index) => {
-    const x = chartData.length > 1 ? (index / (chartData.length - 1)) * (chartWidth - 60) + 30 : 30;
-    const y = chartHeight - ((d.value / (maxVal || 1)) * (chartHeight - 60) + 30);
-    return { x, y, label: d.label, value: d.value };
-  });
-
-  // Polyline points path
-  const linePath = points.map(p => `${p.x},${p.y}`).join(" ");
-  
-  // Area closed path under line for gradient
-  const areaPath = points.length > 0 
-    ? `M ${points[0].x},${chartHeight - 10} L ${points.map(p => `${p.x},${p.y}`).join(" L ")} L ${points[points.length - 1].x},${chartHeight - 10} Z`
-    : "";
+  const { points, linePath, areaPath } = useMemo(() => {
+    const maxVal = chartData.length > 0 ? Math.max(...chartData.map(d => d.value)) : 1;
+    const pts = chartData.map((d, index) => {
+      const x = chartData.length > 1 ? (index / (chartData.length - 1)) * (chartWidth - 60) + 30 : 30;
+      const y = chartHeight - ((d.value / (maxVal || 1)) * (chartHeight - 60) + 30);
+      return { x, y, label: d.label, value: d.value };
+    });
+    const lp = pts.map(p => `${p.x},${p.y}`).join(" ");
+    const ap = pts.length > 0
+      ? `M ${pts[0].x},${chartHeight - 10} L ${pts.map(p => `${p.x},${p.y}`).join(" L ")} L ${pts[pts.length - 1].x},${chartHeight - 10} Z`
+      : "";
+    return { points: pts, linePath: lp, areaPath: ap };
+  }, [chartData]);
 
   return (
     <div className="space-y-8 pb-12 font-sans select-none animate-fadeIn duration-500">

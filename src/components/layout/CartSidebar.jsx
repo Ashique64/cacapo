@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
@@ -21,18 +21,26 @@ export default function CartSidebar() {
     setMounted(true);
   }, []);
 
-  // Calculate Subtotal
-  const subtotal = items.reduce((sum, item) => {
-    const itemPrice = item.variant && item.variant.price ? item.variant.price : item.product?.price || 0;
-    return sum + itemPrice * item.quantity;
-  }, 0);
+  // Memoized Subtotal Calculations
+  const subtotal = useMemo(() =>
+    items.reduce((sum, item) => {
+      const itemPrice = item.variant && item.variant.price ? item.variant.price : item.product?.price || 0;
+      return sum + itemPrice * item.quantity;
+    }, 0),
+  [items]);
 
-  const displaySubtotal = (subtotal / 100).toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
+  const displaySubtotal = useMemo(() =>
+    (subtotal / 100).toLocaleString("en-IN", {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }),
+  [subtotal]);
 
-  const cartCount = items.reduce((sum, item) => sum + item.quantity, 0);
+  const cartCount = useMemo(() =>
+    items.reduce((sum, item) => sum + item.quantity, 0),
+  [items]);
+
+  const handleClose = useCallback(() => setCartOpen(false), [setCartOpen]);
 
   // Disable body scroll when cart sidebar is open
   useEffect(() => {
@@ -63,7 +71,7 @@ export default function CartSidebar() {
     <>
       {/* Background Overlay */}
       <div
-        onClick={() => setCartOpen(false)}
+        onClick={handleClose}
         className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-50 transition-opacity duration-500 ease-in-out ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
@@ -85,7 +93,7 @@ export default function CartSidebar() {
             </h2>
           </div>
           <button
-            onClick={() => setCartOpen(false)}
+            onClick={handleClose}
             className="text-zinc-400 hover:text-accent transition-colors p-1.5 hover:bg-zinc-900/40 rounded-full"
             aria-label="Close Cart"
           >
@@ -107,7 +115,7 @@ export default function CartSidebar() {
                 Add statement pieces from our collections to customize your look.
               </p>
               <button
-                onClick={() => setCartOpen(false)}
+                onClick={handleClose}
                 className="px-6 py-2.5 border border-zinc-800 bg-white text-black text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-black hover:text-white hover:border-white uppercase"
               >
                 Continue Shopping
@@ -231,7 +239,7 @@ export default function CartSidebar() {
             <div className="pt-2">
               <Link
                 href="/checkout"
-                onClick={() => setCartOpen(false)}
+                onClick={handleClose}
                 className="w-full py-3.5 border border-zinc-800 bg-white text-black hover:bg-black hover:text-white hover:border-white text-xs font-semibold tracking-[0.25em] transition-all duration-500 uppercase flex items-center justify-center gap-2 cursor-pointer"
               >
                 PROCEED TO CHECKOUT

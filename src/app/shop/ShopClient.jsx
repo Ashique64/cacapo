@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useMemo, useCallback, memo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
@@ -48,18 +48,18 @@ function ProductCard({ product }) {
     return () => clearInterval(interval);
   }, [isHovered, images]);
 
-  const handleAddBag = (e) => {
+  const handleAddBag = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     const defaultVariant = product.variants && product.variants.length > 0 ? product.variants[0] : null;
     addItem(product, defaultVariant, 1, user?.id);
-  };
+  }, [product, addItem, user?.id]);
 
-  const handleWishlist = (e) => {
+  const handleWishlist = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     toggleWishlist(product);
-  };
+  }, [toggleWishlist, product]);
 
   return (
     <div
@@ -138,6 +138,8 @@ function ProductCard({ product }) {
     </div>
   );
 }
+
+const MemoizedProductCard = memo(ProductCard);
 
 function ShopContent() {
   const [products, setProducts] = useState([]);
@@ -242,59 +244,51 @@ function ShopContent() {
     }
   }, [categories, categoryParam]);
 
-  // Filter & Sort Application
-  const filteredProducts = products
-    .filter((product) => {
-      const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
-      
-      // Category Mapping Match (works for UUIDs as well as MOCK slugs)
-      let matchesCategory = true;
-      if (selectedCategory !== "all") {
-        if (selectedCategory.startsWith("cat-")) {
-          // Mock data matching
-          matchesCategory = product.category_id === selectedCategory;
-        } else {
-          // Supabase UUID matching
-          matchesCategory = product.category_id === selectedCategory;
+  // Memoized filter & sort — only recomputes when deps actually change
+  const filteredProducts = useMemo(() =>
+    products
+      .filter((product) => {
+        const matchesSearch = product.name.toLowerCase().includes(search.toLowerCase());
+        const matchesCategory =
+          selectedCategory === "all" || product.category_id === selectedCategory;
+        const matchesPrice = product.price <= priceRange;
+        return matchesSearch && matchesCategory && matchesPrice;
+      })
+      .sort((a, b) => {
+        if (sortBy === "price-asc") {
+          if (a.price !== b.price) return a.price - b.price;
+        } else if (sortBy === "price-desc") {
+          if (a.price !== b.price) return b.price - a.price;
+        } else if (sortBy === "featured") {
+          const featA = a.featured ? 1 : 0;
+          const featB = b.featured ? 1 : 0;
+          if (featA !== featB) return featB - featA;
         }
-      }
+        return new Date(b.created_at) - new Date(a.created_at);
+      }),
+  [products, search, selectedCategory, priceRange, sortBy]);
 
-      const matchesPrice = product.price <= priceRange;
-
-      return matchesSearch && matchesCategory && matchesPrice;
-    })
-    .sort((a, b) => {
-      if (sortBy === "price-asc") {
-        if (a.price !== b.price) return a.price - b.price;
-      } else if (sortBy === "price-desc") {
-        if (a.price !== b.price) return b.price - a.price;
-      } else if (sortBy === "featured") {
-        const featA = a.featured ? 1 : 0;
-        const featB = b.featured ? 1 : 0;
-        if (featA !== featB) return featB - featA;
-      }
-      return new Date(b.created_at) - new Date(a.created_at);
-    });
-
-  const resetFilters = () => {
+  const resetFilters = useCallback(() => {
     setSearch("");
     setSelectedCategory("all");
     setPriceRange(maxPriceLimit);
     setSortBy("newest");
     setCurrentPage(1);
-  };
+  }, [maxPriceLimit]);
 
   // Reset to page 1 whenever filters/sort change
   useEffect(() => {
     setCurrentPage(1);
   }, [search, selectedCategory, priceRange, sortBy]);
 
-  // Pagination slice
-  const totalPages = Math.ceil(filteredProducts.length / ITEMS_PER_PAGE);
-  const paginatedProducts = filteredProducts.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  // Memoized pagination slice
+  const totalPages = useMemo(() => Math.ceil(filteredProducts.length / ITEMS_PER_PAGE), [filteredProducts]);
+  const paginatedProducts = useMemo(() =>
+    filteredProducts.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    ),
+  [filteredProducts, currentPage]);
 
   return (
     <SmoothScroll>
@@ -452,7 +446,7 @@ function ShopContent() {
               <>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {paginatedProducts.map((product) => (
-                  <ProductCard key={product.id} product={product} />
+                  <MemoizedProductCard key={product.id} product={product} />
                 ))}
               </div>
 

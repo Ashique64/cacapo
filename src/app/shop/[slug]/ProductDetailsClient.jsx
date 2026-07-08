@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { 
   ShoppingBag, 
@@ -68,12 +68,18 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   const [isZooming, setIsZooming] = useState(false);
   const mainImageRef = useRef(null);
 
-  // Variants State
-  const unsortedSizes = Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean)));
-  const sizes = sortSizes(unsortedSizes);
-  const firstInStockVariant = product.variants
-    ?.filter((v) => v.stock_quantity > 0)
-    .sort((a, b) => sizes.indexOf(a.size) - sizes.indexOf(b.size))[0] || null;
+  // Memoize sizes — only recomputes when product.variants changes
+  const sizes = useMemo(() => {
+    const unsorted = Array.from(new Set(product.variants.map((v) => v.size).filter(Boolean)));
+    return sortSizes(unsorted);
+  }, [product.variants]);
+
+  const firstInStockVariant = useMemo(() =>
+    product.variants
+      ?.filter((v) => v.stock_quantity > 0)
+      .sort((a, b) => sizes.indexOf(a.size) - sizes.indexOf(b.size))[0] || null,
+  [product.variants, sizes]);
+
   const [selectedSize, setSelectedSize] = useState(firstInStockVariant?.size || sizes[0] || "");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -88,42 +94,48 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   const [copiedState, setCopiedState] = useState(false);
 
   // Check if current product is in wishlist
-  const isWishlisted = wishlistItems.some((item) => item.id === product.id);
+  const isWishlisted = useMemo(() =>
+    wishlistItems.some((item) => item.id === product.id),
+  [wishlistItems, product.id]);
 
-  const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
+  const images = useMemo(() =>
+    product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"],
+  [product.images]);
   
-  // Find current selected variant
-  const currentVariant = product.variants.find((v) => v.size === selectedSize) || null;
-  const isOutOfStock = product.status === "draft" || (currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant);
+  // Memoize current selected variant
+  const currentVariant = useMemo(() =>
+    product.variants.find((v) => v.size === selectedSize) || null,
+  [product.variants, selectedSize]);
 
-  // Pricing
-  const regularPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
-  const salePrice = (currentVariant && currentVariant.sale_price) ? currentVariant.sale_price : product.sale_price;
+  const isOutOfStock = useMemo(() =>
+    product.status === "draft" || (currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant),
+  [product.status, product.variants.length, currentVariant, firstInStockVariant]);
 
-  const activePrice = salePrice ? salePrice : regularPrice;
-  const originalPrice = salePrice ? regularPrice : null;
-
-  const displayPrice = (activePrice / 100).toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  });
-
-  const displayOriginalPrice = originalPrice ? (originalPrice / 100).toLocaleString("en-IN", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }) : null;
+  // Memoize pricing computations
+  const { activePrice, originalPrice, displayPrice, displayOriginalPrice } = useMemo(() => {
+    const regularPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
+    const salePrice = (currentVariant && currentVariant.sale_price) ? currentVariant.sale_price : product.sale_price;
+    const active = salePrice ? salePrice : regularPrice;
+    const original = salePrice ? regularPrice : null;
+    return {
+      activePrice: active,
+      originalPrice: original,
+      displayPrice: (active / 100).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 }),
+      displayOriginalPrice: original ? (original / 100).toLocaleString("en-IN", { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : null,
+    };
+  }, [currentVariant, product.price, product.sale_price]);
 
   // Share link copy handler
-  const handleShare = () => {
+  const handleShare = useCallback(() => {
     if (typeof window !== "undefined") {
       navigator.clipboard.writeText(window.location.href);
       setCopiedState(true);
       setTimeout(() => setCopiedState(false), 2000);
     }
-  };
+  }, []);
 
   // Magnifier MouseMove Handlers
-  const handleMouseMove = (e) => {
+  const handleMouseMove = useCallback((e) => {
     if (!mainImageRef.current) return;
     const { left, top, width, height } = mainImageRef.current.getBoundingClientRect();
     const x = ((e.clientX - left) / width) * 100;
@@ -134,12 +146,12 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
       backgroundPosition: `${x}% ${y}%`,
       backgroundSize: "200%",
     });
-  };
+  }, [images, activeImgIdx]);
 
-  const handleMouseLeave = () => {
+  const handleMouseLeave = useCallback(() => {
     setZoomStyle({ display: "none" });
     setIsZooming(false);
-  };
+  }, []);
 
   // Mobile Carousel Scroll & Click Handlers
   const mobileScrollRef = useRef(null);
@@ -155,7 +167,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     }
   };
 
-  const handleArrowClick = (direction) => {
+  const handleArrowClick = useCallback((direction) => {
     if (!mobileScrollRef.current) return;
     const container = mobileScrollRef.current;
     const width = container.clientWidth;
@@ -173,10 +185,10 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
       behavior: "smooth"
     });
     setActiveImgIdx(nextIdx);
-  };
+  }, [activeImgIdx, images.length]);
 
   // Cart Add Handler
-  const handleAddToBag = () => {
+  const handleAddToBag = useCallback(() => {
     if (product.variants.length > 0 && !selectedSize) {
       setErrorMsg("Please select a size");
       return;
@@ -189,7 +201,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     setTimeout(() => setAddedState(false), 3000);
     // Slide open cart sidebar
     setCartOpen(true);
-  };
+  }, [product, selectedSize, currentVariant, quantity, addItem, setCartOpen, user?.id]);
 
   return (
     <div className="max-w-7xl mx-auto px-6 py-8 md:py-16 select-none relative z-10">

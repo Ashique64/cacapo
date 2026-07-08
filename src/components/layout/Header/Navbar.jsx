@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { usePathname } from "next/navigation";
 import { ShoppingBag, Heart, User, Menu, X } from "lucide-react";
 import Link from "next/link";
@@ -16,23 +16,23 @@ export default function Navbar() {
   const [mounted, setMounted] = useState(false);
 
   const items = useCartStore((state) => state.items);
-  const cartCount = mounted ? items.reduce((sum, item) => sum + item.quantity, 0) : 0;
+  const cartCount = useMemo(() => mounted ? items.reduce((sum, item) => sum + item.quantity, 0) : 0, [mounted, items]);
   const setCartOpen = useCartStore((state) => state.setCartOpen);
 
   const wishlistItems = useWishlistStore((state) => state.items);
-  const wishlistCount = mounted ? wishlistItems.length : 0;
+  const wishlistCount = useMemo(() => mounted ? wishlistItems.length : 0, [mounted, wishlistItems]);
   const user = useAuthStore((state) => state.user);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { name: "HOME", path: "/" },
     { name: "SHOP", path: "/shop" },
     { name: "ABOUT", path: "/about" },
     { name: "CONTACT", path: "/contact" },
-  ];
+  ], []);
 
   useEffect(() => {
     const getHeroHeight = () => {

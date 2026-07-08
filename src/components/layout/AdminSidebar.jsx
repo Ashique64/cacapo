@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings, TrendingUp, RefreshCw } from "lucide-react";
@@ -12,7 +12,7 @@ export default function AdminSidebar({ role }) {
   const [isOpen, setIsOpen] = useState(false);
   const signOut = useAuthStore((state) => state.signOut);
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     try {
       setIsOpen(false);
       await signOut();
@@ -20,9 +20,9 @@ export default function AdminSidebar({ role }) {
     } catch (err) {
       console.error("Failed to sign out:", err);
     }
-  };
+  }, [signOut, router]);
 
-  const navItems = [
+  const navItems = useMemo(() => [
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { name: "Orders Desk", path: "/admin/orders", icon: ShoppingBag },
     { name: "Returns Desk", path: "/admin/returns", icon: RefreshCw },
@@ -34,7 +34,7 @@ export default function AdminSidebar({ role }) {
       { name: "Users Desk", path: "/admin/users", icon: Users },
       { name: "Store Settings", path: "/admin/settings", icon: Settings },
     ] : []),
-  ];
+  ], [role]);
 
   return (
     <aside className="relative w-full md:w-64 bg-zinc-950 border-b md:border-b-0 md:border-r border-zinc-900 shrink-0 flex flex-col md:h-screen md:sticky md:top-0 z-30">
