@@ -498,6 +498,14 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                 <Info className="w-3.5 h-3.5 text-accent" /> 7-Day Returns
               </div>
             </div>
+
+            {/* Policy trust badge */}
+            <Link 
+              href="/return-policy"
+              className="flex items-center justify-center text-center text-[10px] tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors uppercase pt-3.5 font-sans leading-relaxed border-t border-zinc-950 mt-1"
+            >
+              ✦ Free exchanges within 7 days • Damage claims require a quick photo or video
+            </Link>
           </div>
 
           <div className="h-px bg-zinc-900" />
@@ -533,12 +541,54 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   </button>
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? "max-h-[200px] mt-2 opacity-100" : "max-h-0 opacity-0"
+                      isOpen ? "max-h-[350px] mt-2 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
-                    <p className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans text-justify">
-                      {section.content}
-                    </p>
+                    {section.id === "shipping" ? (
+                      <div className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans text-justify space-y-4">
+                        <p>
+                          Complimentary delivery on orders above ₹10,000. Under this threshold, a flat ₹50 shipping fee is applied at checkout.
+                        </p>
+                        
+                        {/* Tiered return window table */}
+                        <div className="border border-zinc-900 overflow-hidden my-3">
+                          <table className="w-full text-[10px] tracking-wider uppercase border-collapse">
+                            <thead>
+                              <tr className="border-b border-zinc-900 bg-zinc-950 text-zinc-400 font-bold">
+                                <th className="p-2 text-left">Reason</th>
+                                <th className="p-2 text-right">Window</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              <tr className="border-b border-zinc-900">
+                                <td className="p-2 text-left text-zinc-300">Damaged / Defective</td>
+                                <td className="p-2 text-right text-accent font-semibold">48–72 Hours</td>
+                              </tr>
+                              <tr>
+                                <td className="p-2 text-left text-zinc-300">Size / Wrong Item</td>
+                                <td className="p-2 text-right">7 Days</td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </div>
+
+                        <p className="text-[11px] text-zinc-400 border-l border-accent/40 pl-2.5 my-2">
+                          <strong className="text-accent uppercase font-bold text-[9px] tracking-widest block mb-0.5">Quick Resolution</strong>
+                          To process damage claims faster, please film a short unboxing video (15–60 sec) showing the package label and damage without cuts. This helps us skip delays and resolve your case same day.
+                        </p>
+
+                        <p className="pt-1">
+                          Review our full guidelines in the{" "}
+                          <Link href="/return-policy" className="text-accent hover:underline font-semibold">
+                            Return & Replacement Policy
+                          </Link>.
+                        </p>
+                      </div>
+                    ) : (
+                      <p className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans text-justify">
+                        {section.content}
+                      </p>
+                    )}
                   </div>
                 </div>
               );
