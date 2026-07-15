@@ -105,13 +105,21 @@ export const useCartStore = create(
               continue;
             }
 
-            const { data: existing } = await supabase
+            // Correct query matching null/non-null variants
+            let query = supabase
               .from("cart_items")
               .select("id, quantity")
               .eq("cart_id", cart.id)
-              .eq("product_id", item.product_id)
-              .eq("variant_id", item.variant_id || null)
-              .maybeSingle();
+              .eq("product_id", item.product_id);
+
+            if (item.variant_id) {
+              query = query.eq("variant_id", item.variant_id);
+            } else {
+              query = query.is("variant_id", null);
+            }
+
+            const { data: existing, error: existingErr } = await query.maybeSingle();
+            if (existingErr) throw existingErr;
 
             if (existing) {
               // Update quantity
@@ -150,7 +158,7 @@ export const useCartStore = create(
         const currentItems = get().items;
         const variantId = variant?.id || null;
         
-        // Check if item already in cart
+        // Check if item already in cart (for guest mode)
         const existingIndex = currentItems.findIndex(
           (item) => item.product_id === product.id && item.variant_id === variantId
         );
@@ -182,14 +190,28 @@ export const useCartStore = create(
 
             if (!cart) throw new Error("Cart record is missing");
 
-            if (existingIndex > -1) {
-              const item = currentItems[existingIndex];
-              const newQty = item.quantity + quantity;
-              
+            // Look up existing database row to avoid UUID mismatch/guest ID clash
+            let query = supabase
+              .from("cart_items")
+              .select("id, quantity")
+              .eq("cart_id", cart.id)
+              .eq("product_id", product.id);
+
+            if (variantId) {
+              query = query.eq("variant_id", variantId);
+            } else {
+              query = query.is("variant_id", null);
+            }
+
+            const { data: dbItem, error: dbItemErr } = await query.maybeSingle();
+            if (dbItemErr) throw dbItemErr;
+
+            if (dbItem) {
+              const newQty = dbItem.quantity + quantity;
               const { error: updateErr } = await supabase
                 .from("cart_items")
                 .update({ quantity: newQty })
-                .eq("id", item.id);
+                .eq("id", dbItem.id);
               if (updateErr) throw updateErr;
             } else {
               const { error: insertErr } = await supabase
