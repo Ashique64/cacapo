@@ -288,7 +288,7 @@ export default function AccountPage() {
     }
   }, [mounted, user]);
 
-  const fetchProfileData = async () => {
+  async function fetchProfileData() {
     try {
       const { data, error } = await supabase
         .from("profiles")
@@ -301,9 +301,9 @@ export default function AccountPage() {
     } catch (err) {
       console.warn("Could not retrieve profiles from Supabase:", err);
     }
-  };
+  }
 
-  const fetchAddresses = async () => {
+  async function fetchAddresses() {
     setAddressesLoading(true);
     try {
       const { data, error } = await supabase
@@ -319,9 +319,9 @@ export default function AccountPage() {
     } finally {
       setAddressesLoading(false);
     }
-  };
+  }
 
-  const fetchOrders = async () => {
+  async function fetchOrders() {
     setOrdersLoading(true);
     try {
       // Query orders and order items, with product details joined
@@ -349,7 +349,7 @@ export default function AccountPage() {
     } finally {
       setOrdersLoading(false);
     }
-  };
+  }
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -886,7 +886,7 @@ export default function AccountPage() {
                   </div>
                 ) : orders.length === 0 ? (
                   <div className="py-12 text-center space-y-4">
-                    <p className="text-zinc-500 text-xs tracking-wider">You haven't placed any orders yet.</p>
+                    <p className="text-zinc-500 text-xs tracking-wider">You haven&apos;t placed any orders yet.</p>
                     <Link 
                       href="/shop" 
                       className="inline-block px-6 py-2.5 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none"
@@ -917,6 +917,75 @@ export default function AccountPage() {
                         day: "numeric",
                         year: "numeric"
                       });
+                      let badgeClass = "";
+                      let badgeText = "";
+
+                      if (order.order_status === "return_requested") {
+                        badgeClass = "bg-red-500/10 border border-red-500/20 text-red-400";
+                        badgeText = "RETURN REQUESTED";
+                      } else if (order.order_status === "returned") {
+                        badgeClass = "bg-red-500/20 border border-red-500/40 text-red-500";
+                        badgeText = "RETURNED";
+                      } else if (order.order_status === "exchange_requested") {
+                        badgeClass = "bg-purple-500/10 border border-purple-500/20 text-purple-400";
+                        badgeText = "EXCHANGE REQUESTED";
+                      } else if (order.order_status === "exchanged") {
+                        badgeClass = "bg-teal-500/10 border border-teal-500/20 text-teal-400";
+                        badgeText = "EXCHANGED";
+                      } else if (order.shipping_address?.return_request) {
+                        const rr = order.shipping_address.return_request;
+                        if (rr.status === "approved") {
+                          if (rr.type === "exchange") {
+                            badgeClass = "bg-teal-500/10 border border-teal-500/20 text-teal-400";
+                            badgeText = "EXCHANGED";
+                          } else {
+                            badgeClass = "bg-red-500/20 border border-red-500/40 text-red-500";
+                            badgeText = "RETURNED";
+                          }
+                        } else if (rr.status === "rejected") {
+                          badgeClass = "bg-zinc-800 border border-zinc-700/50 text-zinc-500";
+                          badgeText = rr.type === "exchange" ? "EXCHANGE DECLINED" : "RETURN DECLINED";
+                        } else if (rr.status === "received") {
+                          badgeClass = "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse";
+                          badgeText = "ITEMS RECEIVED";
+                        } else if (rr.status === "pickup_confirmed") {
+                          badgeClass = "bg-blue-500/10 border border-blue-500/20 text-blue-400 animate-pulse";
+                          badgeText = "PICKUP SCHEDULED";
+                        } else {
+                          if (rr.type === "exchange") {
+                            badgeClass = "bg-purple-500/10 border border-purple-500/20 text-purple-400";
+                            badgeText = "EXCHANGE REQUESTED";
+                          } else {
+                            badgeClass = "bg-red-500/10 border border-red-500/20 text-red-400";
+                            badgeText = "RETURN REQUESTED";
+                          }
+                        }
+                      } else {
+                        switch (order.order_status) {
+                          case "delivered":
+                            badgeClass = "bg-green-500/10 border border-green-500/20 text-green-500";
+                            badgeText = "DELIVERED";
+                            break;
+                          case "shipped":
+                            badgeClass = "bg-orange-500/10 border border-orange-500/20 text-orange-400";
+                            badgeText = "DISPATCHED";
+                            break;
+                          case "processing":
+                            badgeClass = "bg-blue-500/10 border border-blue-500/20 text-blue-400";
+                            badgeText = "PROCESSING";
+                            break;
+                          case "cancelled":
+                            badgeClass = "bg-zinc-800 border border-zinc-700/50 text-zinc-500";
+                            badgeText = "CANCELLED";
+                            break;
+                          case "pending":
+                          case "pending_payment":
+                          default:
+                            badgeClass = "bg-amber-500/10 border border-amber-500/20 text-amber-400";
+                            badgeText = "AWAITING VERIFICATION";
+                            break;
+                        }
+                      }
 
                       return (
                         <div key={order.id} className="border border-zinc-900 bg-black overflow-hidden transition-all duration-300">
@@ -929,61 +998,9 @@ export default function AccountPage() {
                             <div className="space-y-1.5 tracking-wider text-xs">
                               <div className="flex items-center gap-2.5">
                                 <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
-                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                                  order.shipping_address?.return_request
-                                    ? order.shipping_address.return_request.status === "approved"
-                                      ? order.shipping_address.return_request.type === "exchange"
-                                        ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
-                                        : "bg-red-500/10 border border-red-500/20 text-red-500"
-                                      : order.shipping_address.return_request.status === "rejected"
-                                      ? "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
-                                      : order.shipping_address.return_request.status === "received"
-                                      ? "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
-                                      : order.shipping_address.return_request.status === "pickup_confirmed"
-                                      ? "bg-blue-500/10 border border-blue-500/20 text-blue-400 animate-pulse"
-                                      : order.shipping_address.return_request.type === "exchange"
-                                      ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
-                                      : "bg-red-500/10 border border-red-500/20 text-red-400"
-                                    : order.order_status === "delivered"
-                                    ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                    : order.order_status === "shipped"
-                                    ? "bg-orange-500/10 border border-orange-500/20 text-orange-400"
-                                    : order.order_status === "processing"
-                                    ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
-                                    : order.order_status === "cancelled"
-                                    ? "bg-red-500/10 border border-red-500/20 text-red-500"
-                                    : order.payment_method === "cod"
-                                    ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                    : "bg-amber-500/10 border border-amber-500/20 text-amber-400"
-                                }`}>
-                                  {order.shipping_address?.return_request
-                                    ? order.shipping_address.return_request.status === "approved"
-                                      ? order.shipping_address.return_request.type === "exchange"
-                                        ? "EXCHANGED"
-                                        : "RETURNED"
-                                      : order.shipping_address.return_request.status === "rejected"
-                                      ? order.shipping_address.return_request.type === "exchange"
-                                        ? "EXCHANGE DECLINED"
-                                        : "RETURN DECLINED"
-                                      : order.shipping_address.return_request.status === "received"
-                                      ? "ITEMS RECEIVED"
-                                      : order.shipping_address.return_request.status === "pickup_confirmed"
-                                      ? "PICKUP SCHEDULED"
-                                      : order.shipping_address.return_request.type === "exchange"
-                                      ? "EXCHANGE REQUESTED"
-                                      : "RETURN REQUESTED"
-                                    : order.order_status === "delivered"
-                                    ? "DELIVERED"
-                                    : order.order_status === "shipped"
-                                    ? "SHIPPED"
-                                    : order.order_status === "processing"
-                                    ? "PROCESSING"
-                                    : order.order_status === "cancelled"
-                                    ? "CANCELLED"
-                                    : order.payment_method === "cod"
-                                    ? "ORDER CONFIRMED"
-                                    : "AWAITING VERIFICATION"}
-                                </span>
+                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${badgeClass}`}>
+                                  {badgeText}
+                                 </span>
                               </div>
                               <p className="text-zinc-500 text-[10px]">
                                 {dateFormatted}
@@ -1057,16 +1074,29 @@ export default function AccountPage() {
                                     {order.shipping_address?.city}, {order.shipping_address?.state} - {order.shipping_address?.pincode}
                                   </p>
                                   <p className="text-zinc-500 text-[10px] font-bold mt-1">Phone: {order.shipping_address?.phone}</p>
-
-                                  {(order.order_status === "shipped" || order.order_status === "delivered") && order.shipping_carrier && (
+                                  {(order.order_status === "shipped" || order.order_status === "delivered") && (order.shipping_carrier || order.tracking_number) && (
                                     <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 space-y-1">
                                       <h5 className="text-accent text-[8px] font-bold uppercase tracking-widest">Shipment Details</h5>
-                                      <p className="text-white text-[10px] font-bold uppercase">
-                                        Carrier: {order.shipping_carrier}
-                                      </p>
-                                      <p className="text-zinc-400 text-[10px] font-mono">
-                                        Tracking Reference: {order.tracking_number}
-                                      </p>
+                                      {order.shipping_carrier && (
+                                        <p className="text-white text-[10px] font-bold uppercase">
+                                          Carrier: {order.shipping_carrier}
+                                        </p>
+                                      )}
+                                      {order.tracking_number && (
+                                        <p className="text-zinc-400 text-[10px] font-mono">
+                                          Tracking Reference: {order.tracking_number}
+                                        </p>
+                                      )}
+                                      {order.tracking_url && (
+                                        <a 
+                                          href={order.tracking_url} 
+                                          target="_blank" 
+                                          rel="noopener noreferrer"
+                                          className="inline-block text-accent hover:underline text-[9px] uppercase tracking-widest font-bold mt-1"
+                                        >
+                                          Track Live Shipment →
+                                        </a>
+                                      )}
                                     </div>
                                   )}
                                 </div>
@@ -1217,7 +1247,7 @@ export default function AccountPage() {
 
                                     <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
                                       <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>
-                                      "{order.shipping_address.return_request.reason}"
+                                      &quot;{order.shipping_address.return_request.reason}&quot;
                                     </div>
 
                                     <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
