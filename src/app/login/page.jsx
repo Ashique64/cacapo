@@ -23,7 +23,12 @@ function LoginContent() {
   const signUp = useAuthStore((state) => state.signUp);
 
   const type = searchParams.get("type");
-  const [authTab, setAuthTab] = useState(type === "recovery" ? "recovery" : "signin");
+  const tabParam = searchParams.get("tab");
+  const urlError = searchParams.get("error");
+
+  const [authTab, setAuthTab] = useState(
+    type === "recovery" ? "recovery" : tabParam === "forgot" ? "forgot" : "signin"
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -34,7 +39,7 @@ function LoginContent() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(urlError ? decodeURIComponent(urlError) : null);
   const [successMessage, setSuccessMessage] = useState(null);
   const [verificationSent, setVerificationSent] = useState(false);
 
@@ -122,10 +127,28 @@ function LoginContent() {
 
       setSubmitting(true);
       try {
+        // Step 1: Check if this email belongs to a registered account.
+        // Supabase's resetPasswordForEmail always returns success even for
+        // unknown emails (anti-enumeration design), so we do a server-side
+        // check first using the admin API.
+        const checkRes = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const checkData = await checkRes.json();
+
+        if (!checkData.exists) {
+          setError("No account found with this email address. Please check the email or create a new account.");
+          setSubmitting(false);
+          return;
+        }
+
+        // Step 2: Email exists — send the password reset link
         const siteUrl = window.location.origin.includes("localhost")
           ? "https://cacapo.vercel.app"
           : window.location.origin;
-        const resetRedirect = `${siteUrl}/login?type=recovery`;
+        const resetRedirect = `${siteUrl}/auth/callback?type=recovery`;
         const { error: resetErr } = await useAuthStore.getState().resetPasswordForEmail(email.trim(), resetRedirect);
         if (resetErr) throw resetErr;
         setVerificationSent(true);
@@ -133,6 +156,7 @@ function LoginContent() {
         setError(err.message || "Failed to send reset link.");
       } finally {
         setSubmitting(false);
+
       }
       return;
     }
