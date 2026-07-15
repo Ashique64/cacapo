@@ -38,6 +38,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [step, setStep] = useState(0); // 0: SHIPPING, 1: PAYMENT, 2: CONFIRMED
+  const [policyAccepted, setPolicyAccepted] = useState(false);
   
   // Zustand State
   const cartItems = useCartStore((state) => state.items);
@@ -100,7 +101,7 @@ export default function CheckoutPage() {
   });
 
   useEffect(() => {
-    setMounted(true);
+    const timer = setTimeout(() => setMounted(true), 0);
 
     // Dynamically load Razorpay checkout script
     const script = document.createElement("script");
@@ -109,6 +110,7 @@ export default function CheckoutPage() {
     document.body.appendChild(script);
 
     return () => {
+      clearTimeout(timer);
       document.body.removeChild(script);
     };
   }, []);
@@ -140,14 +142,21 @@ export default function CheckoutPage() {
     }
   }, [mounted]);
 
-  // Fetch addresses when mounted & logged in
-  useEffect(() => {
-    if (mounted && user) {
-      fetchUserAddresses();
-    }
-  }, [mounted, user]);
+  function populateFormFromAddress(addr) {
+    setShippingDetails({
+      fullName: addr.full_name || "",
+      phone: addr.phone || "",
+      addressLine1: addr.address_line1 || "",
+      addressLine2: addr.address_line2 || "",
+      city: addr.city || "",
+      state: addr.state || "",
+      pincode: addr.pincode || "",
+      country: addr.country || "India",
+      isDefault: addr.is_default || false
+    });
+  }
 
-  const fetchUserAddresses = async () => {
+  async function fetchUserAddresses() {
     setAddressesLoading(true);
     try {
       const { data, error } = await supabase
@@ -169,21 +178,18 @@ export default function CheckoutPage() {
     } finally {
       setAddressesLoading(false);
     }
-  };
+  }
 
-  const populateFormFromAddress = (addr) => {
-    setShippingDetails({
-      fullName: addr.full_name || "",
-      phone: addr.phone || "",
-      addressLine1: addr.address_line1 || "",
-      addressLine2: addr.address_line2 || "",
-      city: addr.city || "",
-      state: addr.state || "",
-      pincode: addr.pincode || "",
-      country: addr.country || "India",
-      isDefault: addr.is_default || false
-    });
-  };
+  // Fetch addresses when mounted & logged in
+  useEffect(() => {
+    if (mounted && user) {
+      const timer = setTimeout(() => {
+        fetchUserAddresses();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mounted, user]);
 
   const handleSelectSavedAddress = (e) => {
     const id = e.target.value;
@@ -932,9 +938,31 @@ export default function CheckoutPage() {
                         </div>
                       )}
 
+                      {/* Return policy acknowledgment checkbox (Step 8.3) */}
+                      <div className="flex flex-col gap-2 pt-4 border-t border-zinc-900/60">
+                        <label className="flex items-start gap-3 text-[10px] tracking-wider cursor-pointer text-zinc-500 hover:text-zinc-400 transition-colors select-none leading-relaxed">
+                          <input
+                            type="checkbox"
+                            checked={policyAccepted}
+                            onChange={(e) => setPolicyAccepted(e.target.checked)}
+                            className="accent-accent w-4 h-4 cursor-pointer mt-0.5"
+                          />
+                          <span>
+                            I have read and agree to the{" "}
+                            <Link href="/return-policy" target="_blank" className="text-accent underline font-semibold">
+                              Return & Replacement Policy
+                            </Link>.
+                            <span className="block text-[9px] text-zinc-600 mt-1 italic normal-case">
+                              Understanding our policy ensures faster resolutions if anything goes wrong with your order.
+                            </span>
+                          </span>
+                        </label>
+                      </div>
+
                       <button
                         type="submit"
-                        className="w-full py-4 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8"
+                        disabled={!policyAccepted}
+                        className="w-full py-4 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8 disabled:bg-zinc-900 disabled:text-zinc-650 disabled:border-zinc-900 disabled:cursor-not-allowed"
                       >
                         CONTINUE TO PAYMENT <ArrowRight className="w-3.5 h-3.5" />
                       </button>
@@ -1006,7 +1034,7 @@ export default function CheckoutPage() {
                             <ShieldCheck className="w-4 h-4 text-accent" /> Secure Razorpay Checkout Selected
                           </p>
                           <p className="text-xs text-muted-text tracking-wider leading-relaxed pt-1">
-                            Upon clicking "Place Order", a secure Razorpay payment window will open where you can pay instantly using your preferred UPI app, Credit/Debit card, Netbanking, or mobile wallets.
+                            Upon clicking &quot;Place Order&quot;, a secure Razorpay payment window will open where you can pay instantly using your preferred UPI app, Credit/Debit card, Netbanking, or mobile wallets.
                           </p>
                           <p className="text-[11px] text-zinc-500 italic">
                             Do not close or refresh the window while payment is processing.
