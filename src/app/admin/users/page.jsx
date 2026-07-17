@@ -17,7 +17,9 @@ import {
   X, 
   Loader2, 
   ExternalLink,
-  Users
+  Users,
+  AlertCircle,
+  CheckCircle2
 } from "lucide-react";
 
 export default function AdminUsersDesk() {
@@ -25,6 +27,8 @@ export default function AdminUsersDesk() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentUserRole, setCurrentUserRole] = useState(null);
+  const [toast, setToast] = useState(null);
+  const [actionLoading, setActionLoading] = useState(false);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -111,6 +115,71 @@ export default function AdminUsersDesk() {
       setUsers(fallbackUsers);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const showToast = (message, type = "success") => {
+    setToast({ message, type });
+    setTimeout(() => {
+      setToast(prev => prev && prev.message === message ? null : prev);
+    }, 4000);
+  };
+
+  const handleUpdateRole = async (userId, newRole, userEmail) => {
+    setActionLoading(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, role: newRole, email: userEmail })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to update role");
+      }
+
+      showToast("User role updated successfully");
+      
+      setUsers(prev => prev.map(u => u.id === userId ? { ...u, role: newRole } : u));
+      if (selectedUser && selectedUser.id === userId) {
+        setSelectedUser(prev => ({ ...prev, role: newRole }));
+      }
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to update user role", "error");
+    } finally {
+      setActionLoading(false);
+    }
+  };
+
+  const handleDeleteUser = async (userId) => {
+    if (!window.confirm("Are you sure you want to permanently delete this user account? This cannot be undone.")) {
+      return;
+    }
+
+    setActionLoading(true);
+    try {
+      const response = await fetch("/api/admin/users", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId })
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to delete user account");
+      }
+
+      showToast("User account permanently deleted");
+      
+      setSelectedUser(null);
+      setUsers(prev => prev.filter(u => u.id !== userId));
+    } catch (err) {
+      console.error(err);
+      showToast(err.message || "Failed to delete user account", "error");
+    } finally {
+      setActionLoading(false);
     }
   };
 
@@ -671,6 +740,57 @@ export default function AdminUsersDesk() {
                       </div>
                     )}
                   </div>
+                  {/* Administrative Controls */}
+                  <div className="border border-zinc-900 bg-zinc-950 p-5 space-y-4">
+                    <h4 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+                      <Shield className="w-3.5 h-3.5 text-accent" /> Administrative Controls
+                    </h4>
+                    
+                    <div className="space-y-3">
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <label className="text-[10px] text-zinc-500 uppercase tracking-widest font-bold block mb-1">
+                            System Role Permission
+                          </label>
+                          <p className="text-[11px] text-zinc-400">
+                            Assign permissions. Regular users are Customers.
+                          </p>
+                        </div>
+                        <div className="relative shrink-0">
+                          <select
+                            disabled={actionLoading}
+                            value={selectedUser.role || "customer"}
+                            onChange={(e) => handleUpdateRole(selectedUser.id, e.target.value, selectedUser.email)}
+                            className="bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-4 py-2 uppercase tracking-wider font-semibold rounded-none focus:outline-none focus:border-accent hover:border-zinc-700 transition-colors cursor-pointer disabled:opacity-50"
+                          >
+                            <option value="customer">Customer</option>
+                            <option value="admin">Admin (Staff)</option>
+                            <option value="super_admin">Super Admin</option>
+                          </select>
+                        </div>
+                      </div>
+                      
+                      <div className="border-t border-zinc-900 pt-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div>
+                          <label className="text-[10px] text-red-500/80 uppercase tracking-widest font-bold block mb-1">
+                            Danger Zone
+                          </label>
+                          <p className="text-[11px] text-zinc-400">
+                            Permanently delete this user credentials and database profile.
+                          </p>
+                        </div>
+                        <button
+                          type="button"
+                          disabled={actionLoading}
+                          onClick={() => handleDeleteUser(selectedUser.id)}
+                          className="px-4 py-2 border border-red-500/30 text-red-400 hover:border-red-500 text-[10px] font-bold tracking-widest uppercase transition-all rounded-none bg-red-950/5 hover:bg-red-950/15 cursor-pointer disabled:opacity-50 shrink-0"
+                        >
+                          Delete Account
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
                 </>
               )}
 
@@ -707,6 +827,29 @@ export default function AdminUsersDesk() {
           animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
+
+      {/* Premium Luxury Toast Notifications */}
+      {toast && (
+        <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
+          toast.type === "success" 
+            ? "border-green-500/30 text-green-400" 
+            : "border-red-500/30 text-red-400"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-4 h-4 text-green-400 shrink-0" />
+          ) : (
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+          )}
+          <span className="text-[10px] font-bold tracking-widest uppercase font-mono">{toast.message}</span>
+          <button 
+            type="button"
+            onClick={() => setToast(null)} 
+            className="ml-3 text-zinc-500 hover:text-white transition-colors bg-transparent border-none cursor-pointer p-0"
+          >
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
 
     </div>
     )

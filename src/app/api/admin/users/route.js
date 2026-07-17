@@ -94,3 +94,74 @@ export async function GET(request) {
     );
   }
 }
+
+export async function PATCH(request) {
+  try {
+    const { userId, role, email } = await request.json();
+    if (!userId || !role) {
+      return NextResponse.json({ error: "Missing required fields: userId and role" }, { status: 400 });
+    }
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      serviceRoleKey,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    if (role === "customer") {
+      const { error: deleteErr } = await supabase
+        .from("admin_users")
+        .delete()
+        .eq("id", userId);
+      if (deleteErr) throw deleteErr;
+    } else {
+      const { error: upsertErr } = await supabase
+        .from("admin_users")
+        .upsert({
+          id: userId,
+          email: email || null,
+          role: role
+        });
+      if (upsertErr) throw upsertErr;
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[admin-users-patch-api] Error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to update user role" },
+      { status: 500 }
+    );
+  }
+}
+
+export async function DELETE(request) {
+  try {
+    const { userId } = await request.json();
+    if (!userId) {
+      return NextResponse.json({ error: "Missing required field: userId" }, { status: 400 });
+    }
+
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      serviceRoleKey,
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    const { error: authErr } = await supabase.auth.admin.deleteUser(userId);
+    if (authErr) throw authErr;
+
+    await supabase.from("profiles").delete().eq("id", userId);
+    await supabase.from("admin_users").delete().eq("id", userId);
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error("[admin-users-delete-api] Error:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to delete user account" },
+      { status: 500 }
+    );
+  }
+}
