@@ -337,7 +337,13 @@ export default function AccountPage() {
           reason: returnReasonSelected,
           reason_notes: returnDescription,
           items: itemsPayload,
-          exchange_details: returnAction === "exchange" ? exchangeDetails : null
+          exchange_details: returnAction === "exchange" ? exchangeDetails : null,
+          bank_details: returnAction === "return" ? {
+            account_holder: accountHolder,
+            bank_name: bankName,
+            account_number: accountNumber,
+            ifsc_code: ifscCode
+          } : null
         })
       });
 

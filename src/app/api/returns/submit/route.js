@@ -11,7 +11,7 @@ import { createClient } from "@supabase/supabase-js";
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { order_id, request_type, reason, reason_notes, items, exchange_details, user_id } = body;
+    const { order_id, request_type, reason, reason_notes, items, exchange_details, bank_details, user_id } = body;
 
     if (!order_id || !request_type || !reason || !items || !user_id) {
       return NextResponse.json(
@@ -102,6 +102,7 @@ export async function POST(request) {
       status: "pending",
       items,
       exchange_details: request_type === "exchange" ? exchange_details : null,
+      bank_details: request_type === "return" ? bank_details : null,
       restocking_fee: restockingFee,
       refund_amount: request_type === "return" ? refundAmount : null,
       evidence_skipped: true, // Default to true until evidence is uploaded
@@ -125,6 +126,7 @@ export async function POST(request) {
           status: "pending",
           items,
           exchange_details: request_type === "exchange" ? exchange_details : null,
+          bank_details: request_type === "return" ? bank_details : null,
           restocking_fee: restockingFee,
           refund_amount: request_type === "return" ? refundAmount : null,
           evidence_skipped: true,

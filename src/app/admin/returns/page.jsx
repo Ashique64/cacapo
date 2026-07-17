@@ -51,6 +51,7 @@ export default function AdminReturnsDesk() {
   // Search, Filter and Tabs
   const [searchTerm, setSearchTerm] = useState("");
   const [activeTab, setActiveTab] = useState("all"); // 'all', 'pending', 'under_review', 'approved', 'rejected', 'completed', 'flagged'
+  const [sortBy, setSortBy] = useState("default"); // 'default', 'frequent_returners'
   
   // Pagination
   const [currentPage, setCurrentPage] = useState(1);
@@ -162,6 +163,7 @@ export default function AdminReturnsDesk() {
           status: r.status,
           items: r.items,
           exchange_details: r.exchange_details,
+          bank_details: r.bank_details || null,
           evidence_urls: r.evidence_urls || [],
           evidence_skipped: !!r.evidence_skipped,
           evidence_submitted_at: r.evidence_submitted_at,
@@ -222,6 +224,7 @@ export default function AdminReturnsDesk() {
             status: rr.status || "pending",
             items: rr.items || [],
             exchange_details: rr.exchange_details || null,
+            bank_details: rr.bank_details || null,
             evidence_urls: rr.evidence_urls || [],
             evidence_skipped: !!rr.evidence_skipped,
             evidence_submitted_at: rr.evidence_submitted_at,
@@ -503,6 +506,32 @@ export default function AdminReturnsDesk() {
 
   // Filters, search & Priority Queue sorting
   const processedRequests = useMemo(() => {
+    // 1. Calculate return frequency maps
+    const customerReturnCounts = {};
+    const productReturnCounts = {};
+    const reasonCounts = {};
+
+    if (sortBy === "frequent_returners") {
+      requests.forEach(r => {
+        const customerName = r.shipping_address?.full_name || "Unknown Customer";
+        customerReturnCounts[customerName] = (customerReturnCounts[customerName] || 0) + 1;
+      });
+    } else if (sortBy === "frequent_products") {
+      requests.forEach(r => {
+        if (r.items && Array.isArray(r.items)) {
+          r.items.forEach(item => {
+            const prodId = item.product_id || item.product?.id || "Unknown Product";
+            productReturnCounts[prodId] = (productReturnCounts[prodId] || 0) + item.quantity;
+          });
+        }
+      });
+    } else if (sortBy === "reason") {
+      requests.forEach(r => {
+        const reason = r.reason || "Unknown Reason";
+        reasonCounts[reason] = (reasonCounts[reason] || 0) + 1;
+      });
+    }
+
     return requests
       .filter(r => {
         // Search filter
@@ -519,14 +548,66 @@ export default function AdminReturnsDesk() {
         return r.status === activeTab;
       })
       .sort((a, b) => {
-        // Priority Queue logic: requests with evidence (evidence_skipped = false) come first
+        if (sortBy === "frequent_returners") {
+          const nameA = a.shipping_address?.full_name || "Unknown Customer";
+          const nameB = b.shipping_address?.full_name || "Unknown Customer";
+          const countA = customerReturnCounts[nameA] || 0;
+          const countB = customerReturnCounts[nameB] || 0;
+
+          if (countA !== countB) {
+            return countB - countA; // High counts first
+          }
+        } else if (sortBy === "frequent_products") {
+          let maxCountA = 0;
+          if (a.items && Array.isArray(a.items)) {
+            a.items.forEach(item => {
+              const prodId = item.product_id || item.product?.id || "Unknown Product";
+              const cnt = productReturnCounts[prodId] || 0;
+              if (cnt > maxCountA) maxCountA = cnt;
+            });
+          }
+
+          let maxCountB = 0;
+          if (b.items && Array.isArray(b.items)) {
+            b.items.forEach(item => {
+              const prodId = item.product_id || item.product?.id || "Unknown Product";
+              const cnt = productReturnCounts[prodId] || 0;
+              if (cnt > maxCountB) maxCountB = cnt;
+            });
+          }
+
+          if (maxCountA !== maxCountB) {
+            return maxCountB - maxCountA; // High counts first
+          }
+        } else if (sortBy === "reason") {
+          const reasonA = a.reason || "Unknown Reason";
+          const reasonB = b.reason || "Unknown Reason";
+          const countA = reasonCounts[reasonA] || 0;
+          const countB = reasonCounts[reasonB] || 0;
+
+          if (countA !== countB) {
+            return countB - countA; // High counts first
+          }
+        }
+
+        // Default Sort Comparator:
+        // 1. Closed claims (completed/rejected) go to the bottom
+        const isClosedA = ["completed", "rejected"].includes(a.status);
+        const isClosedB = ["completed", "rejected"].includes(b.status);
+
+        if (isClosedA !== isClosedB) {
+          return isClosedA ? 1 : -1;
+        }
+
+        // 2. Priority Queue logic: requests with evidence (evidence_skipped = false) come first
         if (a.evidence_skipped !== b.evidence_skipped) {
           return a.evidence_skipped ? 1 : -1;
         }
-        // Then sort by submission date descending
+
+        // 3. Sort by submission date descending (latest first)
         return new Date(b.created_at) - new Date(a.created_at);
       });
-  }, [requests, searchTerm, activeTab]);
+  }, [requests, searchTerm, activeTab, sortBy]);
 
   const totalPages = Math.ceil(processedRequests.length / itemsPerPage);
   const paginatedRequests = processedRequests.slice(
@@ -592,6 +673,21 @@ export default function AdminReturnsDesk() {
             className="w-full bg-transparent text-white px-4 py-2 text-xs tracking-wider outline-none rounded-none placeholder-zinc-650"
           />
           <Search className="absolute right-3.5 w-4 h-4 text-zinc-500 pointer-events-none" />
+        </div>
+
+        {/* Sort Dropdown */}
+        <div className="relative flex items-center border border-zinc-850 bg-zinc-950 text-xs tracking-wider min-w-[220px]">
+          <select
+            value={sortBy}
+            onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+            className="w-full bg-zinc-950 text-white px-4 py-2.5 outline-none rounded-none cursor-pointer appearance-none border-none uppercase font-bold text-[10px] tracking-widest"
+          >
+            <option value="default">Sort: Default</option>
+            <option value="frequent_returners">Sort: Frequent Returners</option>
+            <option value="frequent_products">Sort: Frequent Products</option>
+            <option value="reason">Sort: Reason</option>
+          </select>
+          <Filter className="absolute right-3.5 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
         </div>
       </div>
 
@@ -801,6 +897,31 @@ export default function AdminReturnsDesk() {
                 )}
               </div>
             </div>
+
+            {/* Direct Bank Transfer Details */}
+            {selectedRequest.request_type === "return" && selectedRequest.bank_details && (
+              <div className="space-y-2 animate-fadeIn">
+                <span className="text-zinc-500 font-bold text-[9px] tracking-widest block uppercase">Direct Bank Transfer Details</span>
+                <div className="p-4 border border-zinc-900 bg-zinc-950/40 divide-y divide-zinc-900/60 leading-relaxed text-xs tracking-wider">
+                  <div className="py-2 flex justify-between gap-4">
+                    <span className="text-zinc-500 font-bold text-[9px] uppercase">Account Holder</span>
+                    <span className="text-white font-semibold uppercase">{selectedRequest.bank_details.account_holder}</span>
+                  </div>
+                  <div className="py-2 flex justify-between gap-4">
+                    <span className="text-zinc-500 font-bold text-[9px] uppercase">Bank Name</span>
+                    <span className="text-white font-semibold uppercase">{selectedRequest.bank_details.bank_name}</span>
+                  </div>
+                  <div className="py-2 flex justify-between gap-4">
+                    <span className="text-zinc-500 font-bold text-[9px] uppercase">Account Number</span>
+                    <span className="text-white font-mono select-all font-semibold">{selectedRequest.bank_details.account_number}</span>
+                  </div>
+                  <div className="py-2 flex justify-between gap-4">
+                    <span className="text-zinc-500 font-bold text-[9px] uppercase">IFSC Code</span>
+                    <span className="text-white font-mono select-all font-semibold uppercase">{selectedRequest.bank_details.ifsc_code}</span>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Evidence files viewer */}
             <div className="space-y-3">
