@@ -98,9 +98,23 @@ export default function AdminUsersDesk() {
 
       if (adminsError) throw adminsError;
 
+      // Fetch orders to calculate counts & LTV
+      const { data: orderStats } = await supabase
+        .from("orders")
+        .select("user_id, total_amount");
+
+      const statsMap = {};
+      (orderStats || []).forEach(o => {
+        if (!o.user_id) return;
+        if (!statsMap[o.user_id]) statsMap[o.user_id] = { count: 0, ltv: 0 };
+        statsMap[o.user_id].count += 1;
+        statsMap[o.user_id].ltv += (o.total_amount || 0);
+      });
+
       // Combine users
       const combined = (profiles || []).map((p) => {
         const admin = (admins || []).find((a) => a.id === p.id);
+        const stats = statsMap[p.id] || { count: 0, ltv: 0 };
         return {
           id: p.id,
           full_name: p.full_name || "Guest User",
@@ -108,6 +122,8 @@ export default function AdminUsersDesk() {
           created_at: p.created_at,
           role: admin ? admin.role : "customer",
           email: admin ? admin.email : p.email,
+          orderCount: stats.count,
+          ltv: stats.ltv
         };
       });
 
@@ -115,6 +131,7 @@ export default function AdminUsersDesk() {
       const profileIds = new Set((profiles || []).map((p) => p.id));
       (admins || []).forEach((a) => {
         if (!profileIds.has(a.id)) {
+          const stats = statsMap[a.id] || { count: 0, ltv: 0 };
           combined.push({
             id: a.id,
             full_name: "Admin Workspace User",
@@ -122,6 +139,8 @@ export default function AdminUsersDesk() {
             created_at: a.created_at,
             role: a.role,
             email: a.email,
+            orderCount: stats.count,
+            ltv: stats.ltv
           });
         }
       });
@@ -136,8 +155,8 @@ export default function AdminUsersDesk() {
       
       // Sandbox data fallback for testing/demo
       const fallbackUsers = [
-        { id: "u-1", full_name: "Muhammed Ashique", phone: "+91 9876543210", email: "ashique@cacapo.com", role: "super_admin", created_at: new Date(Date.now() - 30 * 86400000).toISOString() },
-        { id: "u-2", full_name: "Jane Doe", phone: "+91 9988776655", email: null, role: "customer", created_at: new Date(Date.now() - 15 * 86400000).toISOString() },
+        { id: "u-1", full_name: "Muhammed Ashique", phone: "+91 9876543210", email: "ashique@cacapo.com", role: "super_admin", created_at: new Date(Date.now() - 30 * 86400000).toISOString(), orderCount: 5, ltv: 1250000 },
+        { id: "u-2", full_name: "Jane Doe", phone: "+91 9988776655", email: null, role: "customer", created_at: new Date(Date.now() - 15 * 86400000).toISOString(), orderCount: 2, ltv: 340000 },
         { id: "u-3", full_name: "John Smith", phone: "+91 9444332211", email: null, role: "customer", created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
         { id: "u-4", full_name: "Sarah Parker", phone: "+91 9555667788", email: "sarah@cacapo.com", role: "admin", created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
       ];
@@ -375,6 +394,7 @@ export default function AdminUsersDesk() {
                   <th className="p-5">Name & Profile ID</th>
                   <th className="p-5">Contact Details</th>
                   <th className="p-5">Role Permission</th>
+                  <th className="p-5">Orders & LTV</th>
                   <th className="p-5">Registration Date</th>
                   <th className="p-5 text-right">Actions</th>
                 </tr>
@@ -425,6 +445,17 @@ export default function AdminUsersDesk() {
                       {/* Role */}
                       <td className="p-5">
                         {getRoleBadge(user.role)}
+                      </td>
+
+                      {/* Orders & LTV */}
+                      <td className="p-5 space-y-1">
+                        <div className="flex items-center gap-2 text-zinc-300 font-bold">
+                          <ShoppingBag className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+                          <span>{user.orderCount || 0} Orders</span>
+                        </div>
+                        <span className="text-[10.5px] font-extrabold text-accent block font-mono">
+                          {formatPrice(user.ltv || 0)} LTV
+                        </span>
                       </td>
 
                       {/* Registration timestamp */}
@@ -487,7 +518,7 @@ export default function AdminUsersDesk() {
             <div className="flex-1 space-y-8">
               
               {/* Account Profile Meta details */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-5 border border-zinc-900 bg-zinc-950/50">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 border border-zinc-900 bg-zinc-950/50">
                 <div className="space-y-1">
                   <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">Registered Phone</span>
                   <span className="text-zinc-200 font-semibold text-xs">{selectedUser.phone}</span>
@@ -508,6 +539,14 @@ export default function AdminUsersDesk() {
                       timeStyle: "short"
                     })}
                   </span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">Total Orders Count</span>
+                  <span className="text-zinc-200 font-extrabold text-xs">{selectedUser.orderCount || 0} Orders</span>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">Lifetime Value (LTV)</span>
+                  <span className="text-accent font-extrabold text-xs">{formatPrice(selectedUser.ltv || 0)}</span>
                 </div>
               </div>
 
