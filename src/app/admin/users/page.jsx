@@ -83,72 +83,12 @@ export default function AdminUsersDesk() {
   const fetchUsers = async () => {
     setError(null);
     try {
-      // Fetch profiles
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("*")
-        .order("created_at", { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      // Fetch admin users
-      const { data: admins, error: adminsError } = await supabase
-        .from("admin_users")
-        .select("*");
-
-      if (adminsError) throw adminsError;
-
-      // Fetch orders to calculate counts & LTV
-      const { data: orderStats } = await supabase
-        .from("orders")
-        .select("user_id, total_amount");
-
-      const statsMap = {};
-      (orderStats || []).forEach(o => {
-        if (!o.user_id) return;
-        if (!statsMap[o.user_id]) statsMap[o.user_id] = { count: 0, ltv: 0 };
-        statsMap[o.user_id].count += 1;
-        statsMap[o.user_id].ltv += (o.total_amount || 0);
-      });
-
-      // Combine users
-      const combined = (profiles || []).map((p) => {
-        const admin = (admins || []).find((a) => a.id === p.id);
-        const stats = statsMap[p.id] || { count: 0, ltv: 0 };
-        return {
-          id: p.id,
-          full_name: p.full_name || "Guest User",
-          phone: p.phone || "N/A",
-          created_at: p.created_at,
-          role: admin ? admin.role : "customer",
-          email: admin ? admin.email : p.email,
-          orderCount: stats.count,
-          ltv: stats.ltv
-        };
-      });
-
-      // Include admin users that might not have a profile row
-      const profileIds = new Set((profiles || []).map((p) => p.id));
-      (admins || []).forEach((a) => {
-        if (!profileIds.has(a.id)) {
-          const stats = statsMap[a.id] || { count: 0, ltv: 0 };
-          combined.push({
-            id: a.id,
-            full_name: "Admin Workspace User",
-            phone: "N/A",
-            created_at: a.created_at,
-            role: a.role,
-            email: a.email,
-            orderCount: stats.count,
-            ltv: stats.ltv
-          });
-        }
-      });
-
-      // Sort by creation date
-      combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
-
-      setUsers(combined);
+      const res = await fetch("/api/admin/users");
+      if (!res.ok) {
+        throw new Error("Failed to load user directory API");
+      }
+      const data = await res.json();
+      setUsers(data.users || []);
     } catch (err) {
       console.error("Error fetching users:", err);
       setError("Failed to load user database. Please verify client RLS policies.");
