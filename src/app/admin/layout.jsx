@@ -17,24 +17,40 @@ export default async function AdminLayout({ children }) {
   }
 
   const supabase = createServerSupabase(token);
-  const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+  let user = null;
+  let adminUser = null;
 
-  if (authError || !user) {
+  try {
+    const { data, error: authError } = await supabase.auth.getUser(token);
+    if (!authError && data) {
+      user = data.user;
+    }
+  } catch (err) {
+    console.error("Network timeout or connection error during admin auth verification:", err);
+  }
+
+  if (!user) {
     redirect("/login?redirect=/admin/orders");
   }
 
-  // Verify if user is listed in admin_users table
-  const { data: adminUser, error: dbError } = await supabase
-    .from("admin_users")
-    .select("role")
-    .eq("id", user.id)
-    .maybeSingle();
+  try {
+    // Verify if user is listed in admin_users table
+    const { data, error: dbError } = await supabase
+      .from("admin_users")
+      .select("role")
+      .eq("id", user.id)
+      .maybeSingle();
 
-  if (dbError) {
-    console.error("Database error verifying admin status:", dbError);
+    if (dbError) {
+      console.error("Database error verifying admin status:", dbError);
+    } else {
+      adminUser = data;
+    }
+  } catch (err) {
+    console.error("Network or connection error verifying admin role in database:", err);
   }
 
-  if (dbError || !adminUser) {
+  if (!adminUser) {
     redirect("/account?error=unauthorized_admin");
   }
 
