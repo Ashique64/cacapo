@@ -30,6 +30,13 @@ export default function AdminUsersDesk() {
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [sortBy, setSortBy] = useState("default"); // 'default', 'most_spent', 'most_orders'
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+
+  const sortByLabels = {
+    default: "Sort: Default",
+    most_spent: "Sort: Most Spent (LTV)",
+    most_orders: "Sort: Most Orders"
+  };
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -333,17 +340,45 @@ export default function AdminUsersDesk() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="relative flex items-center border border-zinc-900 bg-zinc-950/50 text-xs tracking-wider min-w-[200px]">
-            <select
-              value={sortBy}
-              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
-              className="w-full bg-transparent text-white px-4 py-3 outline-none rounded-none cursor-pointer appearance-none border-none uppercase font-bold text-[9px] tracking-widest"
+          <div className="relative min-w-[200px] z-20">
+            <button
+              onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+              className="w-full flex items-center justify-between gap-4 px-4 py-3 bg-zinc-950/50 border border-zinc-900 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all hover:border-zinc-800 rounded-none cursor-pointer"
             >
-              <option value="default" className="bg-zinc-955">Sort: Default</option>
-              <option value="most_spent" className="bg-zinc-955">Sort: Most Spent (LTV)</option>
-              <option value="most_orders" className="bg-zinc-955">Sort: Most Orders</option>
-            </select>
-            <Filter className="absolute right-4 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+              <span>{sortByLabels[sortBy]}</span>
+              <Filter className="w-3.5 h-3.5 text-zinc-500 shrink-0" />
+            </button>
+
+            {sortDropdownOpen && (
+              <>
+                {/* Backdrop overlay to close when clicking outside */}
+                <div 
+                  className="fixed inset-0 z-30 cursor-default" 
+                  onClick={() => setSortDropdownOpen(false)}
+                />
+                
+                {/* Dropdown Options Box */}
+                <div className="absolute left-0 mt-1.5 w-full bg-zinc-950 border border-zinc-900 shadow-2xl z-40 divide-y divide-zinc-900 animate-fadeIn rounded-none">
+                  {Object.keys(sortByLabels).map((key) => (
+                    <button
+                      key={key}
+                      onClick={() => {
+                        setSortBy(key);
+                        setCurrentPage(1);
+                        setSortDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-3.5 text-[9px] font-bold tracking-widest uppercase transition-all block cursor-pointer ${
+                        sortBy === key
+                          ? "text-accent bg-accent/5 font-extrabold"
+                          : "text-zinc-400 hover:text-white hover:bg-zinc-900/40"
+                      }`}
+                    >
+                      {sortByLabels[key]}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         </div>
 
