@@ -187,9 +187,28 @@ export default function SalesReportDesk() {
       orderRevenue += (order.discount || 0);
     }
     if (deductGst) {
-      const appliedTax = !deductCoupons && order.discount && order.subtotal > 0
-        ? Math.round((order.tax || 0) * (order.subtotal / (order.subtotal - order.discount)))
-        : (order.tax || 0);
+      // Calculate flat GST portion dynamically for order items (handles older orders perfectly too)
+      let totalTax = 0;
+      if (order.order_items && order.order_items.length > 0) {
+        order.order_items.forEach(item => {
+          const unitPrice = item.price || 0;
+          const rate = unitPrice > 249900 ? 18 : 5;
+          const unitTax = Math.round(unitPrice * (rate / 100));
+          totalTax += unitTax * item.quantity;
+        });
+      } else {
+        // Fallback using subtotal or total_amount
+        const baseAmount = order.subtotal || order.total_amount || 0;
+        const rate = baseAmount > 249900 ? 18 : 5;
+        totalTax = Math.round(baseAmount * (rate / 100));
+      }
+
+      // Adjust tax proportionally if discount coupon is deducted
+      const sub = order.subtotal || (order.total_amount - (order.shipping_charge || 0)) || 1;
+      const appliedTax = deductCoupons && order.discount && sub > 0
+        ? Math.round(totalTax * ((sub - order.discount) / sub))
+        : totalTax;
+
       orderRevenue = orderRevenue - appliedTax;
     }
     return Math.max(0, orderRevenue);

@@ -250,7 +250,7 @@ export default function CheckoutPage() {
   cartItems.forEach(item => {
     const unitPrice = item.variant?.price || item.product?.price || 0;
     const rate = unitPrice > 249900 ? 18 : 5;
-    const unitTax = Math.round(unitPrice * (rate / (100 + rate)));
+    const unitTax = Math.round(unitPrice * (rate / 100));
     totalPreDiscountTax += unitTax * item.quantity;
   });
 
