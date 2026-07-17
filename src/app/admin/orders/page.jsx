@@ -19,6 +19,7 @@ import {
   ChevronUp,
   Loader2,
   RefreshCw,
+  FileText,
   X
 } from "lucide-react";
 
@@ -107,13 +108,278 @@ export default function AdminOrdersDesk() {
       if (dbError) throw dbError;
       setOrders(data || []);
 
-
-
     } catch (err) {
       console.error("Failed to load orders for admin desk:", err);
       setError(err.message || "Could not retrieve orders from the database.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadTaxInvoice = async (order) => {
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+      
+      const doc = new jsPDF();
+      
+      // Store Branding Header
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("CACAPO", 14, 20);
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("CACAPO Store, Perinthalmanna, Kerala - 679322", 14, 26);
+      if (gstNumber) {
+        doc.text(`GSTIN: ${gstNumber}`, 14, 31);
+      }
+      
+      // Document Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(16);
+      doc.setTextColor(0, 0, 0);
+      doc.text("TAX INVOICE", 140, 20);
+      
+      // Invoice Details Block
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Invoice No: ${order.order_number}`, 140, 26);
+      const d = new Date(order.created_at);
+      doc.text(`Date: ${d.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}`, 140, 31);
+      doc.text(`Payment: ${order.payment_method?.toUpperCase()} (${order.payment_status?.toUpperCase()})`, 140, 36);
+      
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 42, 196, 42);
+      
+      // Customer details
+      const shipping = order.shipping_address || {};
+      const customerName = shipping.full_name || "N/A";
+      const phone = shipping.phone || "N/A";
+      const addressLine1 = shipping.address_line1 || "";
+      const addressLine2 = shipping.address_line2 || "";
+      const city = shipping.city || "";
+      const state = shipping.state || "";
+      const zip = shipping.zip_code || "";
+      const addressStr = `${addressLine1}${addressLine2 ? ', ' + addressLine2 : ''}, ${city}, ${state} - ${zip}`;
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("BILL TO / SHIP TO:", 14, 50);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Customer Name: ${customerName}`, 14, 56);
+      doc.text(`Phone: ${phone}`, 14, 62);
+      
+      // Split address line if long
+      const splitAddress = doc.splitTextToSize(`Address: ${addressStr}`, 100);
+      doc.text(splitAddress, 14, 68);
+      
+      // Items details
+      const discountRatio = order.discount && order.subtotal > 0 ? (order.subtotal - order.discount) / order.subtotal : 1;
+      
+      let totalTaxableValue = 0;
+      let totalCGST = 0;
+      let totalSGST = 0;
+      let totalIGST = 0;
+      const isKerala = (state || "").toLowerCase().includes("kerala");
+      
+      const tableColumn = ["S.No.", "Product Description", "Variant", "Qty", "Gross Rate (INR)", "Taxable Value", "GST Rate", "GST Amt", "Total (INR)"];
+      const tableRows = (order.order_items || []).map((item, index) => {
+        const grossPrice = item.price || 0; // in paise
+        const rate = grossPrice > 249900 ? 18 : 5;
+        const discountedPrice = grossPrice * discountRatio;
+        
+        // Flat rate GST math
+        const unitTax = Math.round(discountedPrice * (rate / 100));
+        const unitTaxable = discountedPrice - unitTax;
+        
+        const qty = item.quantity || 1;
+        const itemTaxableTotal = (unitTaxable * qty) / 100;
+        const itemTaxTotal = (unitTax * qty) / 100;
+        const itemGrossTotal = (discountedPrice * qty) / 100;
+        
+        totalTaxableValue += itemTaxableTotal;
+
+        const cgstAmount = isKerala ? (itemTaxTotal / 2) : 0;
+        const sgstAmount = isKerala ? (itemTaxTotal / 2) : 0;
+        const igstAmount = !isKerala ? itemTaxTotal : 0;
+
+        totalCGST += cgstAmount;
+        totalSGST += sgstAmount;
+        totalIGST += igstAmount;
+
+        return [
+          index + 1,
+          item.product?.name || "Product Item",
+          item.variant?.size ? `Size: ${item.variant.size}${item.variant?.color ? ' • ' + item.variant.color : ''}` : "N/A",
+          qty,
+          (grossPrice / 100).toFixed(2),
+          itemTaxableTotal.toFixed(2),
+          `${rate}%`,
+          itemTaxTotal.toFixed(2),
+          itemGrossTotal.toFixed(2)
+        ];
+      });
+      
+      autoTable(doc, {
+        startY: 85,
+        head: [tableColumn],
+        body: tableRows,
+        theme: "striped",
+        headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255] },
+        styles: { fontSize: 8, cellPadding: 3 },
+        columnStyles: {
+          1: { cellWidth: 50 },
+          2: { cellWidth: 25 }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 150;
+      
+      // Invoice summary math blocks
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, finalY + 5, 196, finalY + 5);
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("Summary details:", 120, finalY + 13);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Subtotal: Rs. ${(order.subtotal / 100).toFixed(2)}`, 120, finalY + 20);
+      
+      if (order.discount > 0) {
+        doc.text(`Coupon Discount: -Rs. ${(order.discount / 100).toFixed(2)}`, 120, finalY + 26);
+      }
+      doc.text(`Shipping Charge: Rs. ${(order.shipping_charge / 100).toFixed(2)}`, 120, finalY + 32);
+      
+      let nextY = finalY + 38;
+      if (isKerala) {
+        doc.text(`CGST (Central Tax 2.5%/9%): Rs. ${totalCGST.toFixed(2)}`, 120, nextY);
+        doc.text(`SGST (State Tax 2.5%/9%): Rs. ${totalSGST.toFixed(2)}`, 120, nextY + 6);
+        nextY += 12;
+      } else {
+        doc.text(`IGST (Integrated Tax 5%/18%): Rs. ${totalIGST.toFixed(2)}`, 120, nextY);
+        nextY += 6;
+      }
+      
+      doc.setFont("helvetica", "bold");
+      doc.text(`Total Paid: Rs. ${(order.total_amount / 100).toFixed(2)}`, 120, nextY + 4);
+      
+      // Footer / Declaration
+      doc.setFontSize(8);
+      doc.setFont("helvetica", "normal");
+      doc.text("Declaration: This is a system generated tax invoice and does not require a physical signature.", 14, nextY + 16);
+      
+      doc.save(`CACAPO_TaxInvoice_${order.order_number}.pdf`);
+      showToast("Tax Invoice downloaded successfully");
+    } catch (err) {
+      console.error("Failed to generate PDF invoice:", err);
+      showToast("Failed to generate PDF invoice", "error");
+    }
+  };
+
+  const handleDownloadPackagingSlip = async (order) => {
+    try {
+      const { default: jsPDF } = await import("jspdf");
+      const { default: autoTable } = await import("jspdf-autotable");
+      
+      const doc = new jsPDF();
+      
+      // Pack Slip Title
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(22);
+      doc.text("PACKAGING SLIP", 14, 20);
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      doc.setTextColor(100, 100, 100);
+      doc.text("For Internal Warehouse Fulfillment Only", 14, 26);
+      
+      // Order metadata
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(14);
+      doc.setTextColor(0, 0, 0);
+      doc.text(`ORDER NO: ${order.order_number}`, 140, 20);
+      
+      doc.setFontSize(9);
+      doc.setFont("helvetica", "normal");
+      const d = new Date(order.created_at);
+      doc.text(`Date: ${d.toLocaleDateString("en-IN", { day: '2-digit', month: 'short', year: 'numeric' })}`, 140, 26);
+      doc.text(`Method: ${order.payment_method?.toUpperCase()}`, 140, 31);
+      
+      doc.setDrawColor(220, 220, 220);
+      doc.line(14, 38, 196, 38);
+      
+      // Shipping Recipient details
+      const shipping = order.shipping_address || {};
+      const customerName = shipping.full_name || "N/A";
+      const phone = shipping.phone || "N/A";
+      const addressLine1 = shipping.address_line1 || "";
+      const addressLine2 = shipping.address_line2 || "";
+      const city = shipping.city || "";
+      const state = shipping.state || "";
+      const zip = shipping.zip_code || "";
+      const addressStr = `${addressLine1}${addressLine2 ? ', ' + addressLine2 : ''}, ${city}, ${state} - ${zip}`;
+      
+      doc.setFont("helvetica", "bold");
+      doc.text("DELIVER TO:", 14, 46);
+      doc.setFont("helvetica", "normal");
+      doc.text(`Customer Name: ${customerName}`, 14, 52);
+      doc.text(`Phone: ${phone}`, 14, 58);
+      
+      const splitAddress = doc.splitTextToSize(`Address: ${addressStr}`, 120);
+      doc.text(splitAddress, 14, 64);
+      
+      // Packing item checklist
+      const tableColumn = ["S.No.", "Item Description", "Size / Details", "Qty Ordered", "Packed [  ]", "Checked [  ]"];
+      const tableRows = (order.order_items || []).map((item, index) => {
+        const details = [];
+        if (item.variant?.size) details.push(`Size: ${item.variant.size}`);
+        if (item.variant?.color) details.push(`Color: ${item.variant.color}`);
+        return [
+          index + 1,
+          item.product?.name || "Product Item",
+          details.join(" • ") || "N/A",
+          item.quantity || 1,
+          "",
+          ""
+        ];
+      });
+      
+      autoTable(doc, {
+        startY: 80,
+        head: [tableColumn],
+        body: tableRows,
+        theme: "grid",
+        headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255] },
+        styles: { fontSize: 9, cellPadding: 4 },
+        columnStyles: {
+          1: { cellWidth: 70 },
+          2: { cellWidth: 40 },
+          3: { halign: "center" },
+          4: { cellWidth: 20 },
+          5: { cellWidth: 20 }
+        }
+      });
+      
+      const finalY = doc.lastAutoTable.finalY || 150;
+      
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      doc.text("PACKING PROCESS CONTROL CHECKLIST:", 14, finalY + 15);
+      
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8);
+      doc.text("1. Verify product name, size, and SKU matches packaging checklist.", 14, finalY + 22);
+      doc.text("2. Inspect item for any defects or branding label issues before packing.", 14, finalY + 28);
+      doc.text("3. Enclose brand cards, store slips, and invoice files into secondary bag envelope.", 14, finalY + 34);
+      
+      doc.text("Packed By: ________________________", 14, finalY + 50);
+      doc.text("Checked By: ________________________", 120, finalY + 50);
+      
+      doc.save(`CACAPO_PackagingSlip_${order.order_number}.pdf`);
+      showToast("Packaging Slip downloaded successfully");
+    } catch (err) {
+      console.error("Failed to generate Packaging Slip:", err);
+      showToast("Failed to generate Packaging Slip", "error");
     }
   };
 
@@ -741,6 +1007,29 @@ export default function AdminOrdersDesk() {
                             )}
                           </div>
                         )}
+
+                        {/* Documents & Invoices Card */}
+                        <div className="border border-zinc-900 bg-zinc-950 p-4 space-y-4">
+                          <h5 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase flex items-center gap-2">
+                            <FileText className="w-4 h-4 text-accent" /> Documents & Invoices
+                          </h5>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadPackagingSlip(order)}
+                              className="py-2 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
+                            >
+                              <FileText className="w-3.5 h-3.5" /> Pack Slip
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDownloadTaxInvoice(order)}
+                              className="py-2 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
+                            >
+                              <FileText className="w-3.5 h-3.5" /> Tax Invoice
+                            </button>
+                          </div>
+                        </div>
 
                         {/* Cancellation Control (Admin cancellation desk) */}
                         {["pending", "processing", "pending_payment"].includes(order.order_status) && (
