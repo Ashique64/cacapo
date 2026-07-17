@@ -95,6 +95,7 @@ export default function SalesReportDesk() {
           subtotal,
           shipping_charge,
           discount,
+          tax,
           payment_status,
           order_status,
           shipping_address,
