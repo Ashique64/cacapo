@@ -247,8 +247,8 @@ export default function CheckoutPage() {
 
   // Calculate pre-discount GST for each item based on unit price threshold (₹2,499 = 249,900 paise)
   let totalPreDiscountTax = 0;
-  cart.forEach(item => {
-    const unitPrice = item.price; // in paise
+  cartItems.forEach(item => {
+    const unitPrice = item.variant?.price || item.product?.price || 0;
     const rate = unitPrice >= 249900 ? 18 : 5;
     const unitTax = Math.round(unitPrice * (rate / (100 + rate)));
     totalPreDiscountTax += unitTax * item.quantity;
