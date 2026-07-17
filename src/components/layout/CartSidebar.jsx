@@ -24,7 +24,9 @@ export default function CartSidebar() {
   // Memoized Subtotal Calculations
   const subtotal = useMemo(() =>
     items.reduce((sum, item) => {
-      const itemPrice = item.variant && item.variant.price ? item.variant.price : item.product?.price || 0;
+      const variant = item.variant;
+      const product = item.product;
+      const itemPrice = (variant && variant.sale_price) ? variant.sale_price : (variant && variant.price) ? variant.price : product?.sale_price || product?.price || 0;
       return sum + itemPrice * item.quantity;
     }, 0),
   [items]);
@@ -130,7 +132,7 @@ export default function CartSidebar() {
               const images = product.images && product.images.length > 0 
                 ? product.images 
                 : (dbImages.length > 0 ? dbImages : ["/Images/clothing.jpg"]);
-              const activePrice = variant.price ? variant.price : product.price || 0;
+              const activePrice = variant.sale_price ? variant.sale_price : variant.price ? variant.price : product.sale_price || product.price || 0;
               const displayItemPrice = (activePrice / 100).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,

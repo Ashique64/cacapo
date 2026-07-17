@@ -225,7 +225,7 @@ export default function CheckoutPage() {
 
   // Calculations
   const subtotal = cartItems.reduce((sum, item) => {
-    const price = item.variant?.price || item.product?.price || 0;
+    const price = item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0;
     return sum + (price * item.quantity);
   }, 0);
 
@@ -248,7 +248,7 @@ export default function CheckoutPage() {
   // Calculate pre-discount GST for each item based on unit price threshold (₹2,499 = 249,900 paise)
   let totalPreDiscountTax = 0;
   cartItems.forEach(item => {
-    const unitPrice = item.variant?.price || item.product?.price || 0;
+    const unitPrice = item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0;
     const rate = unitPrice > 249900 ? 18 : 5;
     const unitTax = Math.round(unitPrice * (rate / 100));
     totalPreDiscountTax += unitTax * item.quantity;
@@ -475,7 +475,7 @@ export default function CheckoutPage() {
           product_id: item.product_id,
           variant_id: item.variant_id && uuidRegex.test(item.variant_id) ? item.variant_id : null,
           quantity: item.quantity,
-          price: item.variant?.price || item.product?.price || 0
+          price: item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0
         }));
 
         const { error: itemsErr } = await supabase
@@ -1114,7 +1114,7 @@ export default function CheckoutPage() {
                     {/* Cart Items list */}
                     <div className="max-h-60 overflow-y-auto divide-y divide-zinc-900 pr-1 no-scrollbar">
                       {cartItems.map((item) => {
-                        const itemPrice = item.variant?.price || item.product?.price || 0;
+                        const itemPrice = item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0;
                         const dbImages = item.product?.product_images ? item.product.product_images.map(img => img.image_url) : [];
                         const mainImage = item.product?.images?.[0] || (dbImages.length > 0 ? dbImages[0] : "/Images/clothing.jpg");
                         return (
@@ -1349,7 +1349,7 @@ export default function CheckoutPage() {
                             {item.product?.name} <span className="text-zinc-600">({item.quantity}x)</span>
                           </span>
                           <span className="text-zinc-400 font-medium">
-                            {formatPrice((item.variant?.price || item.product?.price || 0) * item.quantity)}
+                            {formatPrice((item.price || item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0) * item.quantity)}
                           </span>
                         </div>
                       ))}
