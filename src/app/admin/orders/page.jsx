@@ -573,7 +573,7 @@ export default function AdminOrdersDesk() {
                             <div className="flex flex-col">
                               <span>Final Total Amount</span>
                               <span className="text-[9px] text-zinc-500 tracking-wider font-normal mt-0.5 font-sans normal-case">
-                                (Inclusive of 18% GST)
+                                (Inclusive of GST)
                               </span>
                               {gstNumber && (
                                 <span className="text-[9px] text-zinc-600 font-mono tracking-widest uppercase mt-1">

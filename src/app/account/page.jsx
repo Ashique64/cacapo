@@ -1465,7 +1465,7 @@ export default function AccountPage() {
                                         <div className="flex flex-col">
                                           <span>Total Paid</span>
                                           <span className="text-[9px] text-zinc-500 tracking-wider font-normal mt-0.5">
-                                            (Inclusive of 18% GST)
+                                            (Inclusive of GST)
                                           </span>
                                         </div>
                                         <span>{formatPrice(order.total_amount)}</span>

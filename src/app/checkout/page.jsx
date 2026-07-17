@@ -245,9 +245,20 @@ export default function CheckoutPage() {
     }
   }
 
-  // 18% GST (Tax) - Inclusive in Subtotal
+  // Calculate pre-discount GST for each item based on unit price threshold (₹2,499 = 249,900 paise)
+  let totalPreDiscountTax = 0;
+  cart.forEach(item => {
+    const unitPrice = item.price; // in paise
+    const rate = unitPrice >= 249900 ? 18 : 5;
+    const unitTax = Math.round(unitPrice * (rate / (100 + rate)));
+    totalPreDiscountTax += unitTax * item.quantity;
+  });
+
+  // GST (Tax) - Inclusive in Subtotal (reduced proportionally by coupon discount)
   const taxableAmount = Math.max(0, subtotal - discount);
-  const tax = Math.round(taxableAmount * (18 / 118));
+  const tax = subtotal > 0
+    ? Math.round(totalPreDiscountTax * (taxableAmount / subtotal))
+    : 0;
 
   const totalAmount = taxableAmount + shippingCharge;
 
@@ -1209,7 +1220,7 @@ export default function CheckoutPage() {
                         <div className="flex flex-col">
                           <span className="tracking-widest uppercase">Total Due</span>
                           <span className="text-[10px] text-zinc-500 tracking-wider font-normal mt-0.5">
-                            (Inclusive of 18% GST)
+                            (Inclusive of GST)
                           </span>
                           {storeSettings.gst_number && (
                             <span className="text-[9px] text-zinc-600 font-mono tracking-widest uppercase mt-1">

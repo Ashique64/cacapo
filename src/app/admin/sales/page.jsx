@@ -192,9 +192,12 @@ export default function SalesReportDesk() {
       orderRevenue += (order.discount || 0);
     }
 
-    // Deduct GST (18%) if toggled
+    // Deduct GST if toggled (using the actual stored tax amount)
     if (deductGst) {
-      orderRevenue = orderRevenue / 1.18;
+      const appliedTax = !deductCoupons && order.discount && order.subtotal > 0
+        ? Math.round((order.tax || 0) * (order.subtotal / (order.subtotal - order.discount)))
+        : (order.tax || 0);
+      orderRevenue = orderRevenue - appliedTax;
     }
 
     acc.totalRevenue += Math.max(0, orderRevenue);
@@ -475,7 +478,7 @@ export default function SalesReportDesk() {
               className="w-full flex items-center justify-between text-xs tracking-wider font-semibold uppercase group"
             >
               <span className={`transition-colors ${deductGst ? 'text-white' : 'text-zinc-500 group-hover:text-zinc-300'}`}>
-                Deduct 18% GST
+                Deduct GST
               </span>
               {deductGst ? <ToggleRight className="w-5 h-5 text-accent" /> : <ToggleLeft className="w-5 h-5 text-zinc-600" />}
             </button>
