@@ -29,6 +29,7 @@ export default function AdminUsersDesk() {
   const [currentUserRole, setCurrentUserRole] = useState(null);
   const [toast, setToast] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -154,16 +155,18 @@ export default function AdminUsersDesk() {
   };
 
   const handleDeleteUser = async (userId) => {
-    if (!window.confirm("Are you sure you want to permanently delete this user account? This cannot be undone.")) {
-      return;
-    }
+    setDeleteConfirmOpen(true);
+  };
 
+  const executeDeleteUser = async () => {
+    if (!selectedUser) return;
+    setDeleteConfirmOpen(false);
     setActionLoading(true);
     try {
       const response = await fetch("/api/admin/users", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId })
+        body: JSON.stringify({ userId: selectedUser.id })
       });
 
       if (!response.ok) {
@@ -174,7 +177,7 @@ export default function AdminUsersDesk() {
       showToast("User account permanently deleted");
       
       setSelectedUser(null);
-      setUsers(prev => prev.filter(u => u.id !== userId));
+      setUsers(prev => prev.filter(u => u.id !== selectedUser.id));
     } catch (err) {
       console.error(err);
       showToast(err.message || "Failed to delete user account", "error");
@@ -588,10 +591,9 @@ export default function AdminUsersDesk() {
         )}
       </div>
 
-      {/* Sliding Details Drawer overlay */}
       {selectedUser && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex justify-end transition-opacity duration-300">
-          <div className="w-full max-w-2xl bg-zinc-950 border-l border-zinc-900 h-full overflow-y-auto flex flex-col justify-between p-8 space-y-8 animate-slideIn">
+          <div className="w-full max-w-2xl bg-zinc-950 border-l border-zinc-900 h-screen fixed top-0 right-0 flex flex-col justify-between p-8 space-y-8 animate-slideIn z-50">
             
             {/* Drawer Header */}
             <div className="flex justify-between items-start border-b border-zinc-900 pb-5 shrink-0">
@@ -613,7 +615,7 @@ export default function AdminUsersDesk() {
             </div>
 
             {/* Drawer Content */}
-            <div className="flex-1 space-y-8">
+            <div className="flex-1 overflow-y-auto no-scrollbar pr-1 space-y-8">
               
               {/* Account Profile Meta details */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-5 border border-zinc-900 bg-zinc-950/50">
@@ -827,6 +829,39 @@ export default function AdminUsersDesk() {
           animation: fadeIn 0.4s ease-out forwards;
         }
       `}</style>
+
+      {/* Custom Luxury Confirm Modal */}
+      {deleteConfirmOpen && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-zinc-950 border border-zinc-900 p-6 max-w-sm w-full space-y-6 rounded-none shadow-2xl">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold tracking-[0.2em] uppercase text-red-500 flex items-center gap-2 font-mono">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-500" /> Confirm Deletion
+              </h3>
+              <p className="text-[10px] text-zinc-400 leading-relaxed tracking-wider">
+                Are you sure you want to permanently delete **{selectedUser?.full_name || "this user"}**? This action is irreversible and will purge their authentication credentials and profile database records.
+              </p>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => setDeleteConfirmOpen(false)}
+                className="w-1/2 py-2 border border-zinc-900 hover:border-zinc-800 text-zinc-400 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-transparent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeDeleteUser}
+                className="w-1/2 py-2 bg-red-600 text-white text-[9px] font-bold tracking-widest uppercase hover:bg-red-700 transition-all rounded-none cursor-pointer border-none"
+              >
+                Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Premium Luxury Toast Notifications */}
       {toast && (
