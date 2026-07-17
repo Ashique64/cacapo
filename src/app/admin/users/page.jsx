@@ -29,6 +29,7 @@ export default function AdminUsersDesk() {
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
+  const [sortBy, setSortBy] = useState("default"); // 'default', 'most_spent', 'most_orders'
 
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
@@ -36,7 +37,7 @@ export default function AdminUsersDesk() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchTerm, roleFilter]);
+  }, [searchTerm, roleFilter, sortBy]);
 
   // Selected User Drawer Details
   const [selectedUser, setSelectedUser] = useState(null);
@@ -154,21 +155,34 @@ export default function AdminUsersDesk() {
     }
   };
 
-  // Filtered Users
-  const filteredUsers = users.filter((u) => {
-    const matchesSearch = 
-      u.full_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phone.includes(searchTerm) ||
-      (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
-      u.id.toLowerCase().includes(searchTerm.toLowerCase());
+  // Filtered and Sorted Users
+  const filteredUsers = useMemo(() => {
+    return users
+      .filter((u) => {
+        const matchesSearch = 
+          (u.full_name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
+          (u.phone || "").includes(searchTerm) ||
+          (u.email && u.email.toLowerCase().includes(searchTerm.toLowerCase())) ||
+          (u.id || "").toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesRole = 
-      roleFilter === "all" ||
-      (roleFilter === "admin" && (u.role === "admin" || u.role === "super_admin")) ||
-      (roleFilter === "customer" && u.role === "customer");
+        const matchesRole = 
+          roleFilter === "all" ||
+          (roleFilter === "admin" && (u.role === "admin" || u.role === "super_admin")) ||
+          (roleFilter === "customer" && u.role === "customer");
 
-    return matchesSearch && matchesRole;
-  });
+        return matchesSearch && matchesRole;
+      })
+      .sort((a, b) => {
+        if (sortBy === "most_spent") {
+          return (b.ltv || 0) - (a.ltv || 0); // Descending LTV
+        }
+        if (sortBy === "most_orders") {
+          return (b.orderCount || 0) - (a.orderCount || 0); // Descending order count
+        }
+        // Default sort: newest user first
+        return new Date(b.created_at) - new Date(a.created_at);
+      });
+  }, [users, searchTerm, roleFilter, sortBy]);
 
   // Pagination Logic
   const totalPages = Math.ceil(filteredUsers.length / itemsPerPage);
@@ -205,6 +219,30 @@ export default function AdminUsersDesk() {
             Customer
           </span>
         );
+    }
+  };
+
+  const getOrderStatusBadgeStyle = (status) => {
+    switch (status?.toLowerCase()) {
+      case "pending":
+      case "pending_payment":
+        return "bg-amber-500/10 border border-amber-500/20 text-amber-500";
+      case "processing":
+        return "bg-blue-500/10 border border-blue-500/20 text-blue-450";
+      case "shipped":
+        return "bg-purple-500/10 border border-purple-500/20 text-purple-400";
+      case "delivered":
+        return "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400";
+      case "cancelled":
+        return "bg-zinc-850 border border-zinc-800 text-zinc-400";
+      case "return_requested":
+      case "exchange_requested":
+        return "bg-red-500/10 border border-red-500/20 text-red-400";
+      case "returned":
+      case "exchanged":
+        return "bg-pink-500/10 border border-pink-500/20 text-pink-400";
+      default:
+        return "bg-zinc-500/10 border border-zinc-500/20 text-zinc-405";
     }
   };
 
@@ -272,25 +310,41 @@ export default function AdminUsersDesk() {
       </div>
 
       {/* Controls: Search and Role Filter Tabs */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-zinc-900 pb-6">
-        {/* Search */}
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
-          <input
-            type="text"
-            placeholder="Search by name, phone, email, or profile ID..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-12 pr-4 py-3 bg-zinc-950/50 border border-zinc-900 text-zinc-100 placeholder-zinc-600 text-xs tracking-wider outline-none focus:border-accent hover:border-zinc-800 transition-colors"
-          />
-          {searchTerm && (
-            <button
-              onClick={() => setSearchTerm("")}
-              className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-zinc-900 pb-6">
+        <div className="flex flex-col md:flex-row flex-1 max-w-2xl gap-4">
+          {/* Search */}
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-500" />
+            <input
+              type="text"
+              placeholder="Search by name, phone, email..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-zinc-950/50 border border-zinc-900 text-zinc-100 placeholder-zinc-650 text-xs tracking-wider outline-none focus:border-accent hover:border-zinc-800 transition-colors"
+            />
+            {searchTerm && (
+              <button
+                onClick={() => setSearchTerm("")}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Sort Dropdown */}
+          <div className="relative flex items-center border border-zinc-900 bg-zinc-950/50 text-xs tracking-wider min-w-[200px]">
+            <select
+              value={sortBy}
+              onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}
+              className="w-full bg-transparent text-white px-4 py-3 outline-none rounded-none cursor-pointer appearance-none border-none uppercase font-bold text-[9px] tracking-widest"
             >
-              <X className="w-3.5 h-3.5" />
-            </button>
-          )}
+              <option value="default" className="bg-zinc-955">Sort: Default</option>
+              <option value="most_spent" className="bg-zinc-955">Sort: Most Spent (LTV)</option>
+              <option value="most_orders" className="bg-zinc-955">Sort: Most Orders</option>
+            </select>
+            <Filter className="absolute right-4 w-3.5 h-3.5 text-zinc-500 pointer-events-none" />
+          </div>
         </div>
 
         {/* Role Tabs */}
@@ -556,12 +610,8 @@ export default function AdminUsersDesk() {
                               <div className="space-y-1">
                                 <div className="flex items-center gap-2">
                                   <span className="font-mono font-bold text-white text-xs">{order.order_number}</span>
-                                  <span className={`text-[7px] font-extrabold tracking-widest px-1.5 py-0.5 rounded-none font-mono ${
-                                    order.order_status === "pending" || order.order_status === "pending_payment"
-                                      ? "bg-accent/10 border border-accent/20 text-accent"
-                                      : "bg-green-500/10 border border-green-500/20 text-green-500"
-                                  }`}>
-                                    {order.order_status?.toUpperCase() || "PENDING"}
+                                  <span className={`text-[7px] font-extrabold tracking-widest px-1.5 py-0.5 rounded-none font-mono uppercase ${getOrderStatusBadgeStyle(order.order_status)}`}>
+                                    {order.order_status?.replace("_", " ") || "PENDING"}
                                   </span>
                                 </div>
                                 <div className="text-[10px] text-zinc-500">
