@@ -193,6 +193,38 @@ export default function AdminOrdersDesk() {
     }
   };
 
+  const handleCancelOrder = (order) => {
+    setConfirmModal({
+      title: "Cancel Order",
+      message: `Are you sure you want to cancel Order #${order.order_number}? This will return stock items back to inventory, cancel any holds, and log the action.`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setActionLoading(prev => ({ ...prev, [order.id]: true }));
+        try {
+          const res = await fetch("/api/orders/cancel", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ orderId: order.id })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Failed to cancel order");
+          }
+
+          showToast(`Order #${order.order_number} has been cancelled successfully. Stocks restored and logged.`, "success");
+          await fetchOrders();
+        } catch (err) {
+          showToast("Failed to cancel order: " + err.message, "error");
+        } finally {
+          setActionLoading(prev => ({ ...prev, [order.id]: false }));
+        }
+      }
+    });
+  };
+
   const handleCreateShipment = async (order) => {
     const orderId = order.id;
     setActionLoading(prev => ({ ...prev, [orderId]: true }));
@@ -442,9 +474,21 @@ export default function AdminOrdersDesk() {
                             ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
                             : order.order_status === "shipped"
                               ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
-                              : "bg-green-500/10 border border-green-500/20 text-green-500"
+                              : order.order_status === "delivered"
+                                ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                                : order.order_status === "cancelled"
+                                  ? "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
+                                  : order.order_status === "return_requested"
+                                    ? "bg-red-500/10 border border-red-500/20 text-red-400"
+                                    : order.order_status === "returned"
+                                      ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
+                                      : order.order_status === "exchange_requested"
+                                        ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
+                                        : order.order_status === "exchanged"
+                                          ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
+                                          : "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
                       }`}>
-                        {order.order_status?.toUpperCase()}
+                        {order.order_status?.toUpperCase()?.replace("_", " ")}
                       </span>
                     </div>
                     
@@ -695,6 +739,30 @@ export default function AdminOrdersDesk() {
                                 Delivered
                               </div>
                             )}
+                          </div>
+                        )}
+
+                        {/* Cancellation Control (Admin cancellation desk) */}
+                        {["pending", "processing", "pending_payment"].includes(order.order_status) && (
+                          <div className="border border-red-950/20 bg-red-950/5 p-4 space-y-2.5">
+                            <h5 className="text-[10px] font-bold tracking-widest text-red-400 uppercase flex items-center gap-2">
+                              <AlertCircle className="w-4 h-4 text-red-500" /> Cancellation Desk
+                            </h5>
+                            <p className="text-[10px] text-zinc-500 tracking-wider">
+                              Cancel this order and automatically release all stock holds back to the inventory logs.
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() => handleCancelOrder(order)}
+                              disabled={actionLoading[order.id]}
+                              className="w-full py-2 bg-red-950/20 border border-red-900/40 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer flex items-center justify-center gap-1.5"
+                            >
+                              {actionLoading[order.id] ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                "Cancel Order & Restock"
+                              )}
+                            </button>
                           </div>
                         )}
 

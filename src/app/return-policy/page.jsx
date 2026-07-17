@@ -2,7 +2,7 @@ import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import Link from "next/link";
-import { ArrowRight, RefreshCw, ShieldAlert, Clock, HelpCircle } from "lucide-react";
+import { ArrowRight, RefreshCw, ShieldAlert, Clock, HelpCircle, FileText } from "lucide-react";
 
 export const metadata = {
   title: "Returns & Exchanges Policy",
@@ -86,7 +86,13 @@ export default function ReturnPolicyPage() {
                   </h3>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  We accept requests for returns or exchanges within <strong className="text-white font-semibold">7 days</strong> from the date of product delivery. Any request received beyond this period cannot be accommodated due to our inventory cycle constraints.
+                  We implement a tiered window policy from delivery date:
+                  <br />
+                  • <strong className="text-white font-semibold">48–72 Hours</strong> for damaged, defective, or wrong item claims.
+                  <br />
+                  • <strong className="text-white font-semibold">7 Days</strong> for size/fit, wrong-item, or not-as-described claims.
+                  <br />
+                  • Changed-mind claims on bespoke or final-sale archive items are strictly ineligible.
                 </p>
               </div>
 
@@ -106,7 +112,24 @@ export default function ReturnPolicyPage() {
                 </ul>
               </div>
 
-              {/* Pillar 3 */}
+              {/* Pillar 3: Evidence & Documentation */}
+              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+                  <FileText className="w-4.5 h-4.5 text-accent" />
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                    Evidence & Documentation
+                  </h3>
+                </div>
+                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                  To speed up review and prevent processing delays, uploading unboxing documentation is required for damage or defective claims.
+                  <br />
+                  • <strong className="text-white font-semibold">Video Instructions:</strong> Film the sealed package with the courier label clearly visible, open the box on camera, and highlight the issue. Video must be uncut, under 60 seconds, and under 50MB.
+                  <br />
+                  • <strong className="text-white font-semibold">Queue Reward:</strong> Claims submitted with unboxing evidence skip manual queues and are fast-tracked for same-day approvals.
+                </p>
+              </div>
+
+              {/* Pillar 4 */}
               <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
                 <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
                   <RefreshCw className="w-4.5 h-4.5 text-accent" />
@@ -119,7 +142,7 @@ export default function ReturnPolicyPage() {
                 </p>
               </div>
 
-              {/* Pillar 4 */}
+              {/* Pillar 5 */}
               <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
                 <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
                   <HelpCircle className="w-4.5 h-4.5 text-accent" />
@@ -128,7 +151,7 @@ export default function ReturnPolicyPage() {
                   </h3>
                 </div>
                 <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  Upon receiving your request and verifying the product condition at our studio, we will process the replacement shipment. If the requested size is unavailable, a full refund or atelier credit (valid for 1 year) will be issued. Return shipping logistics costs are managed by the client unless the item was delivered damaged.
+                  Upon receiving and inspecting your returned product, we will dispatch the replacement items. If the desired exchange variant is out of stock, a store credit (valid 1 year) or refund is initiated. A return logistics shipping charge of <strong className="text-white font-semibold">₹50</strong> is deducted from your refund/credit for size/fit, change of mind, and not-as-described return reasons.
                 </p>
               </div>
 
@@ -137,21 +160,26 @@ export default function ReturnPolicyPage() {
           </div>
         </section>
 
-        {/* CALL TO ACTION SUPPORT */}
         <section className="relative py-20 border-t border-zinc-900 bg-zinc-950/10 flex items-center justify-center overflow-hidden">
           <div className="max-w-2xl mx-auto px-6 text-center space-y-6 relative z-10">
             <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-zinc-200">
               INITIATE A RETURN OR EXCHANGE
             </h2>
             <p className="text-zinc-500 text-xs tracking-widest max-w-md mx-auto leading-relaxed uppercase">
-              Send your order reference ID and structural issue details directly to our design assistants.
+              Start your claims request instantly through your account profile or contact support.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
               <Link 
-                href="/contact" 
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
+                href="/account" 
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-accent text-white hover:bg-white hover:text-black text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
               >
-                CONTACT SUPPORT <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+                INITIATE RETURN / EXCHANGE <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
+              </Link>
+              <Link 
+                href="/contact" 
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-white hover:text-black text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
+              >
+                CONTACT SUPPORT
               </Link>
             </div>
           </div>

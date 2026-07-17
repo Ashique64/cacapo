@@ -18,13 +18,18 @@ import {
   Lock,
   Eye,
   EyeOff,
-  RefreshCw
+  RefreshCw,
+  Upload,
+  X,
+  CheckCircle,
+  ShieldCheck
 } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
+import imageCompression from "browser-image-compression";
 
 export default function AccountPage() {
   const router = useRouter();
@@ -70,56 +75,175 @@ export default function AccountPage() {
   const [orders, setOrders] = useState([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
+  const [cancellingOrderId, setCancellingOrderId] = useState(null);
 
-  // Return & Exchange State
-  const [showReturnForm, setShowReturnForm] = useState({});
-  const [returnType, setReturnType] = useState({});
-  const [returnReason, setReturnReason] = useState({});
-  const [exchangeSize, setExchangeSize] = useState({});
-  const [selectedReturnItems, setSelectedReturnItems] = useState({});
-  const [submittingReturn, setSubmittingReturn] = useState({});
-  const [bankName, setBankName] = useState({});
-  const [accountHolder, setAccountHolder] = useState({});
-  const [accountNumber, setAccountNumber] = useState({});
-  const [ifscCode, setIfscCode] = useState({});
+  // Return & Exchange State (Step 8.4 Upgrade)
+  const [activeReturnOrder, setActiveReturnOrder] = useState(null);
+  const [returnModalStep, setReturnModalStep] = useState(1);
+  const [selectedItems, setSelectedItems] = useState({}); // { [order_item_id]: boolean }
+  const [returnAction, setReturnAction] = useState("return"); // "return" or "exchange"
+  const [returnReasonSelected, setReturnReasonSelected] = useState("damaged");
+  const [returnDescription, setReturnDescription] = useState("");
+  const [targetExchangeVariants, setTargetExchangeVariants] = useState({}); // { [order_item_id]: variant_id }
+  const [productVariantsCache, setProductVariantsCache] = useState({}); // { [product_id]: [variants] }
+  const [uploadedFiles, setUploadedFiles] = useState([]); // Array of { file, name, size, type, preview, progress }
+  const [uploadError, setUploadError] = useState(null);
+  const [uploadingEvidence, setUploadingEvidence] = useState(false);
+  const [evidenceSkipped, setEvidenceSkipped] = useState(false);
+  const [submittingReturn, setSubmittingReturn] = useState(false);
 
-  const handleToggleReturnForm = (orderId, items) => {
-    setShowReturnForm(prev => ({ ...prev, [orderId]: !prev[orderId] }));
+  // Bank refund details state
+  const [bankName, setBankName] = useState("");
+  const [accountHolder, setAccountHolder] = useState("");
+  const [accountNumber, setAccountNumber] = useState("");
+  const [ifscCode, setIfscCode] = useState("");
+
+  const fetchProductVariants = async (productId) => {
+    if (productVariantsCache[productId]) return productVariantsCache[productId];
+    try {
+      const { data, error } = await supabase
+        .from("product_variants")
+        .select("id, size, color, stock_quantity")
+        .eq("product_id", productId);
+      if (error) throw error;
+      setProductVariantsCache(prev => ({ ...prev, [productId]: data || [] }));
+      return data || [];
+    } catch (err) {
+      console.error("Failed to fetch product variants:", err);
+      return [];
+    }
+  };
+
+  const handleOpenReturnModal = (order) => {
+    setActiveReturnOrder(order);
+    setReturnModalStep(1);
+    setReturnAction("return");
+    setReturnReasonSelected("damaged");
+    setReturnDescription("");
+    setUploadedFiles([]);
+    setUploadError(null);
+    setEvidenceSkipped(false);
+    setBankName("");
+    setAccountHolder("");
+    setAccountNumber("");
+    setIfscCode("");
+    
     const initialSelected = {};
-    items.forEach(item => {
+    order.order_items?.forEach(item => {
       initialSelected[item.id] = true;
     });
-    setSelectedReturnItems(prev => ({ ...prev, [orderId]: initialSelected }));
-    setReturnType(prev => ({ ...prev, [orderId]: "return" }));
-    setReturnReason(prev => ({ ...prev, [orderId]: "" }));
-    setExchangeSize(prev => ({ ...prev, [orderId]: "" }));
-    setBankName(prev => ({ ...prev, [orderId]: "" }));
-    setAccountHolder(prev => ({ ...prev, [orderId]: "" }));
-    setAccountNumber(prev => ({ ...prev, [orderId]: "" }));
-    setIfscCode(prev => ({ ...prev, [orderId]: "" }));
-  };
-
-  const handleReturnCheckboxChange = (orderId, itemId) => {
-    setSelectedReturnItems(prev => {
-      const orderItems = prev[orderId] || {};
-      return {
-        ...prev,
-        [orderId]: {
-          ...orderItems,
-          [itemId]: !orderItems[itemId]
-        }
-      };
+    setSelectedItems(initialSelected);
+    setTargetExchangeVariants({});
+    
+    order.order_items?.forEach(item => {
+      fetchProductVariants(item.product_id);
     });
   };
 
-  const handleSubmitReturn = async (order) => {
-    const orderId = order.id;
-    const type = returnType[orderId] || "return";
-    const reason = returnReason[orderId]?.trim() || "";
-    const size = exchangeSize[orderId]?.trim() || "";
-    const itemsMap = selectedReturnItems[orderId] || {};
-    const selectedItemIds = Object.keys(itemsMap).filter(id => itemsMap[id]);
+  const handleReturnCheckboxChange = (itemId) => {
+    setSelectedItems(prev => ({
+      ...prev,
+      [itemId]: !prev[itemId]
+    }));
+  };
 
+  const handleFileUpload = async (e) => {
+    const filesList = Array.from(e.target.files);
+    setUploadError(null);
+
+    // Limit checks: max 1 video + 5 photos
+    const currentVideoCount = uploadedFiles.filter(f => f.type.startsWith("video/")).length;
+    const currentPhotoCount = uploadedFiles.filter(f => f.type.startsWith("image/")).length;
+
+    let newVideoCount = currentVideoCount;
+    let newPhotoCount = currentPhotoCount;
+
+    const filesToUpload = [];
+
+    for (const file of filesList) {
+      const isVideo = file.type.startsWith("video/");
+      const isImage = file.type.startsWith("image/");
+
+      if (!isVideo && !isImage) {
+        setUploadError("Only images (JPG, PNG, WEBP) and videos (MP4, MOV, WEBM) are supported.");
+        continue;
+      }
+
+      if (isVideo) {
+        if (newVideoCount >= 1) {
+          setUploadError("You can only upload 1 unboxing video.");
+          continue;
+        }
+        if (file.size > 52428800) { // 50MB
+          setUploadError("Video size must be under 50MB.");
+          continue;
+        }
+        newVideoCount++;
+      }
+
+      if (isImage) {
+        if (newPhotoCount >= 5) {
+          setUploadError("You can only upload up to 5 photos.");
+          continue;
+        }
+        if (file.size > 2097152) { // 2MB
+          setUploadError(`Photo "${file.name}" exceeds 2MB. Please use a smaller image.`);
+          continue;
+        }
+        newPhotoCount++;
+      }
+
+      const preview = URL.createObjectURL(file);
+      filesToUpload.push({
+        file,
+        name: file.name,
+        size: file.size,
+        type: file.type,
+        preview,
+        progress: 0
+      });
+    }
+
+    if (filesToUpload.length === 0) return;
+
+    // Apply Client-Side Image Compression using browser-image-compression
+    const processedFiles = [];
+    for (const item of filesToUpload) {
+      if (item.type.startsWith("image/")) {
+        try {
+          const options = {
+            maxSizeMB: 1, // Compress to ~1MB
+            maxWidthOrHeight: 1920,
+            useWebWorker: true
+          };
+          const compressed = await imageCompression(item.file, options);
+          processedFiles.push({
+            ...item,
+            file: compressed,
+            size: compressed.size
+          });
+        } catch (compErr) {
+          console.warn("Client-side compression failed, using original file:", compErr);
+          processedFiles.push(item);
+        }
+      } else {
+        processedFiles.push(item);
+      }
+    }
+
+    setUploadedFiles(prev => [...prev, ...processedFiles]);
+  };
+
+  const handleRemoveFile = (index) => {
+    setUploadedFiles(prev => {
+      const file = prev[index];
+      if (file && file.preview) URL.revokeObjectURL(file.preview);
+      return prev.filter((_, i) => i !== index);
+    });
+  };
+
+  const handleNextStep = () => {
+    const selectedItemIds = Object.keys(selectedItems).filter(id => selectedItems[id]);
     if (selectedItemIds.length === 0) {
       setCustomAlert({
         title: "Selection Required",
@@ -129,45 +253,52 @@ export default function AccountPage() {
       return;
     }
 
-    if (!reason) {
-      setCustomAlert({
-        title: "Reason Required",
-        message: "Please provide a reason for the request.",
-        type: "error"
+    if (returnModalStep === 1) {
+      if (returnAction === "exchange") {
+        setReturnModalStep(2);
+      } else {
+        setReturnModalStep(3);
+      }
+    } else if (returnModalStep === 2) {
+      let missingVariants = false;
+      selectedItemIds.forEach(itemId => {
+        if (!targetExchangeVariants[itemId]) {
+          missingVariants = true;
+        }
       });
-      return;
-    }
 
-    if (type === "exchange" && !size) {
-      setCustomAlert({
-        title: "Size Required",
-        message: "Please specify the desired size for exchange.",
-        type: "error"
-      });
-      return;
-    }
-
-    const holder = accountHolder[orderId]?.trim() || "";
-    const bName = bankName[orderId]?.trim() || "";
-    const accNum = accountNumber[orderId]?.trim() || "";
-    const ifsc = ifscCode[orderId]?.trim() || "";
-
-    if (type === "return") {
-      if (!holder || !bName || !accNum || !ifsc) {
+      if (missingVariants) {
         setCustomAlert({
-          title: "Bank Details Required",
-          message: "Please fill in all bank details to receive your refund.",
+          title: "Replacement Size Required",
+          message: "Please select a replacement size for all exchange items.",
           type: "error"
         });
         return;
       }
+      setReturnModalStep(3);
+    } else if (returnModalStep === 3) {
+      const hasVideo = uploadedFiles.some(f => f.type.startsWith("video/"));
+      const isEvidenceRequired = ["damaged", "defective"].includes(returnReasonSelected);
+
+      if (isEvidenceRequired && !hasVideo && !evidenceSkipped) {
+        setEvidenceSkipped(true);
+        setCustomAlert({
+          title: "Evidence Required",
+          message: "Damaged or defective return claims require unboxing video evidence. Submitting without evidence will delay priority review. Click Next again to proceed anyway.",
+          type: "warning"
+        });
+        return;
+      }
+      setReturnModalStep(4);
     }
+  };
 
-    setSubmittingReturn(prev => ({ ...prev, [orderId]: true }));
-
+  const handleSubmitReturnModal = async () => {
+    setSubmittingReturn(true);
     try {
-      const selectedItemsDetails = order.order_items
-        .filter(item => itemsMap[item.id])
+      const selectedItemIds = Object.keys(selectedItems).filter(id => selectedItems[id]);
+      const itemsPayload = activeReturnOrder.order_items
+        .filter(item => selectedItems[item.id])
         .map(item => ({
           order_item_id: item.id,
           product_id: item.product_id,
@@ -178,115 +309,92 @@ export default function AccountPage() {
           color: item.variant?.color
         }));
 
-      const returnRequest = {
-        type,
-        status: "pending",
-        reason,
-        exchange_size: type === "exchange" ? size : null,
-        bank_details: type === "return" ? {
-          account_holder: holder,
-          bank_name: bName,
-          account_number: accNum,
-          ifsc_code: ifsc
-        } : null,
-        items: selectedItemsDetails,
-        created_at: new Date().toISOString()
-      };
+      const exchangeDetails = {};
+      if (returnAction === "exchange") {
+        selectedItemIds.forEach(itemId => {
+          const varId = targetExchangeVariants[itemId];
+          const item = activeReturnOrder.order_items.find(i => i.id === itemId);
+          const cachedVariants = productVariantsCache[item?.product_id] || [];
+          const selectedVar = cachedVariants.find(v => v.id === varId);
+          if (selectedVar) {
+            exchangeDetails[itemId] = {
+              target_variant_id: varId,
+              target_size: selectedVar.size,
+              target_color: selectedVar.color || "Default"
+            };
+          }
+        });
+      }
 
-      const updatedShippingAddress = {
-        ...order.shipping_address,
-        return_request: returnRequest
-      };
-
-      // Try using secure RPC function to bypass RLS UPDATE restrictions on delivered orders
-      const { error: rpcError } = await supabase.rpc("submit_return_request", {
-        order_id: orderId,
-        return_req: returnRequest
+      // Step A: Call return submission API
+      const res = await fetch("/api/returns/submit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          order_id: activeReturnOrder.id,
+          user_id: user.id,
+          request_type: returnAction,
+          reason: returnReasonSelected,
+          reason_notes: returnDescription,
+          items: itemsPayload,
+          exchange_details: returnAction === "exchange" ? exchangeDetails : null
+        })
       });
 
-      if (rpcError) {
-        console.warn("RPC failed, falling back to direct table update:", rpcError.message);
-        
-        // Fallback: direct table update (requires custom RLS policies to be configured)
-        const { data, error: updateError } = await supabase
-          .from("orders")
-          .update({
-            shipping_address: updatedShippingAddress
-          })
-          .eq("id", orderId)
-          .select();
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to submit return request");
+      }
 
-        if (updateError) throw updateError;
+      const submitData = await res.json();
+      const returnRequestId = submitData.return_request_id;
+
+      // Step B: Upload files if any exist
+      if (uploadedFiles.length > 0 && returnRequestId) {
+        const uploadFormData = new FormData();
+        uploadFormData.append("return_request_id", returnRequestId);
+        uploadFormData.append("user_id", user.id);
         
-        if (!data || data.length === 0) {
-          throw new Error("Unable to save return request. Please execute the SQL script in your Supabase SQL Editor to enable return request submissions.");
+        uploadedFiles.forEach((fileObj) => {
+          uploadFormData.append("files", fileObj.file);
+        });
+
+        setUploadingEvidence(true);
+
+        const uploadRes = await fetch("/api/returns/upload-evidence", {
+          method: "POST",
+          body: uploadFormData
+        });
+
+        if (!uploadRes.ok) {
+          const uploadErr = await uploadRes.json().catch(() => ({}));
+          throw new Error(uploadErr.error || "Evidence files upload failed.");
         }
       }
 
       setCustomAlert({
         title: "Request Submitted",
-        message: `Your ${type} request has been submitted successfully.`,
+        message: `Your ${returnAction === "exchange" ? "exchange" : "return"} request has been successfully queued for priority review.`,
         type: "success"
       });
-      setShowReturnForm(prev => ({ ...prev, [orderId]: false }));
+      setActiveReturnOrder(null);
       await fetchOrders();
+
     } catch (err) {
-      console.error("Failed to submit return request:", err);
+      console.error("Submission failed:", err);
       setCustomAlert({
-        title: "Error",
-        message: "Error submitting return request: " + err.message,
+        title: "Submission Error",
+        message: err.message || "An unexpected error occurred during submission.",
         type: "error"
       });
     } finally {
-      setSubmittingReturn(prev => ({ ...prev, [orderId]: false }));
+      setSubmittingReturn(false);
+      setUploadingEvidence(false);
     }
   };
 
-  const [gstNumber, setGstNumber] = useState("");
-  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
-  const [customAlert, setCustomAlert] = useState(null); // { title, message, type }
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // Fetch GST number from settings
-  useEffect(() => {
-    if (mounted) {
-      const fetchGst = async () => {
-        try {
-          const { data, error } = await supabase
-            .from("store_settings")
-            .select("value")
-            .eq("key", "gst_number")
-            .maybeSingle();
-          if (error) throw error;
-          if (data && data.value) {
-            setGstNumber(data.value);
-          }
-        } catch (err) {
-          console.error("Failed to load GST number for account invoice:", err);
-        }
-      };
-      fetchGst();
-    }
-  }, [mounted]);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (mounted && !authLoading && !user) {
-      router.push("/login?redirect=/account");
-    }
-  }, [mounted, authLoading, user, router]);
-
-  // Fetch data when authenticated
-  useEffect(() => {
-    if (mounted && user) {
-      fetchProfileData();
-      fetchAddresses();
-      fetchOrders();
-    }
-  }, [mounted, user]);
+  const [returnRequests, setReturnRequests] = useState([]);
+  const [uploadingDirectOrderId, setUploadingDirectOrderId] = useState(null);
 
   async function fetchProfileData() {
     try {
@@ -344,12 +452,207 @@ export default function AccountPage() {
 
       if (error) throw error;
       setOrders(data || []);
+
+      // Try loading returns requests from return_requests table (Step 8.8)
+      try {
+        const { data: rrData, error: rrError } = await supabase
+          .from("return_requests")
+          .select("*")
+          .eq("user_id", user.id);
+        if (!rrError && rrData) {
+          setReturnRequests(rrData);
+        }
+      } catch (rrTableErr) {
+        console.warn("Could not query return_requests table, fallback order metadata will be used:", rrTableErr.message);
+      }
     } catch (err) {
       console.warn("Could not fetch orders from Supabase:", err);
     } finally {
       setOrdersLoading(false);
     }
   }
+
+  const handleCancelOrder = async (order) => {
+    setConfirmModal({
+      title: "Cancel Order",
+      message: `Are you sure you want to cancel Order #${order.order_number || order.id}? This action cannot be undone and stock holds will be released.`,
+      onConfirm: async () => {
+        setCancellingOrderId(order.id);
+        try {
+          const res = await fetch("/api/orders/cancel", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ orderId: order.id })
+          });
+
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || "Failed to cancel order");
+          }
+
+          setCustomAlert({
+            title: "Order Cancelled",
+            message: `Order #${order.order_number || order.id} has been cancelled successfully. Any stock holds have been released.`,
+            type: "success"
+          });
+
+          await fetchOrders();
+        } catch (err) {
+          console.error("Failed to cancel order:", err);
+          setCustomAlert({
+            title: "Cancellation Failed",
+            message: err.message || "An unexpected error occurred while cancelling your order. Please try again.",
+            type: "error"
+          });
+        } finally {
+          setCancellingOrderId(null);
+        }
+      }
+    });
+  };
+
+  const handleUploadEvidenceDirect = async (e, order, returnRequest) => {
+    const files = Array.from(e.target.files || []);
+    if (files.length === 0) return;
+
+    // Validation
+    const imageFiles = files.filter(f => f.type.startsWith("image/"));
+    const videoFiles = files.filter(f => f.type.startsWith("video/"));
+
+    if (imageFiles.length > 5) {
+      alert("You can upload a maximum of 5 evidence photos.");
+      return;
+    }
+    if (videoFiles.length > 1) {
+      alert("You can upload a maximum of 1 evidence video.");
+      return;
+    }
+    const oversizedImage = files.filter(f => f.type.startsWith("image/")).some(f => f.size > 2097152); // 2MB
+    const oversizedVideo = files.filter(f => f.type.startsWith("video/")).some(f => f.size > 52428800); // 50MB
+    if (oversizedImage) {
+      alert("Each evidence photo must be smaller than 2MB.");
+      return;
+    }
+    if (oversizedVideo) {
+      alert("The evidence video must be smaller than 50MB.");
+      return;
+    }
+
+    setUploadingDirectOrderId(order.id);
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append("return_request_id", returnRequest.id);
+      uploadFormData.append("user_id", user.id);
+
+      files.forEach((file) => {
+        uploadFormData.append("files", file);
+      });
+
+      const res = await fetch("/api/returns/upload-evidence", {
+        method: "POST",
+        body: uploadFormData
+      });
+
+      if (!res.ok) {
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || "Failed to upload evidence files.");
+      }
+
+      setCustomAlert({
+        title: "Evidence Uploaded",
+        message: "✓ Evidence successfully submitted — your request has been updated to priority review status.",
+        type: "success"
+      });
+
+      await fetchOrders();
+    } catch (err) {
+      console.error("[DirectEvidenceUpload] Upload failed:", err);
+      setCustomAlert({
+        title: "Upload Failed",
+        message: err.message || "Could not upload evidence files. Please try again.",
+        type: "error"
+      });
+    } finally {
+      setUploadingDirectOrderId(null);
+    }
+  };
+
+  const [gstNumber, setGstNumber] = useState("");
+  const [confirmModal, setConfirmModal] = useState(null); // { title, message, onConfirm }
+  const [customAlert, setCustomAlert] = useState(null); // { title, message, type }
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setMounted(true);
+    }, 0);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Disable body scroll and Lenis hijacking when Returns Modal is open (Step 8.4)
+  useEffect(() => {
+    if (mounted && activeReturnOrder) {
+      document.body.style.overflow = "hidden";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.stop();
+      }
+    } else if (mounted) {
+      document.body.style.overflow = "auto";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.start();
+      }
+    }
+    return () => {
+      if (mounted) {
+        document.body.style.overflow = "auto";
+        if (typeof window !== "undefined" && window.lenis) {
+          window.lenis.start();
+        }
+      }
+    };
+  }, [activeReturnOrder, mounted]);
+
+  // Fetch GST number from settings
+  useEffect(() => {
+    if (mounted) {
+      const fetchGst = async () => {
+        try {
+          const { data, error } = await supabase
+            .from("store_settings")
+            .select("value")
+            .eq("key", "gst_number")
+            .maybeSingle();
+          if (error) throw error;
+          if (data && data.value) {
+            setGstNumber(data.value);
+          }
+        } catch (err) {
+          console.error("Failed to load GST number for account invoice:", err);
+        }
+      };
+      fetchGst();
+    }
+  }, [mounted]);
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (mounted && !authLoading && !user) {
+      router.push("/login?redirect=/account");
+    }
+  }, [mounted, authLoading, user, router]);
+
+  // Fetch data when authenticated
+  useEffect(() => {
+    if (mounted && user) {
+      queueMicrotask(() => {
+        fetchProfileData();
+        fetchAddresses();
+        fetchOrders();
+      });
+    }
+  }, [mounted, user]);
+
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -920,31 +1223,20 @@ export default function AccountPage() {
                       let badgeClass = "";
                       let badgeText = "";
 
-                      if (order.order_status === "return_requested") {
-                        badgeClass = "bg-red-500/10 border border-red-500/20 text-red-400";
-                        badgeText = "RETURN REQUESTED";
-                      } else if (order.order_status === "returned") {
-                        badgeClass = "bg-red-500/20 border border-red-500/40 text-red-500";
-                        badgeText = "RETURNED";
-                      } else if (order.order_status === "exchange_requested") {
-                        badgeClass = "bg-purple-500/10 border border-purple-500/20 text-purple-400";
-                        badgeText = "EXCHANGE REQUESTED";
-                      } else if (order.order_status === "exchanged") {
-                        badgeClass = "bg-teal-500/10 border border-teal-500/20 text-teal-400";
-                        badgeText = "EXCHANGED";
-                      } else if (order.shipping_address?.return_request) {
-                        const rr = order.shipping_address.return_request;
-                        if (rr.status === "approved") {
-                          if (rr.type === "exchange") {
+                      const rr = order.shipping_address?.return_request || returnRequests.find(r => r.order_id === order.id);
+
+                      if (rr) {
+                        if (rr.status === "approved" || rr.status === "completed") {
+                          if (rr.type === "exchange" || rr.request_type === "exchange") {
                             badgeClass = "bg-teal-500/10 border border-teal-500/20 text-teal-400";
                             badgeText = "EXCHANGED";
                           } else {
-                            badgeClass = "bg-red-500/20 border border-red-500/40 text-red-500";
+                            badgeClass = "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400";
                             badgeText = "RETURNED";
                           }
                         } else if (rr.status === "rejected") {
                           badgeClass = "bg-zinc-800 border border-zinc-700/50 text-zinc-500";
-                          badgeText = rr.type === "exchange" ? "EXCHANGE DECLINED" : "RETURN DECLINED";
+                          badgeText = (rr.type === "exchange" || rr.request_type === "exchange") ? "EXCHANGE DECLINED" : "RETURN DECLINED";
                         } else if (rr.status === "received") {
                           badgeClass = "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse";
                           badgeText = "ITEMS RECEIVED";
@@ -952,13 +1244,27 @@ export default function AccountPage() {
                           badgeClass = "bg-blue-500/10 border border-blue-500/20 text-blue-400 animate-pulse";
                           badgeText = "PICKUP SCHEDULED";
                         } else {
-                          if (rr.type === "exchange") {
+                          if (rr.type === "exchange" || rr.request_type === "exchange") {
                             badgeClass = "bg-purple-500/10 border border-purple-500/20 text-purple-400";
                             badgeText = "EXCHANGE REQUESTED";
                           } else {
                             badgeClass = "bg-red-500/10 border border-red-500/20 text-red-400";
                             badgeText = "RETURN REQUESTED";
                           }
+                        }
+                      } else if (order.order_status === "return_requested" || order.order_status === "returned" || order.order_status === "exchange_requested" || order.order_status === "exchanged") {
+                        if (order.order_status === "return_requested") {
+                          badgeClass = "bg-red-500/10 border border-red-500/20 text-red-400";
+                          badgeText = "RETURN REQUESTED";
+                        } else if (order.order_status === "returned") {
+                          badgeClass = "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400";
+                          badgeText = "RETURNED";
+                        } else if (order.order_status === "exchange_requested") {
+                          badgeClass = "bg-purple-500/10 border border-purple-500/20 text-purple-400";
+                          badgeText = "EXCHANGE REQUESTED";
+                        } else if (order.order_status === "exchanged") {
+                          badgeClass = "bg-teal-500/10 border border-teal-500/20 text-teal-400";
+                          badgeText = "EXCHANGED";
                         }
                       } else {
                         switch (order.order_status) {
@@ -996,11 +1302,41 @@ export default function AccountPage() {
                             className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer hover:bg-zinc-950/40 transition-colors"
                           >
                             <div className="space-y-1.5 tracking-wider text-xs">
-                              <div className="flex items-center gap-2.5">
+                              <div className="flex items-center gap-2.5 flex-wrap">
                                 <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
-                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${badgeClass}`}>
+                                <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${badgeClass}`}>
                                   {badgeText}
-                                 </span>
+                                </span>
+                                {(() => {
+                                  const rr = order.shipping_address?.return_request || returnRequests.find(r => r.order_id === order.id);
+                                  const isReturnRequested = ["return_requested", "exchange_requested"].includes(order.order_status) || (rr && ["pending", "under_review"].includes(rr.status));
+                                  if (isReturnRequested && rr && rr.evidence_skipped) {
+                                    return (
+                                      <>
+                                        <input
+                                          type="file"
+                                          multiple
+                                          accept="image/*,video/*"
+                                          onChange={(e) => handleUploadEvidenceDirect(e, order, rr)}
+                                          className="hidden"
+                                          id={`badge-evidence-input-${order.id}`}
+                                        />
+                                        <button
+                                          type="button"
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            document.getElementById(`badge-evidence-input-${order.id}`).click();
+                                          }}
+                                          disabled={uploadingDirectOrderId === order.id}
+                                          className="text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono bg-accent hover:bg-white hover:text-black text-white transition-all cursor-pointer border-none"
+                                        >
+                                          {uploadingDirectOrderId === order.id ? "UPLOADING..." : "ADD EVIDENCE"}
+                                        </button>
+                                      </>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                               <p className="text-zinc-500 text-[10px]">
                                 {dateFormatted}
@@ -1159,270 +1495,181 @@ export default function AccountPage() {
                                   <h4 className="text-zinc-300 font-bold text-xs uppercase tracking-widest">
                                     Returns & Exchanges Desk
                                   </h4>
-                                </div>
-
-                                {order.shipping_address?.return_request ? (
-                                  // Request Submitted: Display current request status
-                                  <div className="p-4 bg-zinc-950/40 border border-zinc-900/80 rounded-none space-y-3">
-                                    <div className="flex flex-wrap items-center justify-between gap-3">
-                                      <div className="space-y-1">
-                                        <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                          Request Submitted
-                                        </p>
-                                        <div className="flex items-center gap-2.5">
-                                          <span className="text-[11px] font-bold text-white uppercase tracking-wider">
-                                            {order.shipping_address.return_request.type === "exchange"
-                                              ? `Size Exchange (Desired Size: ${order.shipping_address.return_request.exchange_size})`
-                                              : "Product Return (Refund)"}
-                                          </span>
-                                          <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                                            order.shipping_address.return_request.status === "approved"
-                                              ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                              : order.shipping_address.return_request.status === "rejected"
-                                              ? "bg-red-500/10 border border-red-500/20 text-red-500"
-                                              : order.shipping_address.return_request.status === "received"
-                                              ? "bg-amber-500/10 border border-amber-500/20 text-amber-400"
-                                              : order.shipping_address.return_request.status === "pickup_confirmed"
-                                              ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
-                                              : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
-                                          }`}>
-                                            {order.shipping_address.return_request.status === "received"
-                                              ? "ITEMS RECEIVED"
-                                              : order.shipping_address.return_request.status === "pickup_confirmed"
-                                              ? "PICKUP SCHEDULED"
-                                              : order.shipping_address.return_request.status?.toUpperCase() || "PENDING REVIEW"}
-                                          </span>
-                                        </div>
-                                      </div>
-                                      
-                                      <span className="text-[10px] text-zinc-500 font-mono">
-                                        {new Date(order.shipping_address.return_request.created_at).toLocaleDateString("en-IN", {
-                                          day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
-                                        })}
-                                      </span>
-                                    </div>
-
-                                    {order.shipping_address.return_request.status === "pickup_confirmed" && order.shipping_address.return_request.expected_pickup_date && (
-                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
-                                        <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
-                                          Expected Pickup Date
-                                        </span>
-                                        <span className="text-accent font-extrabold text-[11px] uppercase">
-                                          {new Date(order.shipping_address.return_request.expected_pickup_date).toLocaleDateString("en-IN", {
-                                            weekday: "long", day: "numeric", month: "long"
-                                          })}
-                                        </span>
-                                      </div>
-                                    )}
-
-                                    {order.shipping_address.return_request.type === "return" && (order.shipping_address.return_request.status === "received" || order.shipping_address.return_request.status === "approved") && !order.shipping_address.return_request.refund_transfer_details && (
-                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
-                                        <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
-                                          Estimated Refund Processing
-                                        </span>
-                                        <span className="text-green-500 font-extrabold text-[11px] uppercase">
-                                          {order.shipping_address.return_request.status === "approved"
-                                            ? "Refund Approved. Credited in 1–2 business days"
-                                            : "Items Received. Refund processed within 3–5 business days"}
-                                        </span>
-                                      </div>
-                                    )}
-
-                                    {order.shipping_address.return_request.refund_transfer_details && (
-                                      <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1.5 tracking-wider">
-                                        <span className="text-green-500 font-bold uppercase text-[9px] tracking-widest">
-                                          Refund Disbursed Successfully
-                                        </span>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
-                                          Txn Reference: <span className="text-white font-mono normal-case">{order.shipping_address.return_request.refund_transfer_details.transaction_id}</span>
-                                        </p>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
-                                          Amount Credited: <span className="text-white">{formatPrice(order.shipping_address.return_request.refund_transfer_details.amount)}</span>
-                                        </p>
-                                        <p className="text-[10px] text-zinc-400 font-bold uppercase">
-                                          Disbursed Date: <span className="text-white">{new Date(order.shipping_address.return_request.refund_transfer_details.transferred_at).toLocaleDateString("en-IN")}</span>
-                                        </p>
-                                      </div>
-                                    )}
-
-                                    <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
-                                      <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>
-                                      &quot;{order.shipping_address.return_request.reason}&quot;
-                                    </div>
-
-                                    <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                      <span className="text-zinc-500 font-bold block text-[9px] mb-1">Items Requested:</span>
-                                      <ul className="list-disc pl-4 space-y-1">
-                                        {order.shipping_address.return_request.items?.map((item, idx) => (
-                                          <li key={idx} className="text-zinc-400">
-                                            {item.name} {item.size && `(${item.size} / ${item.color || "Default"})`} x {item.quantity}
-                                          </li>
-                                        ))}
-                                      </ul>
-                                    </div>
-                                  </div>
-                                ) : order.order_status === "delivered" ? (
-                                  // Request Eligible: Allow submitting new request
-                                  <div className="space-y-4">
-                                    {!showReturnForm[order.id] ? (
-                                      <button
-                                        onClick={() => handleToggleReturnForm(order.id, order.order_items || [])}
-                                        className="px-5 py-2.5 border border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
-                                      >
-                                        Request Return / Exchange
-                                      </button>
-                                    ) : (
-                                      <div className="p-5 bg-zinc-950/40 border border-zinc-900 space-y-5 rounded-none max-w-xl">
-                                        <h5 className="text-[10px] font-bold text-white uppercase tracking-widest">
-                                          Submit Request Details
-                                        </h5>
-
-                                        {/* Item Selectors (Checkboxes) */}
-                                        <div className="space-y-2.5">
-                                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-                                            Select Items to Return/Exchange *
-                                          </label>
-                                          <div className="space-y-2 border-l-2 border-zinc-800 pl-3">
-                                            {order.order_items?.map((item) => (
-                                              <label key={item.id} className="flex items-center gap-3 text-[11px] text-zinc-300 cursor-pointer hover:text-white transition-colors">
-                                                <input
-                                                  type="checkbox"
-                                                  checked={!!selectedReturnItems[order.id]?.[item.id]}
-                                                  onChange={() => handleReturnCheckboxChange(order.id, item.id)}
-                                                  className="accent-accent w-4 h-4 cursor-pointer"
-                                                />
-                                                <span>
-                                                  {item.product?.name} {item.variant?.size && `(${item.variant.size})`} x {item.quantity}
-                                                </span>
-                                              </label>
-                                            ))}
-                                          </div>
-                                        </div>
-
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                          {/* Type Selector */}
+                                  {(() => {
+                                  const rr = order.shipping_address?.return_request || returnRequests.find(r => r.order_id === order.id);
+                                  
+                                  if (rr) {
+                                    return (
+                                      // Request Submitted: Display current request status
+                                      <div className="p-4 bg-zinc-950/40 border border-zinc-900/80 rounded-none space-y-3">
+                                        <div className="flex flex-wrap items-center justify-between gap-3">
                                           <div className="space-y-1">
-                                            <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-                                              Request Type *
-                                            </label>
-                                            <select
-                                              value={returnType[order.id] || "return"}
-                                              onChange={(e) => setReturnType(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                              className="custom-input text-xs tracking-wide py-2 px-3 appearance-none rounded-none focus:border-accent"
-                                            >
-                                              <option value="return">Return for Refund</option>
-                                              <option value="exchange">Size Exchange</option>
-                                            </select>
-                                          </div>
-
-                                          {/* Exchange Size Selector (Visible only for exchange) */}
-                                          {(returnType[order.id] || "return") === "exchange" && (
-                                            <div className="space-y-1">
-                                              <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-                                                Desired Size *
-                                              </label>
-                                              <input
-                                                type="text"
-                                                value={exchangeSize[order.id] || ""}
-                                                onChange={(e) => setExchangeSize(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                className="custom-input text-xs tracking-wide py-2 px-3"
-                                                placeholder="e.g. 40, M, L"
-                                              />
+                                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                              Request Submitted
+                                            </p>
+                                            <div className="flex items-center gap-2.5">
+                                              <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                                                {rr.request_type === "exchange" || rr.type === "exchange"
+                                                  ? "Size Exchange"
+                                                  : "Product Return"}
+                                              </span>
+                                              <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
+                                                rr.status === "approved"
+                                                  ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                                                  : rr.status === "rejected"
+                                                  ? "bg-red-500/10 border border-red-500/20 text-red-500"
+                                                  : rr.status === "received"
+                                                  ? "bg-amber-500/10 border border-amber-500/20 text-amber-405 text-amber-400"
+                                                  : rr.status === "pickup_confirmed"
+                                                  ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
+                                                  : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
+                                              }`}>
+                                                {rr.status === "received"
+                                                  ? "ITEMS RECEIVED"
+                                                  : rr.status === "pickup_confirmed"
+                                                  ? "PICKUP SCHEDULED"
+                                                  : rr.status?.toUpperCase() || "PENDING REVIEW"}
+                                              </span>
                                             </div>
+                                          </div>
+                                          
+                                          <span className="text-[10px] text-zinc-500 font-mono">
+                                            {new Date(rr.created_at).toLocaleDateString("en-IN", {
+                                              day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
+                                            })}
+                                          </span>
+                                        </div>
+
+                                        {/* Inline Nudges (Step 8.8) */}
+                                        <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1.5 tracking-wider">
+                                          {rr.evidence_skipped ? (
+                                            <>
+                                              <span className="text-accent font-bold uppercase text-[9px] tracking-widest flex items-center gap-1">
+                                                ⚡ Add your unboxing photo/video to unlock priority review.
+                                              </span>
+                                              <div className="pt-2 flex items-center gap-2">
+                                                <input
+                                                  type="file"
+                                                  multiple
+                                                  accept="image/*,video/*"
+                                                  onChange={(e) => handleUploadEvidenceDirect(e, order, rr)}
+                                                  className="hidden"
+                                                  id={`inline-evidence-input-${order.id}`}
+                                                />
+                                                <button
+                                                  type="button"
+                                                  onClick={() => document.getElementById(`inline-evidence-input-${order.id}`).click()}
+                                                  disabled={uploadingDirectOrderId === order.id}
+                                                  className="px-3 py-1.5 bg-zinc-900 border border-zinc-805 text-white text-[9px] font-bold tracking-widest uppercase hover:border-accent hover:text-accent transition-colors cursor-pointer"
+                                                >
+                                                  {uploadingDirectOrderId === order.id ? "UPLOADING..." : "UPLOAD EVIDENCE NOW"}
+                                                </button>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <span className="text-green-550 text-green-500 font-bold uppercase text-[9px] tracking-widest">
+                                              ✓ Evidence submitted — your request is in priority review.
+                                            </span>
                                           )}
                                         </div>
 
-                                        {/* Bank Details Inputs for Refund */}
-                                        {(returnType[order.id] || "return") === "return" && (
-                                          <div className="space-y-3 pt-2 border-t border-zinc-900">
-                                            <span className="block text-[9px] font-bold uppercase tracking-widest text-accent">
-                                              Bank Account Details (For Refund Cash) *
+                                        {rr.status === "pickup_confirmed" && rr.expected_pickup_date && (
+                                          <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
+                                            <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
+                                              Expected Pickup Date
                                             </span>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-                                              <div className="space-y-1">
-                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Account Holder Name *</label>
-                                                <input
-                                                  type="text"
-                                                  value={accountHolder[order.id] || ""}
-                                                  onChange={(e) => setAccountHolder(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
-                                                  placeholder="e.g. Muhammed Ashik"
-                                                />
-                                              </div>
-                                              <div className="space-y-1">
-                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Bank Name *</label>
-                                                <input
-                                                  type="text"
-                                                  value={bankName[order.id] || ""}
-                                                  onChange={(e) => setBankName(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
-                                                  placeholder="e.g. State Bank of India"
-                                                />
-                                              </div>
-                                              <div className="space-y-1">
-                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">Account Number *</label>
-                                                <input
-                                                  type="text"
-                                                  value={accountNumber[order.id] || ""}
-                                                  onChange={(e) => setAccountNumber(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
-                                                  placeholder="Account Number"
-                                                />
-                                              </div>
-                                              <div className="space-y-1">
-                                                <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-550">IFSC Code *</label>
-                                                <input
-                                                  type="text"
-                                                  value={ifscCode[order.id] || ""}
-                                                  onChange={(e) => setIfscCode(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                                  className="custom-input text-xs tracking-wide py-1.5 px-3"
-                                                  placeholder="IFSC Code"
-                                                />
-                                              </div>
-                                            </div>
+                                            <span className="text-accent font-extrabold text-[11px] uppercase">
+                                              {new Date(rr.expected_pickup_date).toLocaleDateString("en-IN", {
+                                                weekday: "long", day: "numeric", month: "long"
+                                              })}
+                                            </span>
                                           </div>
                                         )}
 
-                                        {/* Reason Input */}
-                                        <div className="space-y-1">
-                                          <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">
-                                            Reason for Return / Exchange *
-                                          </label>
-                                          <textarea
-                                            value={returnReason[order.id] || ""}
-                                            onChange={(e) => setReturnReason(prev => ({ ...prev, [order.id]: e.target.value }))}
-                                            className="custom-input text-xs tracking-wide py-2 px-3 h-20 resize-none rounded-none focus:border-accent"
-                                            placeholder="Please describe why you are requesting a return or exchange..."
-                                          />
+                                        {rr.status === "rejected" && rr.admin_notes && (
+                                          <div className="p-3 bg-red-950/10 border border-red-900/40 rounded-none text-xs text-red-400 tracking-wider">
+                                            <span className="font-bold uppercase text-[9px] block mb-1">Rejection Reason:</span>
+                                            {rr.admin_notes}
+                                          </div>
+                                        )}
+
+                                        <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
+                                          <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>
+                                          &quot;{rr.reason_notes || rr.reason}&quot;
                                         </div>
 
-                                        {/* Buttons */}
-                                        <div className="flex gap-3 pt-2">
-                                          <button
-                                            type="button"
-                                            onClick={() => setShowReturnForm(prev => ({ ...prev, [order.id]: false }))}
-                                            className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all rounded-none bg-transparent cursor-pointer"
-                                          >
-                                            Cancel
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => handleSubmitReturn(order)}
-                                            disabled={submittingReturn[order.id]}
-                                            className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none flex items-center justify-center gap-1.5 cursor-pointer border-none"
-                                          >
-                                            {submittingReturn[order.id] ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "Submit Request"}
-                                          </button>
+                                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                          <span className="text-zinc-500 font-bold block text-[9px] mb-1">Items Requested:</span>
+                                          <ul className="list-disc pl-4 space-y-1">
+                                            {rr.items?.map((item, idx) => (
+                                              <li key={idx} className="text-zinc-400">
+                                                {item.name} {item.size && `(${item.size} / ${item.color || "Default"})`} x {item.quantity}
+                                              </li>
+                                            ))}
+                                          </ul>
                                         </div>
                                       </div>
-                                    )}
-                                  </div>
-                                ) : (
-                                  // Not Eligible: Show placeholder note
-                                  <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                    Return window opens only upon successful delivery.
-                                  </p>
-                                )}
+                                    );
+                                  } else {
+                                    return (
+                                      // Request Eligible: Allow submitting new request
+                                      <div>
+                                        {(() => {
+                                          const orderDate = new Date(order.created_at);
+                                          const now = new Date();
+                                          const diffDays = (now - orderDate) / (1000 * 60 * 60 * 24);
+                                          const isEligible = order.order_status === "delivered" && diffDays <= 7;
+                                          const canCancel = ["pending", "processing", "pending_payment"].includes(order.order_status);
+
+                                          if (isEligible) {
+                                            return (
+                                              <button
+                                                onClick={() => handleOpenReturnModal(order)}
+                                                className="px-5 py-2.5 border border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
+                                              >
+                                                Initiate Return / Exchange
+                                              </button>
+                                            );
+                                          } else if (canCancel) {
+                                            return (
+                                              <div className="space-y-3">
+                                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                                  This order is awaiting dispatch. You can cancel it before shipment.
+                                                </p>
+                                                <button
+                                                  onClick={() => handleCancelOrder(order)}
+                                                  disabled={cancellingOrderId === order.id}
+                                                  className="px-5 py-2.5 border border-red-900/60 bg-red-950/10 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer flex items-center gap-2"
+                                                >
+                                                  {cancellingOrderId === order.id ? (
+                                                    <>
+                                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                                      CANCELLING...
+                                                    </>
+                                                  ) : (
+                                                    "Cancel Order"
+                                                  )}
+                                                </button>
+                                              </div>
+                                            );
+                                          } else {
+                                            return (
+                                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                                {order.order_status === "delivered" 
+                                                  ? "Return window closed (7 days from delivery exceeded)"
+                                                  : order.order_status === "cancelled"
+                                                  ? "This order has been cancelled."
+                                                  : "Return window opens only upon successful delivery."
+                                                }
+                                              </p>
+                                            );
+                                          }
+                                        })()}
+                                      </div>
+                                    );
+                                  }
+                                })()}
+                                </div>
                               </div>
 
                             </div>
@@ -1440,7 +1687,472 @@ export default function AccountPage() {
 
         </div>
       </div>
-      
+      {/* Upgraded Multi-Step Returns Modal (Step 8.4) */}
+      {activeReturnOrder && (
+        <div className="fixed inset-0 bg-black/85 backdrop-blur-md z-9999 flex items-start justify-center p-4 md:p-8 overflow-y-auto" data-lenis-prevent>
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-2xl p-6 md:p-8 space-y-6 shadow-2xl relative text-white select-none my-4 md:my-8">
+            
+            {/* Close Button */}
+            <button 
+              type="button"
+              onClick={() => setActiveReturnOrder(null)}
+              className="absolute top-4 right-4 text-zinc-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            {/* Stepper Header */}
+            <div className="space-y-3">
+              <span className="text-[10px] font-mono tracking-[0.25em] text-accent uppercase font-bold">
+                Returns & Exchanges Desk
+              </span>
+              <h3 className="text-lg font-bold tracking-widest uppercase flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-accent animate-spin-slow" />
+                Initiate Request
+              </h3>
+              
+              {/* Stepper Steps visual tracker */}
+              <div className="grid grid-cols-4 gap-2 pt-2 border-b border-zinc-900 pb-4 text-[9px] tracking-wider uppercase font-bold">
+                <div className={`border-b-2 pb-1.5 ${returnModalStep >= 1 ? "border-accent text-white" : "border-zinc-800 text-zinc-500"}`}>
+                  01. Items & Reason
+                </div>
+                <div className={`border-b-2 pb-1.5 ${returnAction === "exchange" ? (returnModalStep >= 2 ? "border-accent text-white" : "border-zinc-800 text-zinc-500") : "border-dashed border-zinc-800 text-zinc-600"}`}>
+                  02. Replacements
+                </div>
+                <div className={`border-b-2 pb-1.5 ${returnModalStep >= 3 ? "border-accent text-white" : "border-zinc-800 text-zinc-500"}`}>
+                  03. Evidence
+                </div>
+                <div className={`border-b-2 pb-1.5 ${returnModalStep >= 4 ? "border-accent text-white" : "border-zinc-800 text-zinc-500"}`}>
+                  04. Review
+                </div>
+              </div>
+            </div>
+
+            {/* STEP 1: ITEM & REASON SELECTION */}
+            {returnModalStep === 1 && (
+              <div className="space-y-5 animate-fadeIn duration-300">
+                <div className="space-y-2.5">
+                  <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400">
+                    Select Items to Return/Exchange *
+                  </label>
+                  <div className="divide-y divide-zinc-900 border border-zinc-900 bg-zinc-950/40 p-4 space-y-3 max-h-48 overflow-y-auto">
+                    {activeReturnOrder.order_items?.map((item) => {
+                      const prodName = item.product?.name || "Product Item";
+                      const prodImg = item.product?.product_images?.[0]?.image_url || "/Images/clothing.jpg";
+                      return (
+                        <label 
+                          key={item.id} 
+                          className="flex items-center gap-4 py-2 first:pt-0 last:pb-0 cursor-pointer hover:text-white transition-colors"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={!!selectedItems[item.id]}
+                            onChange={() => handleReturnCheckboxChange(item.id)}
+                            className="accent-accent w-4 h-4 cursor-pointer"
+                          />
+                          <div className="w-10 h-12 bg-zinc-900 border border-zinc-800 overflow-hidden relative shrink-0">
+                            <img src={prodImg} alt={prodName} className="w-full h-full object-cover" />
+                          </div>
+                          <div className="flex-1 text-xs">
+                            <p className="font-bold text-zinc-300 uppercase">{prodName}</p>
+                            <p className="text-[9px] text-zinc-500 uppercase mt-0.5">
+                              {item.variant?.size && `Size: ${item.variant.size}`}
+                              {item.variant?.color && ` • Color: ${item.variant.color}`}
+                            </p>
+                          </div>
+                          <div className="text-xs text-zinc-400 font-mono">
+                            {item.quantity} x {formatPrice(item.price)}
+                          </div>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Return vs Exchange Toggle */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400">Action Type *</label>
+                    <div className="grid grid-cols-2 border border-zinc-800 p-0.5">
+                      <button
+                        type="button"
+                        onClick={() => setReturnAction("return")}
+                        className={`py-2 text-[10px] font-bold tracking-widest uppercase text-center rounded-none transition-colors border-none cursor-pointer ${
+                          returnAction === "return" ? "bg-white text-black" : "bg-transparent text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        Return (Store Credit)
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setReturnAction("exchange")}
+                        className={`py-2 text-[10px] font-bold tracking-widest uppercase text-center rounded-none transition-colors border-none cursor-pointer ${
+                          returnAction === "exchange" ? "bg-white text-black" : "bg-transparent text-zinc-500 hover:text-zinc-300"
+                        }`}
+                      >
+                        Exchange Sizes
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Reason Dropdown */}
+                  <div className="space-y-1.5">
+                    <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400">Reason for Request *</label>
+                    <select
+                      value={returnReasonSelected}
+                      onChange={(e) => setReturnReasonSelected(e.target.value)}
+                      className="custom-input text-xs tracking-wider py-2.5 px-3 appearance-none rounded-none focus:border-accent"
+                    >
+                      <option value="damaged">Damaged / Defective</option>
+                      <option value="wrong_item">Wrong Item Received</option>
+                      <option value="size_fit">Size / Fit Issue</option>
+                      <option value="not_as_described">Not As Described</option>
+                      <option value="changed_mind">Changed Mind</option>
+                    </select>
+                  </div>
+                </div>
+
+                {/* Reason Dynamic Policy Card */}
+                {(() => {
+                  const policyDetails = {
+                    damaged: { evidence: "Unboxing Video (mandatory) + photos", window: "48–72 hours from delivery", fee: "Free" },
+                    wrong_item: { evidence: "Photo of item + packaging label/tag", window: "7 days from delivery", fee: "Free" },
+                    size_fit: { evidence: "Photos optional (recommended)", window: "7 days from delivery", fee: "₹50 return shipping charge" },
+                    not_as_described: { evidence: "Photos + video comparison", window: "7 days from delivery", fee: "₹50 return shipping charge" },
+                    changed_mind: { evidence: "None required", window: "7 days from delivery", fee: "₹50 return shipping charge" }
+                  }[returnReasonSelected];
+
+                  const showIncentive = ["damaged", "defective", "wrong_item", "not_as_described"].includes(returnReasonSelected);
+
+                  return (
+                    <div className="p-4 bg-zinc-950 border border-zinc-900 space-y-3.5">
+                      <div className="grid grid-cols-3 gap-2 text-center text-[9px] uppercase tracking-wider divide-x divide-zinc-900">
+                        <div className="space-y-1">
+                          <span className="text-zinc-500 font-bold block">Evidence</span>
+                          <span className="text-white font-extrabold block normal-case">{policyDetails.evidence}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-zinc-500 font-bold block">Window</span>
+                          <span className="text-white font-extrabold block">{policyDetails.window}</span>
+                        </div>
+                        <div className="space-y-1">
+                          <span className="text-zinc-500 font-bold block">Fee</span>
+                          <span className="text-accent font-extrabold block">{policyDetails.fee}</span>
+                        </div>
+                      </div>
+
+                      {showIncentive && (
+                        <p className="text-[10px] text-accent tracking-wide italic font-medium pt-1 border-t border-zinc-900/60 text-center">
+                          ⚡ Priority Review Nudge: Submit unboxing evidence now for priority same-day approval. Skipped evidence defaults to standard 2-3 day manual reviews.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
+
+                {/* Customer Notes */}
+                <div className="space-y-1.5">
+                  <label className="block text-[9px] font-bold uppercase tracking-widest text-zinc-400">Additional Information / Notes (Optional)</label>
+                  <textarea
+                    value={returnDescription}
+                    onChange={(e) => setReturnDescription(e.target.value)}
+                    className="custom-input text-xs tracking-wider py-2 px-3 h-20 resize-none rounded-none focus:border-accent"
+                    placeholder="Provide details about size difference, defect locations, or wrong items..."
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* STEP 2: EXCHANGE SIZE DETAILS (CONDITIONAL) */}
+            {returnModalStep === 2 && (
+              <div className="space-y-5 animate-fadeIn duration-300">
+                <p className="text-xs text-zinc-400 tracking-wider">
+                  Choose your target replacement variant for each selected garment. Real-time warehouse availability is listed.
+                </p>
+
+                <div className="space-y-4 divide-y divide-zinc-900">
+                  {activeReturnOrder.order_items?.filter(item => selectedItems[item.id]).map((item) => {
+                    const prodName = item.product?.name || "Garment";
+                    const cachedVariants = productVariantsCache[item.product_id] || [];
+                    const selectedValId = targetExchangeVariants[item.id] || "";
+
+                    return (
+                      <div key={item.id} className="pt-4 first:pt-0 space-y-3 text-xs tracking-wider">
+                        <div className="flex justify-between items-center font-bold">
+                          <span className="text-white uppercase truncate max-w-[280px]">{prodName}</span>
+                          <span className="text-zinc-500 uppercase text-[9px]">Original: Size {item.variant?.size}</span>
+                        </div>
+
+                        <div className="space-y-1">
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Replacement Variant *</label>
+                          {cachedVariants.length === 0 ? (
+                            <div className="flex items-center gap-2 text-zinc-600 text-[10px] italic py-2">
+                              <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" /> Querying variant stock cache...
+                            </div>
+                          ) : (
+                            <select
+                              value={selectedValId}
+                              onChange={(e) => setTargetExchangeVariants(prev => ({ ...prev, [item.id]: e.target.value }))}
+                              className="custom-input text-xs tracking-wide py-2.5 px-3 appearance-none rounded-none focus:border-accent"
+                            >
+                              <option value="">-- SELECT TARGET SIZE/VARIANT --</option>
+                              {cachedVariants.map(v => {
+                                const isAvailable = v.stock_quantity > 0;
+                                return (
+                                  <option key={v.id} value={v.id} disabled={!isAvailable}>
+                                    Size {v.size} {v.color ? ` - ${v.color}` : ""} ({isAvailable ? `${v.stock_quantity} in stock` : "OUT OF STOCK"})
+                                  </option>
+                                );
+                              })}
+                            </select>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 3: EVIDENCE UPLOAD */}
+            {returnModalStep === 3 && (
+              <div className="space-y-5 animate-fadeIn duration-300">
+                
+                {/* Guidelines */}
+                <div className="p-4 border border-zinc-900 bg-zinc-950/60 text-xs leading-relaxed tracking-wider space-y-2">
+                  <span className="text-accent uppercase font-bold text-[9px] tracking-widest flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-accent" /> CAPTURE CLEAR VALUE — For priority SAME-DAY verification:
+                  </span>
+                  <ol className="list-decimal pl-4.5 space-y-1 font-light text-zinc-400">
+                    <li>Film the sealed package showing the courier details/label clearly</li>
+                    <li>Open on camera showing the whole product without any cuts</li>
+                    <li>Focus clearly on the specific size label or defect point</li>
+                  </ol>
+                  <p className="text-[9px] text-zinc-500 italic pt-1 border-t border-zinc-900/60">
+                    MIME formats: JPG, PNG, WEBP (Compressed client-side); MP4, MOV, WEBM (Max 60s, 50MB). Limit: 1 video + 5 photos.
+                  </p>
+                </div>
+
+                {/* Upload Action inputs */}
+                <div className="space-y-3">
+                  <div className="flex gap-4">
+                    <label className="flex-1 py-4 border border-dashed border-zinc-800 hover:border-accent bg-zinc-950/20 text-center flex flex-col items-center justify-center gap-2 cursor-pointer transition-colors select-none">
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,video/*"
+                        onChange={handleFileUpload}
+                        className="hidden"
+                      />
+                      <Upload className="w-5 h-5 text-zinc-500" />
+                      <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400">Choose Files</span>
+                      <span className="text-[8px] text-zinc-650 uppercase">Select images or unboxing video</span>
+                    </label>
+                  </div>
+                  {uploadError && (
+                    <p className="text-accent text-[10px] font-medium tracking-wider text-center">{uploadError}</p>
+                  )}
+                </div>
+
+                {/* Preview Grid */}
+                <div className="space-y-2">
+                  <span className="block text-[9px] font-bold uppercase tracking-widest text-zinc-500">Selected Evidence Files ({uploadedFiles.length})</span>
+                  {uploadedFiles.length === 0 ? (
+                    <p className="text-zinc-600 text-[10px] italic py-2">No files selected. Submit unboxing video to enable priority reviews.</p>
+                  ) : (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 max-h-48 overflow-y-auto pr-1">
+                      {uploadedFiles.map((fileObj, idx) => (
+                        <div key={idx} className="relative aspect-square border border-zinc-900 bg-zinc-950 overflow-hidden shrink-0 group">
+                          {fileObj.type.startsWith("image/") ? (
+                            <img src={fileObj.preview} alt="Upload" className="w-full h-full object-cover" />
+                          ) : (
+                            <div className="w-full h-full flex flex-col items-center justify-center bg-zinc-900 text-[8px] text-zinc-400 uppercase font-bold p-2 text-center gap-1.5">
+                              <span className="text-accent">📹 VIDEO</span>
+                              <span className="text-zinc-600 truncate max-w-full text-[7px]">{fileObj.name}</span>
+                            </div>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveFile(idx)}
+                            className="absolute top-1.5 right-1.5 p-1 bg-black/80 text-zinc-400 hover:text-white transition-colors cursor-pointer rounded-none border border-zinc-800"
+                          >
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* STEP 4: REVIEW & SUBMIT */}
+            {returnModalStep === 4 && (
+              <div className="space-y-5 animate-fadeIn duration-300">
+                <p className="text-xs text-zinc-400 tracking-wider">
+                  Review the summary of your claim before submitting.
+                </p>
+
+                <div className="border border-zinc-900 bg-zinc-950/40 p-4 space-y-4 text-xs tracking-wider">
+                  <div className="grid grid-cols-2 gap-4 border-b border-zinc-900 pb-3">
+                    <div>
+                      <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block mb-0.5">Claim Action</span>
+                      <span className="text-white font-extrabold uppercase">
+                        {returnAction === "exchange" ? "Size Exchange" : "Return (Refund credit)"}
+                      </span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block mb-0.5">Reason</span>
+                      <span className="text-white font-extrabold uppercase">{returnReasonSelected.replace("_", " ")}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 border-b border-zinc-900 pb-3">
+                    <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block">Selected Items</span>
+                    <ul className="list-disc pl-4 space-y-1 text-zinc-300">
+                      {activeReturnOrder.order_items?.filter(item => selectedItems[item.id]).map(item => {
+                        const targetId = targetExchangeVariants[item.id];
+                        const cached = productVariantsCache[item.product_id] || [];
+                        const selectedVar = cached.find(v => v.id === targetId);
+
+                        return (
+                          <li key={item.id}>
+                            {item.product?.name} ({item.variant?.size})
+                            {returnAction === "exchange" && selectedVar && (
+                              <span className="text-accent font-bold"> &rarr; Replacement Size: {selectedVar.size}</span>
+                            )}
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 border-b border-zinc-900 pb-3">
+                    <div>
+                      <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block mb-0.5">Evidence Uploaded</span>
+                      <span className="text-white font-extrabold">{uploadedFiles.length} files ({uploadedFiles.filter(f => f.type.startsWith("video/")).length} videos, {uploadedFiles.filter(f => f.type.startsWith("image/")).length} images)</span>
+                    </div>
+                    <div>
+                      <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block mb-0.5">Logistics return charge</span>
+                      <span className="text-accent font-extrabold uppercase">
+                        {["size_fit", "changed_mind", "not_as_described"].includes(returnReasonSelected) ? "₹50 (Deducted from credit)" : "FREE"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Bank Details Input conditional on return */}
+                  {returnAction === "return" && (
+                    <div className="space-y-3.5 pt-1">
+                      <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest block">Direct Bank Transfer Details (For Refund Cash)</span>
+                      
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Account Holder Name *</label>
+                          <input
+                            type="text"
+                            value={accountHolder}
+                            onChange={(e) => setAccountHolder(e.target.value)}
+                            className="custom-input text-xs tracking-wide py-1.5 px-3"
+                            placeholder="e.g. Rahul Sharma"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Bank Name *</label>
+                          <input
+                            type="text"
+                            value={bankName}
+                            onChange={(e) => setBankName(e.target.value)}
+                            className="custom-input text-xs tracking-wide py-1.5 px-3"
+                            placeholder="e.g. State Bank of India"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Account Number *</label>
+                          <input
+                            type="text"
+                            value={accountNumber}
+                            onChange={(e) => setAccountNumber(e.target.value)}
+                            className="custom-input text-xs tracking-wide py-1.5 px-3"
+                            placeholder="Account Number"
+                          />
+                        </div>
+                        <div className="space-y-1">
+                          <label className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">IFSC Code *</label>
+                          <input
+                            type="text"
+                            value={ifscCode}
+                            onChange={(e) => setIfscCode(e.target.value)}
+                            className="custom-input text-xs tracking-wide py-1.5 px-3"
+                            placeholder="IFSC Code"
+                          />
+                        </div>
+                      </div>
+
+                      <p className="text-[10px] text-zinc-500 leading-normal italic pt-1 text-justify">
+                        * Direct bank transfers are processed only after reverse items successfully reach our warehouse and pass quality evaluations.
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {uploadingEvidence && (
+                  <div className="space-y-2 text-center py-2 animate-pulse">
+                    <Loader2 className="w-5 h-5 animate-spin mx-auto text-accent" />
+                    <p className="text-[10px] font-mono tracking-widest uppercase text-accent font-semibold">Uploading high-resolution unboxing evidence...</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Stepper Footer buttons */}
+            <div className="flex gap-4 pt-4 border-t border-zinc-900">
+              {returnModalStep > 1 && (
+                <button
+                  type="button"
+                  disabled={submittingReturn || uploadingEvidence}
+                  onClick={() => {
+                    if (returnModalStep === 3 && returnAction === "exchange") {
+                      setReturnModalStep(2);
+                    } else {
+                      setReturnModalStep(returnModalStep - 1);
+                    }
+                  }}
+                  className="px-6 py-3 border border-zinc-800 bg-transparent text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-colors rounded-none w-1/3 disabled:opacity-30 cursor-pointer"
+                >
+                  Back
+                </button>
+              )}
+
+              {returnModalStep < 4 ? (
+                <button
+                  type="button"
+                  onClick={handleNextStep}
+                  className="flex-1 py-3 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-colors rounded-none border-none cursor-pointer text-center"
+                >
+                  Next Step
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  disabled={submittingReturn || uploadingEvidence || (returnAction === "return" && (!accountHolder.trim() || !bankName.trim() || !accountNumber.trim() || !ifscCode.trim()))}
+                  onClick={handleSubmitReturnModal}
+                  className="flex-1 py-3 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-colors rounded-none border-none cursor-pointer flex items-center justify-center gap-2 disabled:bg-zinc-900 disabled:text-zinc-600 disabled:cursor-not-allowed"
+                >
+                  {submittingReturn ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Submitting Claim...
+                    </>
+                  ) : (
+                    "Confirm & Submit Request"
+                  )}
+                </button>
+              )}
+            </div>
+
+          </div>
+        </div>
+      )}
+
       {/* Custom Alert Modal Overlay */}
       {customAlert && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-99999 flex items-center justify-center p-4">
@@ -1462,6 +2174,41 @@ export default function AccountPage() {
                 className="w-full py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all rounded-none cursor-pointer border-none"
               >
                 OK
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Custom Confirmation Modal Overlay */}
+      {confirmModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-99999 flex items-center justify-center p-4 animate-fadeIn duration-200">
+          <div className="bg-zinc-950 border border-zinc-900 w-full max-w-sm p-6 space-y-6 shadow-2xl relative">
+            <div className="space-y-2">
+              <h3 className="text-sm font-bold uppercase tracking-widest text-white">
+                {confirmModal.title || "Confirm Action"}
+              </h3>
+              <p className="text-xs text-zinc-400 leading-relaxed tracking-wider font-sans normal-case">
+                {confirmModal.message}
+              </p>
+            </div>
+            <div className="flex gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmModal(null)}
+                className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-550 transition-all rounded-none cursor-pointer bg-transparent"
+              >
+                Keep Order
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  confirmModal.onConfirm();
+                  setConfirmModal(null);
+                }}
+                className="w-1/2 py-2 bg-accent text-white text-[10px] font-bold tracking-widest uppercase hover:bg-white hover:text-black transition-all rounded-none cursor-pointer border-none"
+              >
+                Confirm
               </button>
             </div>
           </div>

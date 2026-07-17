@@ -1,16 +1,79 @@
 "use client";
 
-import { useState, useMemo, useCallback } from "react";
+import { useState, useMemo, useCallback, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings, TrendingUp, RefreshCw } from "lucide-react";
+import { Shield, ShoppingBag, Database, LayoutDashboard, Ticket, Box, Menu, X, Users, LogOut, Settings, TrendingUp, RotateCcw } from "lucide-react";
 import { useAuthStore } from "@/store/useAuthStore";
+import { supabase } from "@/lib/supabase";
 
 export default function AdminSidebar({ role }) {
   const pathname = usePathname();
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
+  const [returnsCount, setReturnsCount] = useState(0);
+  const [ordersCount, setOrdersCount] = useState(0);
   const signOut = useAuthStore((state) => state.signOut);
+
+  // Fetch Returns Desk count badge dynamically
+  useEffect(() => {
+    const fetchReturnsCount = async () => {
+      try {
+        // A. Try loading pending/under_review returns from return_requests table
+        const { count, error } = await supabase
+          .from("return_requests")
+          .select("id", { count: "exact", head: true })
+          .in("status", ["pending", "under_review"]);
+
+        if (!error) {
+          setReturnsCount(count || 0);
+          return;
+        }
+
+        // B. Fallback to order address return metadata if table is not created yet
+        const { data: orders } = await supabase
+          .from("orders")
+          .select("shipping_address");
+
+        const pendingReturns = (orders || []).filter(order => {
+          const rr = order.shipping_address?.return_request;
+          return rr && ["pending", "under_review"].includes(rr.status);
+        }).length;
+
+        setReturnsCount(pendingReturns);
+      } catch (e) {
+        console.error("[AdminSidebar] Error loading return counts:", e);
+      }
+    };
+
+    fetchReturnsCount();
+
+    const interval = setInterval(fetchReturnsCount, 15000);
+    return () => clearInterval(interval);
+  }, []);
+
+  // Fetch Orders Desk count badge dynamically (pending + processing)
+  useEffect(() => {
+    const fetchOrdersCount = async () => {
+      try {
+        const { count, error } = await supabase
+          .from("orders")
+          .select("id", { count: "exact", head: true })
+          .in("order_status", ["pending", "processing"]);
+
+        if (!error) {
+          setOrdersCount(count || 0);
+        }
+      } catch (e) {
+        console.error("[AdminSidebar] Error loading order counts:", e);
+      }
+    };
+
+    fetchOrdersCount();
+
+    const interval = setInterval(fetchOrdersCount, 15000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleLogout = useCallback(async () => {
     try {
@@ -25,7 +88,7 @@ export default function AdminSidebar({ role }) {
   const navItems = useMemo(() => [
     { name: "Dashboard", path: "/admin", icon: LayoutDashboard },
     { name: "Orders Desk", path: "/admin/orders", icon: ShoppingBag },
-    { name: "Returns Desk", path: "/admin/returns", icon: RefreshCw },
+    { name: "Returns Desk", path: "/admin/returns", icon: RotateCcw },
     { name: "Catalog CRUD", path: "/admin/products", icon: Database },
     { name: "Coupons Desk", path: "/admin/coupons", icon: Ticket },
     { name: "Inventory Desk", path: "/admin/inventory", icon: Box },
@@ -95,6 +158,16 @@ export default function AdminSidebar({ role }) {
                 >
                   <Icon className={`w-4 h-4 transition-transform duration-300 group-hover:scale-110 ${isActive ? "text-accent" : "text-zinc-500 group-hover:text-accent"}`} />
                   <span>{item.name}</span>
+                  {item.name === "Orders Desk" && ordersCount > 0 && (
+                    <span className="ml-auto bg-accent text-white text-[9px] font-bold px-2 py-0.5 rounded-none font-mono">
+                      {ordersCount}
+                    </span>
+                  )}
+                  {item.name === "Returns Desk" && returnsCount > 0 && (
+                    <span className="ml-auto bg-accent text-white text-[9px] font-bold px-2 py-0.5 rounded-none font-mono">
+                      {returnsCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}
