@@ -180,27 +180,24 @@ export default function SalesReportDesk() {
     return matchesProduct;
   });
 
-  // Calculate Revenue
-  const metrics = filteredOrders.reduce((acc, order) => {
-    acc.ordersCount += 1;
-
-    // Base revenue is the final amount paid by the customer
+  const getOrderDisplayRevenue = (order) => {
     let orderRevenue = order.total_amount || 0;
-
-    // If they want Gross Revenue (i.e., NOT deducting coupons), we add the discount back
     if (!deductCoupons) {
       orderRevenue += (order.discount || 0);
     }
-
-    // Deduct GST if toggled (using the actual stored tax amount)
     if (deductGst) {
       const appliedTax = !deductCoupons && order.discount && order.subtotal > 0
         ? Math.round((order.tax || 0) * (order.subtotal / (order.subtotal - order.discount)))
         : (order.tax || 0);
       orderRevenue = orderRevenue - appliedTax;
     }
+    return Math.max(0, orderRevenue);
+  };
 
-    acc.totalRevenue += Math.max(0, orderRevenue);
+  // Calculate Revenue
+  const metrics = filteredOrders.reduce((acc, order) => {
+    acc.ordersCount += 1;
+    acc.totalRevenue += getOrderDisplayRevenue(order);
     return acc;
   }, { totalRevenue: 0, ordersCount: 0 });
 
@@ -230,7 +227,7 @@ export default function SalesReportDesk() {
       const email = (order.shipping_address?.email || "").replace(/,/g, " ");
       const status = order.payment_status?.toUpperCase() || "N/A";
       const discount = (order.discount || 0) / 100;
-      const finalAmount = (order.total_amount || 0) / 100;
+      const finalAmount = getOrderDisplayRevenue(order) / 100;
 
       csvContent += `${dateStr},${orderNo},${name},${email},${status},${discount},${finalAmount}\n`;
     });
@@ -276,7 +273,7 @@ export default function SalesReportDesk() {
       const name = order.shipping_address?.full_name || "N/A";
       const status = order.payment_status?.toUpperCase() || "N/A";
       const discount = (order.discount || 0) / 100;
-      const finalAmount = (order.total_amount || 0) / 100;
+      const finalAmount = getOrderDisplayRevenue(order) / 100;
 
       tableRows.push([
         dateStr,
@@ -585,7 +582,7 @@ export default function SalesReportDesk() {
                       {order.discount > 0 ? `-${formatPrice(order.discount)}` : "-"}
                     </td>
                     <td className="p-4 text-right font-mono font-bold text-white text-[13px]">
-                      {formatPrice(order.total_amount)}
+                      {formatPrice(getOrderDisplayRevenue(order))}
                     </td>
                   </tr>
                 );
