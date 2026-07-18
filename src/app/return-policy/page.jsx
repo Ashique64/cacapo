@@ -24,11 +24,11 @@ export default function ReturnPolicyPage() {
   return (
     <SmoothScroll>
       <Navbar />
-      <main className="bg-black text-white min-h-screen pt-24 select-none overflow-x-hidden font-sans">
+      <main className="bg-background text-foreground min-h-screen pt-24 select-none overflow-x-hidden font-sans">
         
         {/* HERO HEADER */}
-        <section className="relative h-[45vh] sm:h-[50vh] flex items-center justify-center border-b border-zinc-900 overflow-hidden">
-          <div className="absolute inset-0 bg-linear-to-b from-black/20 via-black/55 to-black z-10" />
+        <section className="relative h-[45vh] sm:h-[50vh] flex items-center justify-center border-b border-card-border overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-white/20 via-white/55 to-white z-10" />
           
           {/* Subtle Ambient Background Light */}
           <div className="absolute top-1/4 left-1/4 w-[35vw] h-[35vw] bg-accent/4 rounded-full blur-[90px] pointer-events-none animate-pulse duration-6000ms" />
@@ -37,11 +37,11 @@ export default function ReturnPolicyPage() {
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
               CLIENT CARE DESK
             </span>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-wider uppercase text-white font-sans leading-none">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-wider uppercase text-foreground font-sans leading-none">
               RETURNS & <span className="text-accent">EXCHANGES</span>
             </h1>
             <div className="w-16 h-px bg-accent mx-auto mt-6" />
-            <p className="text-zinc-500 text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
+            <p className="text-muted-text text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
               Our policies are structured to ensure absolute quality control and structural perfection.
             </p>
           </div>
@@ -57,16 +57,16 @@ export default function ReturnPolicyPage() {
                 <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
                   SATISFACTION ACCORD
                 </span>
-                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-white leading-tight">
+                <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
                   OUR GUARANTEE <br />OF EXCELLENCE
                 </h2>
               </div>
-              <p className="text-zinc-400 text-xs sm:text-sm font-light leading-relaxed text-justify">
+              <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
                 At House of CACAPO, every silhouette is imported from premier international makers, carefully curated, and rigorously inspected at our Kerala hub before dispatch. If a ready-to-wear piece does not sit correctly on your frame, we are fully committed to coordinating exchanges or returns.
               </p>
-              <div className="p-5 border border-zinc-900 bg-zinc-950/40 space-y-2.5">
+              <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Support Hours</span>
-                <p className="text-zinc-400 text-[11px] tracking-wider leading-relaxed">
+                <p className="text-muted-text text-[11px] tracking-wider leading-relaxed">
                   Monday – Saturday • 10:00 AM – 7:00 PM (IST)
                   <br />
                   Response within 12 hours for all requests.
@@ -78,33 +78,33 @@ export default function ReturnPolicyPage() {
             <div className="lg:col-span-7 space-y-8">
               
               {/* Pillar 1 */}
-              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+              <div className="p-6 sm:p-8 bg-[#f9f8f6] border border-card-border space-y-4 hover:border-accent/40 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <Clock className="w-4.5 h-4.5 text-accent" />
-                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
                     Return Window
                   </h3>
                 </div>
-                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                <p className="text-muted-text text-xs font-light leading-relaxed">
                   We implement a tiered window policy from delivery date:
                   <br />
-                  • <strong className="text-white font-semibold">48–72 Hours</strong> for damaged, defective, or wrong item claims.
+                  • <strong className="text-foreground font-semibold">48–72 Hours</strong> for damaged, defective, or wrong item claims.
                   <br />
-                  • <strong className="text-white font-semibold">7 Days</strong> for size/fit, wrong-item, or not-as-described claims.
+                  • <strong className="text-foreground font-semibold">7 Days</strong> for size/fit, wrong-item, or not-as-described claims.
                   <br />
                   • Changed-mind claims on bespoke or final-sale archive items are strictly ineligible.
                 </p>
               </div>
 
               {/* Pillar 2 */}
-              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+              <div className="p-6 sm:p-8 bg-[#f9f8f6] border border-card-border space-y-4 hover:border-accent/40 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <ShieldAlert className="w-4.5 h-4.5 text-accent" />
-                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
                     Eligibility Guidelines
                   </h3>
                 </div>
-                <ul className="text-zinc-400 text-xs font-light leading-relaxed space-y-2 list-disc list-inside">
+                <ul className="text-muted-text text-xs font-light leading-relaxed space-y-2 list-disc list-inside">
                   <li>Garments must be completely unworn, unwashed, and undamaged.</li>
                   <li>Original brand tags, design labels, and packaging materials must be intact.</li>
                   <li>Receipt or proof of purchase must be presented during request.</li>
@@ -113,45 +113,45 @@ export default function ReturnPolicyPage() {
               </div>
 
               {/* Pillar 3: Evidence & Documentation */}
-              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+              <div className="p-6 sm:p-8 bg-[#f9f8f6] border border-card-border space-y-4 hover:border-accent/40 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <FileText className="w-4.5 h-4.5 text-accent" />
-                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
                     Evidence & Documentation
                   </h3>
                 </div>
-                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                <p className="text-muted-text text-xs font-light leading-relaxed">
                   To speed up review and prevent processing delays, uploading unboxing documentation is required for damage or defective claims.
                   <br />
-                  • <strong className="text-white font-semibold">Video Instructions:</strong> Film the sealed package with the courier label clearly visible, open the box on camera, and highlight the issue. Video must be uncut, under 60 seconds, and under 50MB.
+                  • <strong className="text-foreground font-semibold">Video Instructions:</strong> Film the sealed package with the courier label clearly visible, open the box on camera, and highlight the issue. Video must be uncut, under 60 seconds, and under 50MB.
                   <br />
-                  • <strong className="text-white font-semibold">Queue Reward:</strong> Claims submitted with unboxing evidence skip manual queues and are fast-tracked for same-day approvals.
+                  • <strong className="text-foreground font-semibold">Queue Reward:</strong> Claims submitted with unboxing evidence skip manual queues and are fast-tracked for same-day approvals.
                 </p>
               </div>
 
               {/* Pillar 4 */}
-              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+              <div className="p-6 sm:p-8 bg-[#f9f8f6] border border-card-border space-y-4 hover:border-accent/40 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <RefreshCw className="w-4.5 h-4.5 text-accent" />
-                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
                     Non-Returnable Items
                   </h3>
                 </div>
-                <p className="text-zinc-400 text-xs font-light leading-relaxed">
+                <p className="text-muted-text text-xs font-light leading-relaxed">
                   Imported final sale archive items, customized size orders, and intimate apparel are strictly non-returnable. We encourage you to carefully cross-reference your measurements with our sizing charts before placing orders.
                 </p>
               </div>
 
               {/* Pillar 5 */}
-              <div className="p-6 sm:p-8 bg-zinc-950/20 border border-zinc-900 space-y-4 hover:border-zinc-800 transition-colors duration-500 relative">
-                <div className="flex items-center gap-3 border-b border-zinc-900 pb-3">
+              <div className="p-6 sm:p-8 bg-[#f9f8f6] border border-card-border space-y-4 hover:border-accent/40 transition-colors duration-500 relative">
+                <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <HelpCircle className="w-4.5 h-4.5 text-accent" />
-                  <h3 className="text-xs font-bold tracking-[0.2em] text-zinc-100 uppercase">
+                  <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
                     Exchange Process
                   </h3>
                 </div>
-                <p className="text-zinc-400 text-xs font-light leading-relaxed">
-                  Upon receiving and inspecting your returned product, we will dispatch the replacement items. If the desired exchange variant is out of stock, a store credit (valid 1 year) or refund is initiated. A return logistics shipping charge of <strong className="text-white font-semibold">₹50</strong> is deducted from your refund/credit for size/fit, change of mind, and not-as-described return reasons.
+                <p className="text-muted-text text-xs font-light leading-relaxed">
+                  Upon receiving and inspecting your returned product, we will dispatch the replacement items. If the desired exchange variant is out of stock, a store credit (valid 1 year) or refund is initiated. A return logistics shipping charge of <strong className="text-foreground font-semibold">₹50</strong> is deducted from your refund/credit for size/fit, change of mind, and not-as-described return reasons.
                 </p>
               </div>
 
@@ -160,24 +160,24 @@ export default function ReturnPolicyPage() {
           </div>
         </section>
 
-        <section className="relative py-20 border-t border-zinc-900 bg-zinc-950/10 flex items-center justify-center overflow-hidden">
+        <section className="relative py-20 border-t border-card-border bg-[#f9f8f6] flex items-center justify-center overflow-hidden">
           <div className="max-w-2xl mx-auto px-6 text-center space-y-6 relative z-10">
-            <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-zinc-200">
+            <h2 className="text-xl sm:text-2xl font-bold uppercase tracking-wider text-foreground">
               INITIATE A RETURN OR EXCHANGE
             </h2>
-            <p className="text-zinc-500 text-xs tracking-widest max-w-md mx-auto leading-relaxed uppercase">
+            <p className="text-muted-text text-xs tracking-widest max-w-md mx-auto leading-relaxed uppercase">
               Start your claims request instantly through your account profile or contact support.
             </p>
             <div className="pt-4 flex flex-col sm:flex-row gap-4 items-center justify-center">
               <Link 
                 href="/account" 
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-accent text-white hover:bg-white hover:text-black text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-foreground text-background border border-foreground hover:bg-transparent hover:text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
               >
                 INITIATE RETURN / EXCHANGE <ArrowRight className="w-3.5 h-3.5 ml-1.5" />
               </Link>
               <Link 
                 href="/contact" 
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-white hover:text-black text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-transparent border border-card-border text-foreground hover:border-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer"
               >
                 CONTACT SUPPORT
               </Link>
