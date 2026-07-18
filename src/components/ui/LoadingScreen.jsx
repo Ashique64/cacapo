@@ -43,10 +43,12 @@ export default function LoadingScreen({ preloaderRef, loadingProgress, isPreload
 
         {/* Center Typographic Reveal */}
         <div className="text-center my-auto flex flex-col items-center">
-          <div className="overflow-hidden mb-3">
-            <h1 className="preloader-brand text-5xl md:text-7xl font-extrabold tracking-[0.3em] text-loading-text uppercase leading-none opacity-0 translate-y-full">
-              CACAPO
-            </h1>
+          <div className="overflow-hidden mb-5">
+            <img 
+              src="/Cacapo-Logo.svg" 
+              alt="CACAPO" 
+              className="preloader-brand h-9 md:h-12 w-auto object-contain opacity-0 translate-y-full" 
+            />
           </div>
           <p className="preloader-subtext text-[10px] tracking-[0.5em] text-accent font-light uppercase opacity-0">
             ATELIER COUTURE
@@ -58,7 +60,7 @@ export default function LoadingScreen({ preloaderRef, loadingProgress, isPreload
           {/* 1px Progress Bar */}
           <div className="w-full h-px bg-loading-progress-bg relative overflow-hidden">
             <div
-              className="h-full bg-accent transition-all duration-300 ease-out"
+              className="h-full bg-accent transition-all duration-150 ease-out"
               style={{ width: `${loadingProgress}%` }}
             />
           </div>

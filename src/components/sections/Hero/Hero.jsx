@@ -59,19 +59,22 @@ export default function Hero() {
               tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
                 opacity: 0,
                 y: -20,
-                duration: 0.8,
-                ease: "power3.in"
-              })
-              .to(".preloader-top-panel", {
+                duration: 0.6,
+                stagger: 0.1,
+                ease: "power2.in"
+              });
+
+              tl.to(".preloader-top-panel", {
                 y: "-100%",
-                duration: 1.2,
+                duration: 1.0,
                 ease: "power4.inOut"
-              }, "-=0.4")
-              .to(".preloader-bottom-panel", {
+              }, "-=0.4");
+
+              tl.to(".preloader-bottom-panel", {
                 y: "100%",
-                duration: 1.2,
+                duration: 1.0,
                 ease: "power4.inOut"
-              }, "<");
+              }, "-=1.0");
             } else {
               setIsPreloaderRemoved(true);
               sessionStorage.setItem("cacapo_preloader_done", "true");

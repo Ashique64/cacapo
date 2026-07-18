@@ -86,8 +86,12 @@ export default function Navbar() {
             : "bg-transparent p-6"
         } flex justify-between items-center`}
       >
-        <Link href="/" className="text-xl font-extrabold tracking-[0.3em] text-foreground hover:text-accent transition-colors">
-          CACAPO
+        <Link href="/" className="transition-opacity hover:opacity-80">
+          <img 
+            src="/Cacapo-Logo.svg" 
+            alt="CACAPO Logo" 
+            className="h-5 w-auto object-contain dark:invert-0" 
+          />
         </Link>
         
         {/* Desktop Menu Links */}
