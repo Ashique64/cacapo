@@ -639,7 +639,7 @@ export default function CheckoutPage() {
 
   if (!mounted) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground font-sans">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
@@ -650,10 +650,10 @@ export default function CheckoutPage() {
     return (
       <SmoothScroll>
         <Navbar />
-        <div className="min-h-[75vh] bg-black flex flex-col items-center justify-center text-white px-6 font-sans">
+        <div className="min-h-[75vh] bg-background flex flex-col items-center justify-center text-foreground px-6 font-sans">
           <div className="relative mb-6">
             <div className="absolute -inset-1 bg-accent/20 rounded-full blur-lg"></div>
-            <ShoppingBag className="w-16 h-16 text-zinc-600 stroke-1 relative bg-black p-3 rounded-full border border-zinc-800" />
+            <ShoppingBag className="w-16 h-16 text-muted-text stroke-1 relative bg-white p-3 rounded-full border border-card-border" />
           </div>
           <h1 className="text-xl md:text-2xl font-bold tracking-[0.15em] uppercase mb-2">Checkout is Empty</h1>
           <p className="text-muted-text text-sm text-center max-w-md mb-8 tracking-wider">
@@ -661,7 +661,7 @@ export default function CheckoutPage() {
           </p>
           <Link 
             href="/shop" 
-            className="px-8 py-3 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none"
+            className="px-8 py-3 bg-foreground text-background border border-foreground text-xs font-bold tracking-widest uppercase hover:bg-transparent hover:text-foreground transition-all duration-300 rounded-none"
           >
             Explore Collection
           </Link>
@@ -674,7 +674,7 @@ export default function CheckoutPage() {
   // Require Authentication
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground font-sans">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
@@ -682,7 +682,7 @@ export default function CheckoutPage() {
 
   if (!user && step < 2) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground font-sans">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
@@ -707,9 +707,9 @@ export default function CheckoutPage() {
           animation: scan 3s ease-in-out infinite;
         }
         .custom-input {
-          background-color: #0c0c0e;
-          border: 1px solid #27272a;
-          color: white;
+          background-color: #ffffff;
+          border: 1px solid var(--card-border);
+          color: var(--foreground);
           padding: 0.75rem 1rem;
           width: 100%;
           outline: none;
@@ -722,24 +722,24 @@ export default function CheckoutPage() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-black text-white py-24 md:py-32 font-sans select-none">
+      <div className="min-h-screen bg-background text-foreground py-24 md:py-32 font-sans select-none">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
           {step < 2 ? (
             <>
               {/* Stepper Indicator */}
-              <div className="flex items-center justify-start gap-4 mb-12 border-b border-zinc-900 pb-6">
+              <div className="flex items-center justify-start gap-4 mb-12 border-b border-card-border pb-6">
                 <span 
                   className={`text-xs tracking-[0.2em] font-bold ${
-                    step >= 0 ? "text-white" : "text-zinc-600"
+                    step >= 0 ? "text-foreground" : "text-muted-text"
                   } transition-colors`}
                 >
                   01. SHIPPING
                 </span>
-                <ChevronRight className="w-3.5 h-3.5 text-zinc-700" />
+                <ChevronRight className="w-3.5 h-3.5 text-muted-text" />
                 <span 
                   className={`text-xs tracking-[0.2em] font-bold ${
-                    step >= 1 ? "text-white" : "text-zinc-600"
+                    step >= 1 ? "text-foreground" : "text-muted-text"
                   } transition-colors`}
                 >
                   02. PAYMENT
@@ -762,19 +762,19 @@ export default function CheckoutPage() {
 
                       {/* Saved Addresses dropdown */}
                       {user && addresses.length > 0 && (
-                        <div className="p-5 border border-zinc-800 bg-zinc-950/40 space-y-3">
+                        <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-3">
                           <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                             Saved Addresses
                           </label>
                           {addressesLoading ? (
-                            <div className="flex items-center gap-2 text-xs text-zinc-500">
+                            <div className="flex items-center gap-2 text-xs text-muted-text">
                               <Loader2 className="w-3 h-3 animate-spin text-accent" /> Loading saved addresses...
                             </div>
                           ) : (
                             <select
                               value={selectedAddressId}
                               onChange={handleSelectSavedAddress}
-                              className="custom-input text-xs tracking-wider"
+                              className="custom-input text-xs tracking-wider bg-white border-card-border text-foreground"
                             >
                               {addresses.map((addr) => (
                                 <option key={addr.id} value={addr.id}>
@@ -791,7 +791,7 @@ export default function CheckoutPage() {
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-2">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                            <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                               Full Name *
                             </label>
                             <input
@@ -809,7 +809,7 @@ export default function CheckoutPage() {
                           </div>
                           
                           <div className="space-y-2">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                            <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                               Contact Number *
                             </label>
                             <input
@@ -828,7 +828,7 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                          <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                             Address Line 1 *
                           </label>
                           <input
@@ -846,7 +846,7 @@ export default function CheckoutPage() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                          <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                             Address Line 2 (Optional)
                           </label>
                           <input
@@ -862,7 +862,7 @@ export default function CheckoutPage() {
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                           <div className="space-y-2">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                            <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                               City *
                             </label>
                             <input
@@ -880,7 +880,7 @@ export default function CheckoutPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                            <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                               State *
                             </label>
                             <input
@@ -898,7 +898,7 @@ export default function CheckoutPage() {
                           </div>
 
                           <div className="space-y-2">
-                            <label className="block text-xs font-bold uppercase tracking-widest text-zinc-400">
+                            <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
                               ZIP / Pincode *
                             </label>
                             <input
@@ -918,7 +918,7 @@ export default function CheckoutPage() {
 
                         {user && (!selectedAddressId || selectedAddressId === "new") && (
                           <div className="flex flex-col gap-3 pt-2">
-                            <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-zinc-400 hover:text-white transition-colors">
+                            <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-muted-text hover:text-foreground transition-colors">
                               <input
                                 type="checkbox"
                                 checked={saveAddressToProfile}
@@ -928,7 +928,7 @@ export default function CheckoutPage() {
                               Save address to profile for future checkout
                             </label>
                             {saveAddressToProfile && (
-                              <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-zinc-400 hover:text-white transition-colors">
+                              <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-muted-text hover:text-foreground transition-colors">
                                 <input
                                   type="checkbox"
                                   name="isDefault"
@@ -950,8 +950,8 @@ export default function CheckoutPage() {
                       )}
 
                       {/* Return policy acknowledgment checkbox (Step 8.3) */}
-                      <div className="flex flex-col gap-2 pt-4 border-t border-zinc-900/60">
-                        <label className="flex items-start gap-3 text-[10px] tracking-wider cursor-pointer text-zinc-500 hover:text-zinc-400 transition-colors select-none leading-relaxed">
+                      <div className="flex flex-col gap-2 pt-4 border-t border-card-border">
+                        <label className="flex items-start gap-3 text-[10px] tracking-wider cursor-pointer text-muted-text hover:text-foreground transition-colors select-none leading-relaxed">
                           <input
                             type="checkbox"
                             checked={policyAccepted}
@@ -963,7 +963,7 @@ export default function CheckoutPage() {
                             <Link href="/return-policy" target="_blank" className="text-accent underline font-semibold">
                               Return & Replacement Policy
                             </Link>.
-                            <span className="block text-[9px] text-zinc-600 mt-1 italic normal-case">
+                            <span className="block text-[9px] text-muted-text mt-1 italic normal-case">
                               Understanding our policy ensures faster resolutions if anything goes wrong with your order.
                             </span>
                           </span>
@@ -973,7 +973,7 @@ export default function CheckoutPage() {
                       <button
                         type="submit"
                         disabled={!policyAccepted}
-                        className="w-full py-4 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8 disabled:bg-zinc-900 disabled:text-zinc-650 disabled:border-zinc-900 disabled:cursor-not-allowed"
+                        className="w-full py-4 bg-foreground text-background border border-foreground text-xs font-bold tracking-widest uppercase hover:bg-transparent hover:text-foreground transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-100 disabled:cursor-not-allowed"
                       >
                         CONTINUE TO PAYMENT <ArrowRight className="w-3.5 h-3.5" />
                       </button>
@@ -1000,16 +1000,16 @@ export default function CheckoutPage() {
                           className={`flex items-center gap-4 p-5 border text-left rounded-none transition-all duration-300 bg-transparent ${
                             paymentMethod === "razorpay"
                               ? "border-accent bg-accent/5"
-                              : "border-zinc-800 hover:border-zinc-700"
+                              : "border-card-border hover:border-muted-text"
                           }`}
                         >
                           <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            paymentMethod === "razorpay" ? "border-accent" : "border-zinc-700"
+                            paymentMethod === "razorpay" ? "border-accent" : "border-card-border"
                           }`}>
                             {paymentMethod === "razorpay" && <div className="w-2 h-2 rounded-full bg-accent"></div>}
                           </div>
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-white">Online Payment</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-foreground">Online Payment</p>
                             <p className="text-[11px] text-muted-text mt-1 tracking-wider">Cards, UPI, Netbanking, Wallets via Razorpay</p>
                           </div>
                         </button>
@@ -1023,16 +1023,16 @@ export default function CheckoutPage() {
                           className={`flex items-center gap-4 p-5 border text-left rounded-none transition-all duration-300 bg-transparent ${
                             paymentMethod === "cod"
                               ? "border-accent bg-accent/5"
-                              : "border-zinc-800 hover:border-zinc-700"
+                              : "border-card-border hover:border-muted-text"
                           }`}
                         >
                           <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            paymentMethod === "cod" ? "border-accent" : "border-zinc-700"
+                            paymentMethod === "cod" ? "border-accent" : "border-card-border"
                           }`}>
                             {paymentMethod === "cod" && <div className="w-2 h-2 rounded-full bg-accent"></div>}
                           </div>
                           <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-white">Cash on Delivery (COD)</p>
+                            <p className="text-xs font-bold uppercase tracking-widest text-foreground">Cash on Delivery (COD)</p>
                             <p className="text-[11px] text-muted-text mt-1 tracking-wider">Pay in cash upon delivery</p>
                           </div>
                         </button>
@@ -1040,14 +1040,14 @@ export default function CheckoutPage() {
 
                       {/* Razorpay Payment Flow */}
                       {paymentMethod === "razorpay" && (
-                        <div className="p-5 border border-zinc-800 bg-zinc-950/40 space-y-3 animate-fadeIn duration-500">
-                          <p className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
+                        <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-3 animate-fadeIn duration-500">
+                          <p className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
                             <ShieldCheck className="w-4 h-4 text-accent" /> Secure Razorpay Checkout Selected
                           </p>
                           <p className="text-xs text-muted-text tracking-wider leading-relaxed pt-1">
                             Upon clicking &quot;Place Order&quot;, a secure Razorpay payment window will open where you can pay instantly using your preferred UPI app, Credit/Debit card, Netbanking, or mobile wallets.
                           </p>
-                          <p className="text-[11px] text-zinc-500 italic">
+                          <p className="text-[11px] text-muted-text italic">
                             Do not close or refresh the window while payment is processing.
                           </p>
                         </div>
@@ -1055,13 +1055,13 @@ export default function CheckoutPage() {
 
                       {/* Cash on Delivery Flow */}
                       {paymentMethod === "cod" && (
-                        <div className="p-5 border border-zinc-800 bg-zinc-950/40 space-y-2 animate-fadeIn duration-500">
-                          <p className="text-xs font-bold uppercase tracking-widest text-white flex items-center gap-2">
-                            <ShieldCheck className="w-4 h-4 text-green-500" /> Cash on Delivery Selected
+                        <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2 animate-fadeIn duration-500">
+                          <p className="text-xs font-bold uppercase tracking-widest text-foreground flex items-center gap-2">
+                            <ShieldCheck className="w-4 h-4 text-green-600" /> Cash on Delivery Selected
                           </p>
                           <p className="text-xs text-muted-text tracking-wider leading-relaxed pt-1">
                             Your order will be processed immediately. You will pay the courier partner the exact total amount of{" "}
-                            <span className="text-white font-bold">{formatPrice(totalAmount)}</span> in cash upon receiving your package.
+                            <span className="text-foreground font-bold">{formatPrice(totalAmount)}</span> in cash upon receiving your package.
                           </p>
                         </div>
                       )}
@@ -1080,7 +1080,7 @@ export default function CheckoutPage() {
                             setStep(0);
                             window.scrollTo({ top: 0, behavior: "smooth" });
                           }}
-                          className="px-6 py-4 border border-zinc-800 bg-transparent text-white text-xs font-bold tracking-widest uppercase hover:border-zinc-600 transition-all duration-300 rounded-none w-1/3"
+                          className="px-6 py-4 border border-card-border bg-transparent text-foreground text-xs font-bold tracking-widest uppercase hover:border-foreground transition-all duration-300 rounded-none w-1/3"
                         >
                           BACK
                         </button>
@@ -1089,7 +1089,7 @@ export default function CheckoutPage() {
                           type="button"
                           disabled={orderLoading}
                           onClick={handlePlaceOrder}
-                          className="flex-1 py-4 bg-white text-black text-xs font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-800 disabled:text-zinc-500"
+                          className="flex-1 py-4 bg-foreground text-background border border-foreground text-xs font-bold tracking-widest uppercase hover:bg-transparent hover:text-foreground transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-100 disabled:text-zinc-400"
                         >
                           {orderLoading ? (
                             <>
@@ -1106,20 +1106,20 @@ export default function CheckoutPage() {
 
                 {/* Right Summary Panel */}
                 <div className="lg:col-span-5">
-                  <div className="border border-zinc-800 bg-black p-6 rounded-none sticky top-28 space-y-6">
-                    <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 border-b border-zinc-900 pb-3">
+                  <div className="border border-card-border bg-white p-6 rounded-none sticky top-28 space-y-6">
+                    <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-foreground border-b border-card-border pb-3">
                       Order Summary ({cartItems.length})
                     </h3>
 
                     {/* Cart Items list */}
-                    <div className="max-h-60 overflow-y-auto divide-y divide-zinc-900 pr-1 no-scrollbar">
+                    <div className="max-h-60 overflow-y-auto divide-y divide-card-border pr-1 no-scrollbar">
                       {cartItems.map((item) => {
                         const itemPrice = item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0;
                         const dbImages = item.product?.product_images ? item.product.product_images.map(img => img.image_url) : [];
                         const mainImage = item.product?.images?.[0] || (dbImages.length > 0 ? dbImages[0] : "/Images/clothing.jpg");
                         return (
                           <div key={item.id} className="flex gap-4 py-3 first:pt-0 last:pb-0 items-center">
-                            <div className="w-12 h-14 bg-zinc-900 relative shrink-0 border border-zinc-800 overflow-hidden">
+                            <div className="w-12 h-14 bg-[#f9f8f6] relative shrink-0 border border-card-border overflow-hidden">
                               <img
                                 src={mainImage}
                                 alt={item.product?.name || "Product"}
@@ -1127,18 +1127,18 @@ export default function CheckoutPage() {
                               />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-white truncate">
+                              <h4 className="text-[11px] font-bold uppercase tracking-widest text-foreground truncate">
                                 {item.product?.name}
                               </h4>
-                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-widest mt-1">
+                              <p className="text-[10px] text-muted-text font-bold uppercase tracking-widest mt-1">
                                 {item.variant?.size && `Size: ${item.variant.size}`}
                                 {item.variant?.color && ` • Color: ${item.variant.color}`}
                               </p>
-                              <p className="text-[10px] text-zinc-400 mt-1 tracking-wider">
+                              <p className="text-[10px] text-muted-text mt-1 tracking-wider">
                                 {item.quantity} x {formatPrice(itemPrice)}
                               </p>
                             </div>
-                            <div className="text-[11px] font-bold tracking-wider text-white">
+                            <div className="text-[11px] font-bold tracking-wider text-foreground">
                               {formatPrice(itemPrice * item.quantity)}
                             </div>
                           </div>
@@ -1147,16 +1147,16 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Coupon Box */}
-                    <div className="border-t border-zinc-900 pt-4 space-y-3">
+                    <div className="border-t border-card-border pt-4 space-y-3">
                       {appliedCoupon ? (
-                        <div className="flex items-center justify-between p-3 border border-zinc-800 bg-zinc-950/40">
+                        <div className="flex items-center justify-between p-3 border border-card-border bg-[#f9f8f6]">
                           <div className="flex items-center gap-2">
-                            <CheckCircle2 className="w-4 h-4 text-green-500" />
+                            <CheckCircle2 className="w-4 h-4 text-green-600" />
                             <div>
-                              <p className="text-[10px] font-bold uppercase tracking-widest text-white font-mono">
+                              <p className="text-[10px] font-bold uppercase tracking-widest text-foreground font-mono">
                                 {appliedCoupon.code} APPLIED
                               </p>
-                              <p className="text-[9px] text-green-500 tracking-wider">
+                              <p className="text-[9px] text-green-600 tracking-wider">
                                 Save {appliedCoupon.discount_type === "percentage" ? `${appliedCoupon.discount_value}%` : formatPrice(appliedCoupon.discount_value)}
                               </p>
                             </div>
@@ -1164,7 +1164,7 @@ export default function CheckoutPage() {
                           <button
                             type="button"
                             onClick={handleRemoveCoupon}
-                            className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 hover:text-accent transition-colors"
+                            className="text-[10px] font-bold uppercase tracking-widest text-muted-text hover:text-accent transition-colors"
                           >
                             Remove
                           </button>
@@ -1179,12 +1179,12 @@ export default function CheckoutPage() {
                               if (couponError) setCouponError(null);
                             }}
                             placeholder="PROMO CODE (e.g. WELCOME10)"
-                            className="custom-input text-xs tracking-wider flex-1 py-2 px-3"
+                            className="custom-input text-xs tracking-wider flex-1 py-2 px-3 bg-white"
                           />
                           <button
                             type="submit"
                             disabled={couponLoading || !couponCode.trim()}
-                            className="px-4 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 hover:border-zinc-700 text-white text-[10px] font-bold tracking-widest uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="px-4 bg-foreground hover:bg-[#27272a] border border-foreground text-background text-[10px] font-bold tracking-widest uppercase transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {couponLoading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : "APPLY"}
                           </button>
@@ -1196,34 +1196,34 @@ export default function CheckoutPage() {
                     </div>
 
                     {/* Order Price Breakdown */}
-                    <div className="border-t border-zinc-900 pt-4 space-y-2.5 text-xs">
-                      <div className="flex justify-between text-zinc-400">
+                    <div className="border-t border-card-border pt-4 space-y-2.5 text-xs">
+                      <div className="flex justify-between text-muted-text">
                         <span className="tracking-wider">Subtotal</span>
                         <span className="font-semibold">{formatPrice(subtotal)}</span>
                       </div>
                       
                       {appliedCoupon && (
-                        <div className="flex justify-between text-green-500">
+                        <div className="flex justify-between text-green-600">
                           <span className="tracking-wider">Promo Discount</span>
                           <span className="font-semibold">-{formatPrice(discount)}</span>
                         </div>
                       )}
 
-                      <div className="flex justify-between text-zinc-400">
+                      <div className="flex justify-between text-muted-text">
                         <span className="tracking-wider">Shipping</span>
                         <span className="font-semibold">
                           {shippingCharge === 0 ? "FREE" : formatPrice(shippingCharge)}
                         </span>
                       </div>
 
-                      <div className="flex justify-between text-white border-t border-zinc-900 pt-3 text-sm font-bold items-start">
+                      <div className="flex justify-between text-foreground border-t border-card-border pt-3 text-sm font-bold items-start">
                         <div className="flex flex-col">
                           <span className="tracking-widest uppercase">Total Due</span>
-                          <span className="text-[10px] text-zinc-500 tracking-wider font-normal mt-0.5">
+                          <span className="text-[10px] text-muted-text tracking-wider font-normal mt-0.5">
                             (Inclusive of GST)
                           </span>
                           {storeSettings.gst_number && (
-                            <span className="text-[9px] text-zinc-600 font-mono tracking-widest uppercase mt-1">
+                            <span className="text-[9px] text-muted-text font-mono tracking-widest uppercase mt-1">
                               GSTIN: {storeSettings.gst_number}
                             </span>
                           )}
@@ -1248,11 +1248,11 @@ export default function CheckoutPage() {
                 }`}></div>
                 
                 {placedOrder?.paymentMethod === "upi" ? (
-                  <div className="relative border-2 border-accent bg-zinc-950 p-6 rounded-full inline-block">
+                  <div className="relative border-2 border-accent bg-white p-6 rounded-full inline-block">
                     <Info className="w-12 h-12 text-accent" />
                   </div>
                 ) : (
-                  <div className="relative border-2 border-green-500 bg-zinc-950 p-6 rounded-full inline-block">
+                  <div className="relative border-2 border-green-500 bg-white p-6 rounded-full inline-block">
                     <CheckCircle className="w-12 h-12 text-green-500" />
                   </div>
                 )}
@@ -1260,34 +1260,34 @@ export default function CheckoutPage() {
 
               {/* Title & Status Message */}
               <div className="space-y-3">
-                <h1 className="text-xs font-bold uppercase tracking-[0.25em] text-zinc-500">
+                <h1 className="text-xs font-bold uppercase tracking-[0.25em] text-muted-text">
                   Checkout Complete
                 </h1>
                 
                 {placedOrder?.paymentMethod === "upi" ? (
                   <>
-                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white">
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-foreground">
                       AWAITING PAYMENT VERIFICATION
                     </h2>
-                    <p className="text-zinc-400 text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
+                    <p className="text-muted-text text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
                       Your order has been registered successfully. Our administrative desk will verify your UPI Transaction UTR Reference (<strong>{placedOrder.utr}</strong>) within 24 hours to confirm your shipment.
                     </p>
                   </>
                 ) : placedOrder?.paymentMethod === "razorpay" ? (
                   <>
-                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-green-500">
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-green-600">
                       ORDER PAID SUCCESSFULLY
                     </h2>
-                    <p className="text-zinc-400 text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
+                    <p className="text-muted-text text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
                       Thank you for your purchase. Your payment reference (<strong>{placedOrder.utr}</strong>) has been verified. Your order is confirmed and is being processed for dispatch.
                     </p>
                   </>
                 ) : (
                   <>
-                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white">
+                    <h2 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-foreground">
                       ORDER CONFIRMED
                     </h2>
-                    <p className="text-zinc-400 text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
+                    <p className="text-muted-text text-sm max-w-lg mx-auto tracking-wider leading-relaxed pt-2">
                       Thank you for your purchase. Your Cash on Delivery order is confirmed and is being processed for dispatch. We will coordinate details with you shortly.
                     </p>
                   </>
@@ -1295,33 +1295,33 @@ export default function CheckoutPage() {
               </div>
 
               {/* Order Receipt Details Card */}
-              <div className="border border-zinc-900 bg-zinc-950/40 p-6 text-left space-y-6">
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-3 text-xs tracking-wider">
-                  <span className="text-zinc-500 font-bold uppercase">Order Reference</span>
-                  <span className="text-white font-mono font-bold">{placedOrder?.orderNumber}</span>
+              <div className="border border-card-border bg-[#f9f8f6] p-6 text-left space-y-6">
+                <div className="flex justify-between items-center border-b border-card-border pb-3 text-xs tracking-wider">
+                  <span className="text-muted-text font-bold uppercase">Order Reference</span>
+                  <span className="text-foreground font-mono font-bold">{placedOrder?.orderNumber}</span>
                 </div>
 
                 <div className="space-y-4">
                   <div>
-                    <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Shipping Destination</h4>
-                    <p className="text-xs text-white mt-1.5 font-bold tracking-wider uppercase">
+                    <h4 className="text-muted-text text-[10px] font-bold uppercase tracking-widest">Shipping Destination</h4>
+                    <p className="text-xs text-foreground mt-1.5 font-bold tracking-wider uppercase">
                       {placedOrder?.shippingAddress?.full_name}
                     </p>
-                    <p className="text-xs text-zinc-400 mt-1 leading-relaxed tracking-wider">
+                    <p className="text-xs text-muted-text mt-1 leading-relaxed tracking-wider">
                       {placedOrder?.shippingAddress?.address_line1}
                       {placedOrder?.shippingAddress?.address_line2 && `, ${placedOrder?.shippingAddress?.address_line2}`}
                       <br />
                       {placedOrder?.shippingAddress?.city}, {placedOrder?.shippingAddress?.state} - {placedOrder?.shippingAddress?.pincode}
                     </p>
-                    <p className="text-xs text-zinc-500 mt-1 font-bold">
+                    <p className="text-xs text-muted-text mt-1 font-bold">
                       Phone: {placedOrder?.shippingAddress?.phone}
                     </p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4 border-t border-zinc-900 pt-4">
+                  <div className="grid grid-cols-2 gap-4 border-t border-card-border pt-4">
                     <div>
-                      <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Billing Mode</h4>
-                      <p className="text-xs text-white font-bold uppercase tracking-wider mt-1.5">
+                      <h4 className="text-muted-text text-[10px] font-bold uppercase tracking-widest">Billing Mode</h4>
+                      <p className="text-xs text-foreground font-bold uppercase tracking-wider mt-1.5">
                         {placedOrder?.paymentMethod === "upi" ? "UPI Transfer" : placedOrder?.paymentMethod === "razorpay" ? "Online Payment (Razorpay)" : "Cash on Delivery"}
                       </p>
                       {(placedOrder?.paymentMethod === "upi" || placedOrder?.paymentMethod === "razorpay") && (
@@ -1332,7 +1332,7 @@ export default function CheckoutPage() {
                     </div>
 
                     <div>
-                      <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest">Total Transaction</h4>
+                      <h4 className="text-muted-text text-[10px] font-bold uppercase tracking-widest">Total Transaction</h4>
                       <p className="text-xs text-accent font-extrabold tracking-wider mt-1.5">
                         {formatPrice(placedOrder?.totals?.total || 0)}
                       </p>
@@ -1340,15 +1340,15 @@ export default function CheckoutPage() {
                   </div>
 
                   {/* Items summary */}
-                  <div className="border-t border-zinc-900 pt-4">
-                    <h4 className="text-zinc-500 text-[10px] font-bold uppercase tracking-widest mb-2">Items Included</h4>
+                  <div className="border-t border-card-border pt-4">
+                    <h4 className="text-muted-text text-[10px] font-bold uppercase tracking-widest mb-2">Items Included</h4>
                     <div className="space-y-2">
                       {placedOrder?.items?.map((item) => (
                         <div key={item.id} className="flex justify-between items-center text-xs tracking-wider">
-                          <span className="text-zinc-400 truncate max-w-xs uppercase font-bold text-[10px]">
-                            {item.product?.name} <span className="text-zinc-600">({item.quantity}x)</span>
+                          <span className="text-muted-text truncate max-w-xs uppercase font-bold text-[10px]">
+                            {item.product?.name} <span className="text-muted-text">({item.quantity}x)</span>
                           </span>
-                          <span className="text-zinc-400 font-medium">
+                          <span className="text-muted-text font-medium">
                             {formatPrice((item.price || item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0) * item.quantity)}
                           </span>
                         </div>
@@ -1362,7 +1362,7 @@ export default function CheckoutPage() {
               <div className="flex flex-col md:flex-row gap-4 justify-center items-center pt-4">
                 <Link
                   href="/shop"
-                  className="w-full md:w-auto px-8 py-3 bg-zinc-900 border border-zinc-800 hover:border-zinc-700 text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 rounded-none text-center"
+                  className="w-full md:w-auto px-8 py-3 bg-foreground text-background border border-foreground text-xs font-bold tracking-widest uppercase hover:bg-transparent hover:text-foreground transition-all duration-300 rounded-none text-center"
                 >
                   CONTINUE SHOPPING
                 </Link>
