@@ -167,7 +167,7 @@ export default async function ProductDetailsPage({ params }) {
   return (
     <SmoothScroll>
       <Navbar />
-      <main className="bg-black text-white min-h-screen pt-24 overflow-x-hidden">
+      <main className="bg-background text-foreground min-h-screen pt-24 overflow-x-hidden">
         <ProductDetailsClient product={product} relatedProducts={relatedProducts} />
       </main>
       <Footer />

@@ -207,12 +207,12 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     <div className="max-w-7xl mx-auto px-6 py-8 md:py-16 select-none relative z-10">
       
       {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-zinc-500 uppercase mb-8 md:mb-12">
-        <Link href="/" className="hover:text-white transition-colors">Home</Link>
+      <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-muted-text uppercase mb-8 md:mb-12">
+        <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
         <span>/</span>
-        <Link href="/shop" className="hover:text-white transition-colors">Shop</Link>
+        <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
         <span>/</span>
-        <span className="text-zinc-300 truncate max-w-[200px]">{product.name}</span>
+        <span className="text-foreground truncate max-w-[200px]">{product.name}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -227,10 +227,10 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             onMouseEnter={() => setIsZooming(true)}
             onMouseLeave={handleMouseLeave}
             style={{ aspectRatio: "15/16" }}
-            className="hidden md:block w-full bg-zinc-950/60 border border-zinc-900 overflow-hidden relative cursor-crosshair shrink-0 md:shrink md:flex-1"
+            className="hidden md:block w-full bg-card-bg border border-card-border overflow-hidden relative cursor-crosshair shrink-0 md:shrink md:flex-1"
           >
             {/* Ambient Background Glow */}
-            <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-black/10 to-black/60 pointer-events-none z-1" />
+            <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-black/5 to-black/40 pointer-events-none z-1" />
             
             <img 
               src={images[activeImgIdx]} 
@@ -248,10 +248,10 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
           {/* Mobile Showcase Carousel (Supports smooth swiping and arrow clicks) */}
           <div 
             style={{ aspectRatio: "15/16" }}
-            className="w-full bg-zinc-950/60 border border-zinc-900 overflow-hidden relative shrink-0 md:hidden"
+            className="w-full bg-card-bg border border-card-border overflow-hidden relative shrink-0 md:hidden"
           >
             {/* Ambient Background Glow */}
-            <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-black/10 to-black/60 pointer-events-none z-10" />
+            <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-black/5 to-black/40 pointer-events-none z-10" />
 
             <div 
               ref={mobileScrollRef}
@@ -277,7 +277,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                     e.stopPropagation();
                     handleArrowClick("prev");
                   }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 border border-white/10 hover:border-accent hover:text-accent rounded-full text-white transition-all z-20 active:scale-95"
+                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 border border-zinc-200/80 hover:border-accent hover:text-accent rounded-full text-zinc-800 transition-all z-20 active:scale-95"
                 >
                   <ChevronLeft className="w-4 h-4" />
                 </button>
@@ -286,7 +286,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                     e.stopPropagation();
                     handleArrowClick("next");
                   }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 border border-white/10 hover:border-accent hover:text-accent rounded-full text-white transition-all z-20 active:scale-95"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 border border-zinc-200/80 hover:border-accent hover:text-accent rounded-full text-zinc-800 transition-all z-20 active:scale-95"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
@@ -303,10 +303,10 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   onClick={() => setActiveImgIdx(idx)}
                   style={{ aspectRatio: "15/16" }}
                   className={`w-20 border-2 overflow-hidden transition-all duration-300 relative ${
-                    activeImgIdx === idx ? "border-accent" : "border-zinc-900 hover:border-zinc-600"
+                    activeImgIdx === idx ? "border-accent" : "border-card-border hover:border-zinc-300"
                   }`}
                 >
-                  <div className="absolute inset-0 bg-black/20" />
+                  <div className="absolute inset-0 bg-black/5" />
                   <img src={img} alt="" className="w-full h-full object-cover" />
                 </button>
               ))}
@@ -329,7 +329,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                     setActiveImgIdx(idx);
                   }}
                   className={`h-1 transition-all rounded-full ${
-                    activeImgIdx === idx ? "w-6 bg-accent" : "w-2 bg-zinc-800"
+                    activeImgIdx === idx ? "w-6 bg-accent" : "w-2 bg-zinc-200"
                   }`}
                 />
               ))}
@@ -352,36 +352,36 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
               <div className="flex gap-2">
                 <button 
                   onClick={handleShare}
-                  className="p-2 bg-zinc-950 border border-zinc-900 hover:border-zinc-700 hover:text-accent rounded-full text-zinc-400 transition-all cursor-pointer relative"
+                  className="p-2 bg-white/80 border border-zinc-200/80 hover:border-accent/40 rounded-full text-zinc-800 transition-all cursor-pointer relative"
                   title="Copy Link"
                 >
                   {copiedState ? <Check className="w-3.5 h-3.5 text-accent" /> : <Share2 className="w-3.5 h-3.5" />}
                   {copiedState && (
-                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-zinc-900 text-white text-[9px] font-mono tracking-widest px-2 py-1 uppercase rounded-sm border border-zinc-800 whitespace-nowrap shadow-md z-20">
+                    <span className="absolute -top-8 left-1/2 -translate-x-1/2 bg-foreground text-background text-[9px] font-mono tracking-widest px-2 py-1 uppercase rounded-sm border border-foreground whitespace-nowrap shadow-md z-20">
                       COPIED ✓
                     </span>
                   )}
                 </button>
                 <button 
                   onClick={() => toggleWishlist(product)}
-                  className="p-2 bg-zinc-950 border border-zinc-900 hover:border-accent/40 rounded-full transition-all cursor-pointer group"
+                  className="p-2 bg-white/80 border border-zinc-200/80 hover:border-accent/40 rounded-full transition-all cursor-pointer group"
                   title="Add to Wishlist"
                 >
-                  <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-accent text-accent" : "text-zinc-400 group-hover:text-accent"}`} />
+                  <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-accent text-accent" : "text-zinc-650 group-hover:text-accent"}`} />
                 </button>
               </div>
             </div>
 
-            <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-zinc-100 uppercase mb-4 leading-tight">
+            <h1 className="text-2xl md:text-3xl font-extrabold tracking-wide text-foreground uppercase mb-4 leading-tight">
               {product.name}
             </h1>
 
             {/* Price Box */}
             <div className="flex items-baseline gap-2 mt-4 flex-wrap">
-              <span className="text-base text-zinc-400 font-sans font-normal">₹</span>
-              <span className="text-3xl font-bold font-mono tracking-tight text-white">{displayPrice}</span>
+              <span className="text-base text-muted-text font-sans font-normal">₹</span>
+              <span className="text-3xl font-bold font-mono tracking-tight text-foreground">{displayPrice}</span>
               {displayOriginalPrice && (
-                <span className="text-sm font-semibold font-mono text-zinc-500 line-through ml-2">
+                <span className="text-sm font-semibold font-mono text-muted-text line-through ml-2">
                   ₹{displayOriginalPrice}
                 </span>
               )}
@@ -389,8 +389,8 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
 
             {/* Color Display */}
             {product.variants?.[0]?.color && (
-              <div className="text-[11px] tracking-[0.25em] text-zinc-400 uppercase mt-3">
-                Color: <span className="text-zinc-100 font-semibold">{product.variants[0].color}</span>
+              <div className="text-[11px] tracking-[0.25em] text-muted-text uppercase mt-3">
+                Color: <span className="text-foreground font-semibold">{product.variants[0].color}</span>
               </div>
             )}
             
@@ -402,13 +402,13 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             )}
           </div>
 
-          <div className="h-px bg-zinc-900" />
+          <div className="h-px bg-card-border" />
 
           {/* Sizing Section */}
           {sizes.length > 0 && (
             <div className="space-y-4">
               <div className="text-xs tracking-wider">
-                <span className="font-bold uppercase text-zinc-400">Select Size</span>
+                <span className="font-bold uppercase text-muted-text">Select Size</span>
               </div>
               
               <div className="flex flex-wrap gap-2.5">
@@ -428,10 +428,10 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                       }}
                       className={`h-11 min-w-[50px] px-4 text-xs tracking-widest uppercase transition-all duration-300 border flex items-center justify-center relative cursor-pointer ${
                         isSizeOutOfStock
-                          ? "border-zinc-900 text-zinc-700 bg-zinc-950/20 cursor-not-allowed line-through"
+                          ? "border-zinc-100 text-zinc-300 bg-zinc-50/50 cursor-not-allowed line-through"
                           : isSelected
                           ? "border-accent bg-accent/10 text-accent font-semibold"
-                          : "border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:border-zinc-600 hover:text-white"
+                          : "border-card-border bg-card-bg text-foreground hover:border-zinc-400 hover:text-foreground"
                       }`}
                       disabled={isSizeOutOfStock}
                     >
@@ -451,21 +451,21 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
 
           {/* Quantity selector */}
           <div className="space-y-3">
-            <span className="block text-xs font-bold tracking-wider uppercase text-zinc-400">Quantity</span>
-            <div className="flex items-center border border-zinc-800 bg-zinc-950/40 w-fit">
+            <span className="block text-xs font-bold tracking-wider uppercase text-muted-text">Quantity</span>
+            <div className="flex items-center border border-card-border bg-card-bg w-fit">
               <button 
                 onClick={() => setQuantity((q) => Math.max(1, q - 1))}
-                className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer"
+                className="w-10 h-10 flex items-center justify-center text-muted-text hover:text-foreground active:scale-90 transition-transform cursor-pointer"
               >
                 <Minus className="w-3.5 h-3.5" />
               </button>
-              <span className="w-12 text-center text-xs font-mono font-bold text-zinc-100">{quantity}</span>
+              <span className="w-12 text-center text-xs font-mono font-bold text-foreground">{quantity}</span>
               <button 
                 onClick={() => {
                   const maxStock = currentVariant ? currentVariant.stock_quantity : 99;
                   setQuantity((q) => Math.min(maxStock, q + 1));
                 }}
-                className="w-10 h-10 flex items-center justify-center text-zinc-400 hover:text-white active:scale-90 transition-transform cursor-pointer"
+                className="w-10 h-10 flex items-center justify-center text-muted-text hover:text-foreground active:scale-90 transition-transform cursor-pointer"
               >
                 <Plus className="w-3.5 h-3.5" />
               </button>
@@ -479,21 +479,21 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
               disabled={isOutOfStock}
               className={`w-full py-4 border text-xs font-semibold tracking-[0.25em] transition-all duration-500 uppercase flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] ${
                 isOutOfStock
-                  ? "border-zinc-900 bg-zinc-950 text-zinc-600 cursor-not-allowed"
+                  ? "border-zinc-100 bg-zinc-50 text-zinc-300 cursor-not-allowed"
                   : addedState
                   ? "border-accent bg-accent text-white"
-                  : "border-zinc-700 bg-white text-black hover:bg-black hover:text-white hover:border-white"
+                  : "border-foreground bg-foreground text-background hover:bg-accent hover:border-accent hover:text-white"
               }`}
             >
               <ShoppingBag className="w-4 h-4" />
               {isOutOfStock ? "SOLD OUT" : addedState ? "ADDED TO BAG ✓" : "ADD TO BAG"}
             </button>
             
-            <div className="flex items-center justify-center gap-4 text-[10px] tracking-widest text-zinc-500 uppercase pt-2">
+            <div className="flex items-center justify-center gap-4 text-[10px] tracking-widest text-muted-text uppercase pt-2">
               <div className="flex items-center gap-1.5">
                 <Truck className="w-3.5 h-3.5 text-accent" /> Free Shipping Above ₹10,000
               </div>
-              <div className="w-1.5 h-1.5 rounded-full bg-zinc-800" />
+              <div className="w-1.5 h-1.5 rounded-full bg-card-border" />
               <div className="flex items-center gap-1.5">
                 <Info className="w-3.5 h-3.5 text-accent" /> 7-Day Returns
               </div>
@@ -502,13 +502,13 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             {/* Policy trust badge */}
             <Link 
               href="/return-policy"
-              className="flex items-center justify-center text-center text-[10px] tracking-widest text-zinc-500 hover:text-zinc-300 transition-colors uppercase pt-3.5 font-sans leading-relaxed border-t border-zinc-950 mt-1"
+              className="flex items-center justify-center text-center text-[10px] tracking-widest text-muted-text hover:text-foreground transition-colors uppercase pt-3.5 font-sans leading-relaxed border-t border-card-border mt-1"
             >
               ✦ Free exchanges within 7 days • Damage claims require a quick photo or video
             </Link>
           </div>
 
-          <div className="h-px bg-zinc-900" />
+          <div className="h-px bg-card-border" />
 
           {/* Accordion Tabs */}
           <div className="space-y-3 pt-2">
@@ -531,13 +531,13 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             ].map((section) => {
               const isOpen = openSection === section.id;
               return (
-                <div key={section.id} className="border-b border-zinc-900 pb-3">
+                <div key={section.id} className="border-b border-card-border pb-3">
                   <button
                     onClick={() => setOpenSection(isOpen ? "" : section.id)}
-                    className="w-full flex items-center justify-between text-left text-xs tracking-wider uppercase font-semibold text-zinc-300 hover:text-white py-1.5 cursor-pointer"
+                    className="w-full flex items-center justify-between text-left text-xs tracking-wider uppercase font-semibold text-foreground hover:text-accent py-1.5 cursor-pointer"
                   >
                     {section.title}
-                    <span className="text-zinc-500 text-lg font-light leading-none">{isOpen ? "−" : "+"}</span>
+                    <span className="text-muted-text text-lg font-light leading-none">{isOpen ? "−" : "+"}</span>
                   </button>
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
@@ -551,28 +551,28 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                         </p>
                         
                         {/* Tiered return window table */}
-                        <div className="border border-zinc-900 overflow-hidden my-3">
+                        <div className="border border-card-border overflow-hidden my-3">
                           <table className="w-full text-[10px] tracking-wider uppercase border-collapse">
                             <thead>
-                              <tr className="border-b border-zinc-900 bg-zinc-950 text-zinc-400 font-bold">
+                              <tr className="border-b border-card-border bg-zinc-50 text-muted-text font-bold">
                                 <th className="p-2 text-left">Reason</th>
                                 <th className="p-2 text-right">Window</th>
                               </tr>
                             </thead>
                             <tbody>
-                              <tr className="border-b border-zinc-900">
-                                <td className="p-2 text-left text-zinc-300">Damaged / Defective</td>
+                              <tr className="border-b border-card-border">
+                                <td className="p-2 text-left text-foreground">Damaged / Defective</td>
                                 <td className="p-2 text-right text-accent font-semibold">48–72 Hours</td>
                               </tr>
                               <tr>
-                                <td className="p-2 text-left text-zinc-300">Size / Wrong Item</td>
+                                <td className="p-2 text-left text-foreground">Size / Wrong Item</td>
                                 <td className="p-2 text-right">7 Days</td>
                               </tr>
                             </tbody>
                           </table>
                         </div>
 
-                        <p className="text-[11px] text-zinc-400 border-l border-accent/40 pl-2.5 my-2">
+                        <p className="text-[11px] text-muted-text border-l border-accent/40 pl-2.5 my-2">
                           <strong className="text-accent uppercase font-bold text-[9px] tracking-widest block mb-0.5">Quick Resolution</strong>
                           To process damage claims faster, please film a short unboxing video (15–60 sec) showing the package label and damage without cuts. This helps us skip delays and resolve your case same day.
                         </p>
@@ -601,12 +601,12 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
 
       {/* RELATED PIECES SECTION */}
       {relatedProducts.length > 0 && (
-        <div className="border-t border-zinc-900 mt-20 md:mt-32 pt-16 select-none">
+        <div className="border-t border-card-border mt-20 md:mt-32 pt-16 select-none">
           <div className="mb-12 text-center md:text-left">
             <span className="text-[10px] font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
               YOU MAY ALSO LIKE
             </span>
-            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-white uppercase font-sans">
+            <h2 className="text-2xl md:text-3xl font-extrabold tracking-tight text-foreground uppercase font-sans">
               RELATED <span className="text-accent">PIECES</span>
             </h2>
           </div>
@@ -620,11 +620,11 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
               });
               
               return (
-                <div key={p.id} className="group flex flex-col bg-zinc-950/40 border border-zinc-900 relative overflow-hidden transition-all duration-500 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(255,77,77,0.03)]">
+                <div key={p.id} className="group flex flex-col bg-card-bg border border-card-border rounded-none relative overflow-hidden transition-all duration-500 hover:border-accent/40 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
                   {/* Aspect ratio frame */}
                   <div className="w-full overflow-hidden relative" style={{ aspectRatio: "15/16" }}>
                     <Link href={`/shop/${p.slug}`} className="block w-full h-full">
-                      <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50 z-2 pointer-events-none" />
+                      <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/35 z-2 pointer-events-none" />
                       <img 
                         src={relImages[0]} 
                         alt={p.name}
@@ -636,7 +636,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   {/* Metadata below image */}
                   <div className="p-4 flex flex-col justify-between grow">
                     <Link href={`/shop/${p.slug}`} className="hover:text-accent transition-colors block">
-                      <h3 className="text-xs font-semibold tracking-wide text-zinc-200 truncate">{p.name}</h3>
+                      <h3 className="text-xs font-semibold tracking-wide text-foreground truncate">{p.name}</h3>
                     </Link>
                     <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-0.5">
                       <span className="text-[10px] font-sans font-normal">₹</span>
