@@ -20,32 +20,31 @@ export const metadata = {
 };
 
 export default function AboutPage() {
-  return (
-    <SmoothScroll>
+  return (    <SmoothScroll>
       <Navbar />
-      <main className="bg-black text-white min-h-screen pt-24 select-none overflow-x-hidden font-sans">
+      <main className="bg-background text-foreground min-h-screen pt-24 select-none overflow-x-hidden font-sans">
         
         {/* HERO SECTION */}
-        <section className="relative h-[65vh] flex items-center justify-center border-b border-zinc-900 overflow-hidden">
-          <div className="absolute inset-0 bg-linear-to-b from-black/10 via-black/40 to-black z-10" />
+        <section className="relative h-[65vh] flex items-center justify-center border-b border-card-border overflow-hidden">
+          <div className="absolute inset-0 bg-linear-to-b from-background/10 via-background/40 to-background z-10" />
           
           {/* Subtle Ambient Background Light */}
           <div className="absolute top-1/4 left-1/4 w-[40vw] h-[40vw] bg-accent/5 rounded-full blur-[100px] pointer-events-none animate-pulse duration-5000" />
           
           <img 
-            src="/Images/ethos.jpg" 
+            src="/Images/ethos_white.png" 
             alt="CACAPO Design Ethos" 
-            className="absolute inset-0 w-full h-full object-cover opacity-30 object-center scale-100"
+            className="absolute inset-0 w-full h-full object-cover opacity-45 object-center scale-100"
           />
 
           <div className="max-w-4xl mx-auto px-6 text-center relative z-20 space-y-6">
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
               THE HOUSE OF CACAPO
             </span>
-            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase leading-tight text-white font-sans">
+            <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase leading-tight text-foreground font-sans">
               THE ARCHITECTURE <br />OF <span className="text-accent">COUTURE</span>
             </h1>
-            <p className="text-zinc-400 text-xs sm:text-sm md:text-base max-w-xl mx-auto tracking-wide font-light leading-relaxed">
+            <p className="text-muted-text text-xs sm:text-sm md:text-base max-w-xl mx-auto tracking-wide font-light leading-relaxed">
               Founded on curating international streetwear and architectural designs. 
               We bring global readymade silhouettes directly to India, hand-selected to contour, empower, and redefine the modern form.
             </p>
@@ -56,16 +55,16 @@ export default function AboutPage() {
         <section className="max-w-7xl mx-auto px-6 md:px-12 py-20 md:py-32 grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-center">
           
           {/* Left: Beautiful Image Box with border details */}
-          <div className="relative group aspect-4/3 bg-zinc-950 border border-zinc-900 overflow-hidden">
-            <div className="absolute inset-0 bg-linear-to-t from-black/60 to-transparent z-10" />
+          <div className="relative group aspect-4/3 bg-card-bg border border-card-border overflow-hidden">
+            <div className="absolute inset-0 bg-linear-to-t from-background/60 to-transparent z-10" />
             <img 
-              src="/Images/clothing.jpg" 
+              src="/Images/clothing_2.png" 
               alt="Tailoring process" 
-              className="w-full h-full object-contain transition-transform duration-[1.5s] group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-[1.5s] group-hover:scale-105"
             />
             {/* Structural corner accents */}
-            <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-accent/60" />
-            <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-accent/60" />
+            <div className="absolute top-4 left-4 w-4 h-4 border-t border-l border-accent/40" />
+            <div className="absolute bottom-4 right-4 w-4 h-4 border-b border-r border-accent/40" />
           </div>
 
           {/* Right: Narrative Description */}
@@ -74,12 +73,12 @@ export default function AboutPage() {
               <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
                 DESIGN ETHOS
               </span>
-              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-wide uppercase text-white leading-tight">
+              <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
                 FLUIDITY MEETS <br />STRUCTURAL INTEGRITY
               </h2>
             </div>
             
-            <div className="space-y-6 text-zinc-400 text-xs sm:text-sm font-light leading-relaxed text-justify">
+            <div className="space-y-6 text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
               <p>
                 At CACAPO, we believe that fashion is an extension of structural art. 
                 Our curated collections of imported ready-to-wear apparel, footwear, and accessories discard transient, loud trends in favor of silent, architectural aesthetics. 
@@ -94,13 +93,13 @@ export default function AboutPage() {
         </section>
 
         {/* SECTION 2: THE THREE PILLARS */}
-        <section className="bg-zinc-950/60 border-y border-zinc-900 py-20 md:py-28">
+        <section className="bg-[#f9f8f6] border-y border-card-border py-20 md:py-28">
           <div className="max-w-7xl mx-auto px-6 md:px-12">
             <div className="text-center max-w-xl mx-auto mb-16 md:mb-24 space-y-4">
               <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
                 OUR CORE VIRTUES
               </span>
-              <h2 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-white">
+              <h2 className="text-2xl sm:text-3xl font-extrabold uppercase tracking-wide text-foreground">
                 THE CACAPO METHOD
               </h2>
               <div className="w-12 h-0.5 bg-accent mx-auto mt-4" />
@@ -126,16 +125,16 @@ export default function AboutPage() {
               ].map((pillar, idx) => (
                 <div 
                   key={idx} 
-                  className="group flex flex-col justify-between bg-black/40 border border-zinc-900/80 p-6 sm:p-8 hover:border-accent/40 transition-all duration-700 hover:shadow-[0_0_30px_rgba(255,77,77,0.02)] relative"
+                  className="group flex flex-col justify-between bg-white border border-card-border p-6 sm:p-8 hover:border-accent/40 transition-all duration-700 hover:shadow-[0_10px_30px_rgba(0,0,0,0.02)] relative"
                 >
-                  <div className="absolute top-0 right-0 p-4 text-[40px] font-black font-mono text-zinc-900/40 group-hover:text-accent/10 transition-colors">
+                  <div className="absolute top-0 right-0 p-4 text-[40px] font-black font-mono text-zinc-150 group-hover:text-accent/10 transition-colors">
                     {pillar.number}
                   </div>
                   <div className="space-y-6">
-                    <h3 className="text-sm font-bold tracking-widest text-zinc-100 uppercase border-b border-zinc-900 pb-3">
+                    <h3 className="text-sm font-bold tracking-widest text-foreground uppercase border-b border-card-border pb-3">
                       {pillar.title}
                     </h3>
-                    <p className="text-zinc-500 text-xs font-light leading-relaxed">
+                    <p className="text-muted-text text-xs font-light leading-relaxed">
                       {pillar.desc}
                     </p>
                   </div>
@@ -151,16 +150,16 @@ export default function AboutPage() {
           <div className="absolute w-[30vw] h-[30vw] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
           
           <div className="max-w-2xl mx-auto px-6 text-center space-y-8 relative z-10">
-            <h2 className="text-3xl sm:text-4xl font-extrabold uppercase tracking-wide text-zinc-200">
+            <h2 className="text-3xl sm:text-4xl font-extrabold uppercase tracking-wide text-foreground">
               DISCOVER THE COLLECTION
             </h2>
-            <p className="text-zinc-500 text-xs sm:text-sm tracking-wide font-light max-w-md mx-auto leading-relaxed">
+            <p className="text-muted-text text-xs sm:text-sm tracking-wide font-light max-w-md mx-auto leading-relaxed">
               Step into the archive and explore tailored pieces, sculpted footwear, and couture accessories.
             </p>
             <div className="pt-2">
               <Link 
                 href="/shop" 
-                className="inline-flex items-center justify-center px-8 py-3.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-all duration-500 rounded-none cursor-pointer"
+                className="inline-flex items-center justify-center px-8 py-3.5 bg-foreground text-background hover:bg-accent hover:text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-all duration-500 rounded-none cursor-pointer"
               >
                 EXPLORE THE ARCHIVE
               </Link>
