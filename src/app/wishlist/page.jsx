@@ -23,14 +23,14 @@ export default function WishlistPage() {
   return (
     <SmoothScroll>
       <Navbar />
-      <main className="bg-black text-white min-h-screen pt-24 overflow-x-hidden">
+      <main className="bg-background text-foreground min-h-screen pt-24 overflow-x-hidden">
         
         {/* Title Block */}
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-12 select-none relative z-10 text-center md:text-left">
           <span className="text-[10px] font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
             YOUR ARCHIVE
           </span>
-          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-white uppercase font-sans">
+          <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground uppercase font-sans">
             THE <span className="text-accent">WISHLIST</span>
           </h1>
           <p className="text-xs text-muted-text tracking-wide mt-3 font-light max-w-md leading-relaxed mx-auto md:mx-0">
@@ -41,10 +41,10 @@ export default function WishlistPage() {
         {/* Empty State */}
         {mounted && wishlistCount === 0 && (
           <div className="max-w-7xl mx-auto px-6 py-20 text-center select-none relative z-10">
-            <div className="inline-flex p-5 bg-zinc-950/60 border border-zinc-900 rounded-none mb-6 text-zinc-500">
+            <div className="inline-flex p-5 bg-card-bg border border-card-border rounded-none mb-6 text-zinc-500">
               <Heart className="w-8 h-8 stroke-1" />
             </div>
-            <h2 className="text-lg md:text-xl font-bold tracking-wider text-zinc-300 uppercase mb-3">
+            <h2 className="text-lg md:text-xl font-bold tracking-wider text-foreground uppercase mb-3">
               YOUR WISHLIST IS EMPTY
             </h2>
             <p className="text-xs text-muted-text tracking-wide max-w-xs mx-auto mb-8 font-light leading-relaxed">
@@ -52,7 +52,7 @@ export default function WishlistPage() {
             </p>
             <Link 
               href="/shop" 
-              className="inline-flex items-center gap-2 px-8 py-3.5 border border-zinc-700 bg-white text-black text-xs font-semibold tracking-[0.2em] transition-all hover:bg-black hover:text-white hover:border-white uppercase"
+              className="inline-flex items-center gap-2 px-8 py-3.5 border border-foreground bg-foreground text-background text-xs font-semibold tracking-[0.2em] transition-all hover:bg-accent hover:text-white hover:border-accent uppercase"
             >
               Explore Shop <ArrowRight className="w-3.5 h-3.5" />
             </Link>
@@ -73,13 +73,13 @@ export default function WishlistPage() {
                 return (
                   <div 
                     key={product.id} 
-                    className="group flex flex-col bg-zinc-950/40 border border-zinc-900 relative overflow-hidden transition-all duration-500 hover:border-accent/30 hover:shadow-[0_0_30px_rgba(255,77,77,0.03)]"
+                    className="group flex flex-col bg-card-bg border border-card-border relative overflow-hidden transition-all duration-500 hover:border-accent/40 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]"
                   >
                     
                     {/* Image frame with aspect ratio 15/16 on mobile/tablet and square on desktop */}
                     <div className="w-full overflow-hidden relative aspect-15/16 lg:aspect-square">
                       <Link href={`/shop/${product.slug}`} className="block w-full h-full">
-                        <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/50 z-2 pointer-events-none" />
+                        <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/35 z-2 pointer-events-none" />
                         <img 
                           src={images[0]} 
                           alt={product.name}
@@ -90,7 +90,7 @@ export default function WishlistPage() {
                       {/* Remove from wishlist button */}
                       <button 
                         onClick={() => removeItem(product.id)}
-                        className="absolute top-3 right-3 p-1.5 bg-black/60 border border-white/10 hover:border-accent hover:text-accent rounded-full text-zinc-400 transition-all z-10 active:scale-90 cursor-pointer"
+                        className="absolute top-3 right-3 p-1.5 bg-white/80 border border-zinc-200/80 hover:border-accent hover:text-accent rounded-full text-zinc-800 transition-all z-10 active:scale-90 cursor-pointer"
                         title="Remove Item"
                       >
                         <X className="w-3.5 h-3.5" />
@@ -108,7 +108,7 @@ export default function WishlistPage() {
                     <div className="p-4 flex flex-col justify-between grow">
                       <div>
                         <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
-                          <h3 className="text-xs font-semibold tracking-wide text-zinc-200 truncate">
+                          <h3 className="text-xs font-semibold tracking-wide text-foreground truncate">
                             {product.name}
                           </h3>
                         </Link>
@@ -119,10 +119,10 @@ export default function WishlistPage() {
                       </div>
 
                       {/* View Details CTA */}
-                      <div className="mt-6 pt-4 border-t border-zinc-900/60">
+                      <div className="mt-6 pt-4 border-t border-card-border">
                         <Link
                           href={`/shop/${product.slug}`}
-                          className="w-full py-2.5 border border-zinc-800 bg-zinc-950/60 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-semibold tracking-[0.2em] transition-all duration-300 uppercase flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
+                          className="w-full py-2.5 bg-foreground text-background hover:bg-accent hover:text-white transition-all duration-300 text-[10px] font-semibold tracking-[0.2em] uppercase flex items-center justify-center gap-1.5 cursor-pointer active:scale-[0.98]"
                         >
                           VIEW DETAILS
                         </Link>

@@ -76,6 +76,8 @@ export default function AccountPage() {
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [expandedOrderId, setExpandedOrderId] = useState(null);
   const [cancellingOrderId, setCancellingOrderId] = useState(null);
+  const [currentOrderPage, setCurrentOrderPage] = useState(1);
+  const ordersPerPage = 10;
 
   // Return & Exchange State (Step 8.4 Upgrade)
   const [activeReturnOrder, setActiveReturnOrder] = useState(null);
@@ -825,7 +827,7 @@ export default function AccountPage() {
 
   if (!mounted || authLoading || !user) {
     return (
-      <div className="min-h-screen bg-black flex items-center justify-center text-white font-sans">
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground font-sans">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
       </div>
     );
@@ -836,41 +838,101 @@ export default function AccountPage() {
       <Navbar />
 
       <style>{`
-        .custom-input {
-          background-color: #0c0c0e;
-          border: 1px solid #27272a;
-          color: white;
+        .account-page-wrapper {
+          color: var(--foreground) !important;
+          background-color: var(--background) !important;
+        }
+        .account-page-wrapper h1, 
+        .account-page-wrapper h2, 
+        .account-page-wrapper h3, 
+        .account-page-wrapper h4, 
+        .account-page-wrapper span.text-white,
+        .account-page-wrapper div.text-white {
+          color: var(--foreground) !important;
+        }
+        .account-page-wrapper .bg-zinc-950,
+        .account-page-wrapper .bg-zinc-950\/20,
+        .account-page-wrapper .bg-zinc-950\/40,
+        .account-page-wrapper .bg-zinc-950\/60,
+        .account-page-wrapper .bg-black,
+        .account-page-wrapper .bg-black\/40 {
+          background-color: var(--card-bg) !important;
+        }
+        .account-page-wrapper .border-zinc-900,
+        .account-page-wrapper .border-zinc-900\/80,
+        .account-page-wrapper .border-zinc-800,
+        .account-page-wrapper .divide-zinc-900 {
+          border-color: var(--card-border) !important;
+        }
+        .account-page-wrapper .divide-y > :not([hidden]) ~ :not([hidden]) {
+          border-color: var(--card-border) !important;
+        }
+        .account-page-wrapper .text-zinc-100,
+        .account-page-wrapper .text-zinc-200,
+        .account-page-wrapper .text-zinc-300 {
+          color: var(--foreground) !important;
+        }
+        .account-page-wrapper .text-zinc-400,
+        .account-page-wrapper .text-zinc-500 {
+          color: var(--muted-text) !important;
+        }
+        .account-page-wrapper .bg-zinc-900 {
+          background-color: var(--background) !important;
+        }
+        .account-page-wrapper .bg-zinc-800 {
+          background-color: var(--card-border) !important;
+          color: var(--muted-text) !important;
+        }
+        .account-page-wrapper .custom-input {
+          background-color: var(--background) !important;
+          border: 1px solid var(--card-border) !important;
+          color: var(--foreground) !important;
           padding: 0.75rem 1rem;
           width: 100%;
           outline: none;
           transition: all 0.3s ease;
           border-radius: 0px;
         }
-        .custom-input:focus {
-          border-color: #FF4D4D;
-          box-shadow: 0 0 8px rgba(255, 77, 77, 0.15);
+        .account-page-wrapper .custom-input::placeholder {
+          color: #a1a1aa !important;
+        }
+        .account-page-wrapper .custom-input:focus {
+          border-color: var(--accent) !important;
+          box-shadow: 0 0 8px var(--accent) !important;
+        }
+        .account-page-wrapper input:not(.custom-input),
+        .account-page-wrapper textarea,
+        .account-page-wrapper select {
+          background-color: var(--background) !important;
+          border: 1px solid var(--card-border) !important;
+          color: var(--foreground) !important;
+        }
+        .account-page-wrapper input:not(.custom-input):focus,
+        .account-page-wrapper textarea:focus,
+        .account-page-wrapper select:focus {
+          border-color: var(--accent) !important;
         }
       `}</style>
 
-      <div className="min-h-screen bg-black text-white py-24 md:py-32 font-sans select-none">
+      <div className="min-h-screen bg-background text-foreground py-24 md:py-32 font-sans select-none account-page-wrapper">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
           {/* Header */}
-          <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b border-zinc-900 pb-8 gap-6 mb-12">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-end border-b border-card-border pb-8 gap-6 mb-12">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">
+              <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-text">
                 CACAPO Client Desk
               </span>
-              <h1 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-white mt-2">
+              <h1 className="text-2xl md:text-3xl font-extrabold tracking-widest uppercase text-foreground mt-2">
                 My Account
               </h1>
             </div>
             
             <button
               onClick={handleLogout}
-              className="px-6 py-2.5 border border-zinc-800 hover:border-accent hover:text-accent bg-transparent text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none self-start md:self-auto"
+              className="px-6 py-2.5 border border-card-border hover:border-accent hover:text-accent bg-transparent text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none self-start md:self-auto"
             >
-              <LogOut className="w-3.5 h-3.5" /> Sign Out
+              <LogOut className="w-3.5 h-3.5 text-accent" /> Sign Out
             </button>
           </div>
 
@@ -880,25 +942,25 @@ export default function AccountPage() {
             <div className="lg:col-span-5 space-y-12">
               
               {/* Profile Details Box */}
-              <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-6">
-                <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+              <div className="border border-card-border bg-white p-6 space-y-6">
+                <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-foreground flex items-center gap-2">
                   <User className="w-4 h-4 text-accent" /> Profile Information
                 </h3>
                 
                 <div className="space-y-4 text-xs tracking-wider">
                   <div>
-                    <span className="text-zinc-500 font-bold block text-[10px] uppercase">Full Name</span>
-                    <span className="text-white font-medium block mt-1">
+                    <span className="text-muted-text font-bold block text-[10px] uppercase">Full Name</span>
+                    <span className="text-foreground font-medium block mt-1">
                       {user.user_metadata?.full_name || profile?.full_name || "N/A"}
                     </span>
                   </div>
                   <div>
-                    <span className="text-zinc-500 font-bold block text-[10px] uppercase">Registered Email</span>
-                    <span className="text-white font-medium block mt-1">{user.email}</span>
+                    <span className="text-muted-text font-bold block text-[10px] uppercase">Registered Email</span>
+                    <span className="text-foreground font-medium block mt-1">{user.email}</span>
                   </div>
                   <div>
-                    <span className="text-zinc-500 font-bold block text-[10px] uppercase">Phone Number</span>
-                    <span className="text-white font-medium block mt-1">
+                    <span className="text-muted-text font-bold block text-[10px] uppercase">Phone Number</span>
+                    <span className="text-foreground font-medium block mt-1">
                       {user.user_metadata?.phone || profile?.phone || "N/A"}
                     </span>
                   </div>
@@ -906,15 +968,15 @@ export default function AccountPage() {
               </div>
 
               {/* Change Password Box */}
-              <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-6">
+              <div className="border border-card-border bg-white p-6 space-y-6">
                 <div className="flex justify-between items-center">
-                  <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+                  <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-foreground flex items-center gap-2">
                     <Lock className="w-4 h-4 text-accent" /> Password & Security
                   </h3>
                   {!showPasswordForm && (
                     <button
                       onClick={() => { setShowPasswordForm(true); setPasswordError(null); setPasswordSuccess(false); }}
-                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors"
+                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors"
                     >
                       Change Password
                     </button>
@@ -998,15 +1060,15 @@ export default function AccountPage() {
               </div>
 
               {/* Addresses Box */}
-              <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-6">
-                <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
-                  <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+              <div className="border border-card-border bg-white p-6 space-y-6">
+                <div className="flex justify-between items-center border-b border-card-border pb-3">
+                  <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-foreground flex items-center gap-2">
                     <MapPin className="w-4 h-4 text-accent" /> Shipping Addresses
                   </h3>
                   {!showAddressForm && (
                     <button
                       onClick={() => setShowAddressForm(true)}
-                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors flex items-center gap-1"
+                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors flex items-center gap-1"
                     >
                       <Plus className="w-3.5 h-3.5" /> ADD NEW
                     </button>
@@ -1184,8 +1246,8 @@ export default function AccountPage() {
 
             {/* Right Column: Order History */}
             <div className="lg:col-span-7 space-y-6">
-              <div className="border border-zinc-900 bg-zinc-950/20 p-6 space-y-6">
-                <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-zinc-400 flex items-center gap-2">
+              <div className="border border-card-border bg-white p-6 space-y-6">
+                <h3 className="text-xs font-bold tracking-[0.2em] uppercase text-foreground flex items-center gap-2">
                   <ShoppingBag className="w-4 h-4 text-accent" /> Order History
                 </h3>
 
@@ -1205,8 +1267,11 @@ export default function AccountPage() {
                   </div>
                 ) : (
                   <div className="space-y-4">
-                    {orders.map((order) => {
-                      const isExpanded = expandedOrderId === order.id;
+                    {(() => {
+                      const startIndex = (currentOrderPage - 1) * ordersPerPage;
+                      const paginatedOrders = orders.slice(startIndex, startIndex + ordersPerPage);
+                      return paginatedOrders.map((order) => {
+                        const isExpanded = expandedOrderId === order.id;
                       const dateFormatted = new Date(order.created_at).toLocaleDateString("en-IN", {
                         year: "numeric",
                         month: "long",
@@ -1300,16 +1365,16 @@ export default function AccountPage() {
                       }
 
                       return (
-                        <div key={order.id} className="border border-zinc-900 bg-black overflow-hidden transition-all duration-300">
+                        <div key={order.id} className="border border-card-border bg-[#f9f8f6] overflow-hidden transition-all duration-300">
                           
                           {/* Order Header Summary Row */}
                           <div 
                             onClick={() => toggleOrderExpand(order.id)}
-                            className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer hover:bg-zinc-950/40 transition-colors"
+                            className="p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 cursor-pointer hover:bg-white/60 transition-colors"
                           >
                             <div className="space-y-1.5 tracking-wider text-xs">
                               <div className="flex items-center gap-2.5 flex-wrap">
-                                <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
+                                <span className="font-mono font-bold text-foreground text-[13px]">{order.order_number}</span>
                                 <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${badgeClass}`}>
                                   {badgeText}
                                 </span>
@@ -1344,10 +1409,10 @@ export default function AccountPage() {
                                   return null;
                                 })()}
                               </div>
-                              <p className="text-zinc-500 text-[10px]">
+                              <p className="text-muted-text text-[10px]">
                                 {dateFormatted}
                                 {order.order_status !== "delivered" && order.order_status !== "cancelled" && (
-                                  <span className="text-zinc-400 ml-3 font-semibold">
+                                  <span className="text-muted-text ml-3 font-semibold">
                                     • Expected {expectedFromFormatted} – {expectedToFormatted}
                                   </span>
                                 )}
@@ -1356,28 +1421,28 @@ export default function AccountPage() {
 
                             <div className="flex items-center gap-6 w-full md:w-auto justify-between md:justify-end">
                               <div className="text-right tracking-wider text-xs">
-                                <span className="text-zinc-500 font-bold block text-[9px] uppercase">Transaction Value</span>
-                                <span className="text-white font-extrabold text-[13px]">{formatPrice(order.total_amount)}</span>
+                                <span className="text-muted-text font-bold block text-[9px] uppercase">Transaction Value</span>
+                                <span className="text-foreground font-extrabold text-[13px]">{formatPrice(order.total_amount)}</span>
                               </div>
                               <div>
-                                {isExpanded ? <ChevronUp className="w-4 h-4 text-zinc-500" /> : <ChevronDown className="w-4 h-4 text-zinc-500" />}
+                                {isExpanded ? <ChevronUp className="w-4 h-4 text-muted-text" /> : <ChevronDown className="w-4 h-4 text-muted-text" />}
                               </div>
                             </div>
                           </div>
 
                           {/* Expanded Order Detail Block */}
                           {isExpanded && (
-                            <div className="border-t border-zinc-900 p-5 bg-zinc-950/20 space-y-6 animate-fadeIn duration-300">
+                            <div className="border-t border-card-border p-5 bg-white space-y-6 animate-fadeIn duration-300">
                               
                               {/* Order Items listing */}
-                              <div className="space-y-3 divide-y divide-zinc-900">
+                              <div className="space-y-3 divide-y divide-card-border">
                                 {order.order_items?.map((item, idx) => {
                                   const prodName = item.product?.name || "Product Archive Piece";
                                   const prodImg = item.product?.product_images?.[0]?.image_url || "/Images/clothing.jpg";
                                   
                                   return (
                                     <div key={item.id || idx} className="flex gap-4 py-3 first:pt-0 last:pb-0 items-center text-xs tracking-wider">
-                                      <div className="w-12 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden relative shrink-0">
+                                      <div className="w-12 h-14 bg-[#f9f8f6] border border-card-border overflow-hidden relative shrink-0">
                                         <img
                                           src={prodImg}
                                           alt={prodName}
@@ -1385,16 +1450,16 @@ export default function AccountPage() {
                                         />
                                       </div>
                                       <div className="flex-1 min-w-0">
-                                        <p className="font-bold text-white uppercase truncate text-[11px]">{prodName}</p>
-                                        <p className="text-[10px] text-zinc-500 font-bold uppercase mt-1">
+                                        <p className="font-bold text-foreground uppercase truncate text-[11px]">{prodName}</p>
+                                        <p className="text-[10px] text-muted-text font-bold uppercase mt-1">
                                           {item.variant?.size && `Size: ${item.variant.size}`}
                                           {item.variant?.color && ` • Color: ${item.variant.color}`}
                                         </p>
-                                        <p className="text-zinc-400 text-[10px] mt-1">
+                                        <p className="text-muted-text text-[10px] mt-1">
                                           {item.quantity} x {formatPrice(item.price)}
                                         </p>
                                       </div>
-                                      <div className="font-extrabold text-white">
+                                      <div className="font-extrabold text-foreground">
                                         {formatPrice(item.price * item.quantity)}
                                       </div>
                                     </div>
@@ -1403,29 +1468,29 @@ export default function AccountPage() {
                               </div>
 
                               {/* Delivery & Billing break */}
-                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-zinc-900 text-xs leading-relaxed tracking-wider">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-card-border text-xs leading-relaxed tracking-wider">
                                 <div>
-                                  <h4 className="text-zinc-500 font-bold text-[9px] uppercase tracking-widest mb-1.5">Shipping Address</h4>
-                                  <p className="text-white font-bold uppercase text-[10px]">
+                                  <h4 className="text-muted-text font-bold text-[9px] uppercase tracking-widest mb-1.5">Shipping Address</h4>
+                                  <p className="text-foreground font-bold uppercase text-[10px]">
                                     {order.shipping_address?.full_name}
                                   </p>
-                                  <p className="text-zinc-400 text-[11px] mt-0.5">
+                                  <p className="text-muted-text text-[11px] mt-0.5">
                                     {order.shipping_address?.address_line1}
                                     {order.shipping_address?.address_line2 && `, ${order.shipping_address?.address_line2}`}
                                     <br />
                                     {order.shipping_address?.city}, {order.shipping_address?.state} - {order.shipping_address?.pincode}
                                   </p>
-                                  <p className="text-zinc-500 text-[10px] font-bold mt-1">Phone: {order.shipping_address?.phone}</p>
+                                  <p className="text-muted-text text-[10px] font-bold mt-1">Phone: {order.shipping_address?.phone}</p>
                                   {(order.order_status === "shipped" || order.order_status === "delivered") && (order.shipping_carrier || order.tracking_number) && (
-                                    <div className="mt-4 p-3 bg-zinc-950 border border-zinc-900 space-y-1">
+                                    <div className="mt-4 p-3 bg-[#f9f8f6] border border-card-border space-y-1">
                                       <h5 className="text-accent text-[8px] font-bold uppercase tracking-widest">Shipment Details</h5>
                                       {order.shipping_carrier && (
-                                        <p className="text-white text-[10px] font-bold uppercase">
+                                        <p className="text-foreground text-[10px] font-bold uppercase">
                                           Carrier: {order.shipping_carrier}
                                         </p>
                                       )}
                                       {order.tracking_number && (
-                                        <p className="text-zinc-400 text-[10px] font-mono">
+                                        <p className="text-muted-text text-[10px] font-mono">
                                           Tracking Reference: {order.tracking_number}
                                         </p>
                                       )}
@@ -1445,14 +1510,14 @@ export default function AccountPage() {
 
                                 <div className="space-y-4">
                                   <div>
-                                    <h4 className="text-zinc-500 font-bold text-[9px] uppercase tracking-widest mb-1">Billing Breakdown</h4>
-                                    <div className="space-y-1 text-zinc-400 text-[11px]">
+                                    <h4 className="text-muted-text font-bold text-[9px] uppercase tracking-widest mb-1">Billing Breakdown</h4>
+                                    <div className="space-y-1 text-muted-text text-[11px]">
                                       <div className="flex justify-between">
                                         <span>Subtotal</span>
                                         <span>{formatPrice(order.subtotal)}</span>
                                       </div>
                                       {order.discount > 0 && (
-                                        <div className="flex justify-between text-green-500">
+                                        <div className="flex justify-between text-green-600">
                                           <span>Discount</span>
                                           <span>-{formatPrice(order.discount)}</span>
                                         </div>
@@ -1461,10 +1526,10 @@ export default function AccountPage() {
                                         <span>Shipping</span>
                                         <span>{order.shipping_charge === 0 ? "FREE" : formatPrice(order.shipping_charge)}</span>
                                       </div>
-                                      <div className="flex justify-between text-white font-bold border-t border-zinc-900 pt-1.5 mt-1 items-start">
+                                      <div className="flex justify-between text-foreground font-bold border-t border-card-border pt-1.5 mt-1 items-start">
                                         <div className="flex flex-col">
                                           <span>Total Paid</span>
-                                          <span className="text-[9px] text-zinc-500 tracking-wider font-normal mt-0.5">
+                                          <span className="text-[9px] text-muted-text tracking-wider font-normal mt-0.5">
                                             (Inclusive of GST)
                                           </span>
                                         </div>
@@ -1473,8 +1538,8 @@ export default function AccountPage() {
                                     </div>
                                   </div>
                                                                     <div>
-                                    <h4 className="text-zinc-500 font-bold text-[9px] uppercase tracking-widest mb-1">Transaction Details</h4>
-                                    <p className="text-[11px] text-white font-medium uppercase">
+                                    <h4 className="text-muted-text font-bold text-[9px] uppercase tracking-widest mb-1">Transaction Details</h4>
+                                    <p className="text-[11px] text-foreground font-medium uppercase">
                                       Method: {order.payment_method === "upi" ? "UPI Instant" : "Cash on Delivery"}
                                     </p>
                                     {order.payment_method === "upi" && order.order_items?.[0] && (
@@ -1486,7 +1551,7 @@ export default function AccountPage() {
                                       </div>
                                     )}
                                     {gstNumber && (
-                                      <p className="text-[10px] text-zinc-500 font-mono tracking-wider mt-2 uppercase">
+                                      <p className="text-[10px] text-muted-text font-mono tracking-wider mt-2 uppercase">
                                         GSTIN: {gstNumber}
                                       </p>
                                     )}
@@ -1495,10 +1560,10 @@ export default function AccountPage() {
                               </div>
 
                               {/* Returns & Exchanges Management Section */}
-                              <div className="pt-6 border-t border-zinc-900 space-y-4">
+                              <div className="pt-6 border-t border-card-border space-y-4">
                                 <div className="flex items-center gap-2">
                                   <RefreshCw className="w-4 h-4 text-accent" />
-                                  <h4 className="text-zinc-300 font-bold text-xs uppercase tracking-widest">
+                                  <h4 className="text-foreground font-bold text-xs uppercase tracking-widest">
                                     Returns & Exchanges Desk
                                   </h4>
                                   {(() => {
@@ -1507,28 +1572,28 @@ export default function AccountPage() {
                                   if (rr) {
                                     return (
                                       // Request Submitted: Display current request status
-                                      <div className="p-4 bg-zinc-950/40 border border-zinc-900/80 rounded-none space-y-3">
+                                      <div className="p-4 bg-[#f9f8f6] border border-card-border rounded-none space-y-3">
                                         <div className="flex flex-wrap items-center justify-between gap-3">
                                           <div className="space-y-1">
-                                            <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                            <p className="text-[10px] text-muted-text font-bold uppercase tracking-wider">
                                               Request Submitted
                                             </p>
                                             <div className="flex items-center gap-2.5">
-                                              <span className="text-[11px] font-bold text-white uppercase tracking-wider">
+                                              <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">
                                                 {rr.request_type === "exchange" || rr.type === "exchange"
                                                   ? "Size Exchange"
                                                   : "Product Return"}
                                               </span>
                                               <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
                                                 rr.status === "approved"
-                                                  ? "bg-green-500/10 border border-green-500/20 text-green-500"
+                                                  ? "bg-green-500/10 border border-green-500/20 text-green-600"
                                                   : rr.status === "rejected"
                                                   ? "bg-red-500/10 border border-red-500/20 text-red-500"
                                                   : rr.status === "received"
-                                                  ? "bg-amber-500/10 border border-amber-500/20 text-amber-405 text-amber-400"
+                                                  ? "bg-amber-500/10 border border-amber-500/20 text-amber-600"
                                                   : rr.status === "pickup_confirmed"
-                                                  ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
-                                                  : "bg-amber-500/10 border border-amber-500/20 text-amber-400 animate-pulse"
+                                                  ? "bg-blue-500/10 border border-blue-500/20 text-blue-600"
+                                                  : "bg-amber-500/10 border border-amber-500/20 text-amber-600 animate-pulse"
                                               }`}>
                                                 {rr.status === "received"
                                                   ? "ITEMS RECEIVED"
@@ -1539,7 +1604,7 @@ export default function AccountPage() {
                                             </div>
                                           </div>
                                           
-                                          <span className="text-[10px] text-zinc-500 font-mono">
+                                          <span className="text-[10px] text-muted-text font-mono">
                                             {new Date(rr.created_at).toLocaleDateString("en-IN", {
                                               day: "numeric", month: "short", hour: "2-digit", minute: "2-digit"
                                             })}
@@ -1547,7 +1612,7 @@ export default function AccountPage() {
                                         </div>
 
                                         {/* Inline Nudges (Step 8.8) */}
-                                        <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1.5 tracking-wider">
+                                        <div className="p-3.5 bg-white border border-card-border rounded-none text-xs flex flex-col gap-1.5 tracking-wider">
                                           {rr.evidence_skipped ? (
                                             <>
                                               <span className="text-accent font-bold uppercase text-[9px] tracking-widest flex items-center gap-1">
@@ -1566,22 +1631,22 @@ export default function AccountPage() {
                                                   type="button"
                                                   onClick={() => document.getElementById(`inline-evidence-input-${order.id}`).click()}
                                                   disabled={uploadingDirectOrderId === order.id}
-                                                  className="px-3 py-1.5 bg-zinc-900 border border-zinc-805 text-white text-[9px] font-bold tracking-widest uppercase hover:border-accent hover:text-accent transition-colors cursor-pointer"
+                                                  className="px-3 py-1.5 bg-foreground border border-foreground text-background text-[9px] font-bold tracking-widest uppercase hover:bg-accent hover:border-accent transition-colors cursor-pointer"
                                                 >
                                                   {uploadingDirectOrderId === order.id ? "UPLOADING..." : "UPLOAD EVIDENCE NOW"}
                                                 </button>
                                               </div>
                                             </>
                                           ) : (
-                                            <span className="text-green-550 text-green-500 font-bold uppercase text-[9px] tracking-widest">
+                                            <span className="text-green-600 font-bold uppercase text-[9px] tracking-widest">
                                               ✓ Evidence submitted — your request is in priority review.
                                             </span>
                                           )}
                                         </div>
 
                                         {rr.status === "pickup_confirmed" && rr.expected_pickup_date && (
-                                          <div className="p-3.5 bg-zinc-950 border border-zinc-900 rounded-none text-xs flex flex-col gap-1 tracking-wider">
-                                            <span className="text-zinc-500 font-bold uppercase text-[9px] tracking-widest">
+                                          <div className="p-3.5 bg-white border border-card-border rounded-none text-xs flex flex-col gap-1 tracking-wider">
+                                            <span className="text-muted-text font-bold uppercase text-[9px] tracking-widest">
                                               Expected Pickup Date
                                             </span>
                                             <span className="text-accent font-extrabold text-[11px] uppercase">
@@ -1593,22 +1658,22 @@ export default function AccountPage() {
                                         )}
 
                                         {rr.status === "rejected" && rr.admin_notes && (
-                                          <div className="p-3 bg-red-950/10 border border-red-900/40 rounded-none text-xs text-red-400 tracking-wider">
+                                          <div className="p-3 bg-red-50 border border-red-200 rounded-none text-xs text-red-600 tracking-wider">
                                             <span className="font-bold uppercase text-[9px] block mb-1">Rejection Reason:</span>
                                             {rr.admin_notes}
                                           </div>
                                         )}
 
-                                        <div className="text-[11px] text-zinc-400 tracking-wide leading-relaxed pt-2 border-t border-zinc-900/60">
-                                          <span className="font-bold text-zinc-500 uppercase block text-[9px] mb-1">Reason for request:</span>
+                                        <div className="text-[11px] text-muted-text tracking-wide leading-relaxed pt-2 border-t border-card-border">
+                                          <span className="font-bold text-muted-text uppercase block text-[9px] mb-1">Reason for request:</span>
                                           &quot;{rr.reason_notes || rr.reason}&quot;
                                         </div>
 
-                                        <div className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
-                                          <span className="text-zinc-500 font-bold block text-[9px] mb-1">Items Requested:</span>
+                                        <div className="text-[10px] text-muted-text font-bold uppercase tracking-wider">
+                                          <span className="text-muted-text font-bold block text-[9px] mb-1">Items Requested:</span>
                                           <ul className="list-disc pl-4 space-y-1">
                                             {rr.items?.map((item, idx) => (
-                                              <li key={idx} className="text-zinc-400">
+                                              <li key={idx} className="text-foreground">
                                                 {item.name} {item.size && `(${item.size} / ${item.color || "Default"})`} x {item.quantity}
                                               </li>
                                             ))}
@@ -1631,7 +1696,7 @@ export default function AccountPage() {
                                             return (
                                               <button
                                                 onClick={() => handleOpenReturnModal(order)}
-                                                className="px-5 py-2.5 border border-zinc-800 bg-zinc-950/40 text-zinc-300 hover:bg-white hover:text-black hover:border-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
+                                                className="px-5 py-2.5 bg-foreground text-background hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
                                               >
                                                 Initiate Return / Exchange
                                               </button>
@@ -1639,13 +1704,13 @@ export default function AccountPage() {
                                           } else if (canCancel) {
                                             return (
                                               <div className="space-y-3">
-                                                <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                                <p className="text-[10px] text-muted-text font-bold uppercase tracking-wider">
                                                   This order is awaiting dispatch. You can cancel it before shipment.
                                                 </p>
                                                 <button
                                                   onClick={() => handleCancelOrder(order)}
                                                   disabled={cancellingOrderId === order.id}
-                                                  className="px-5 py-2.5 border border-red-900/60 bg-red-950/10 text-red-400 hover:bg-red-500 hover:text-white hover:border-red-500 text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer flex items-center gap-2"
+                                                  className="px-5 py-2.5 border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer flex items-center gap-2"
                                                 >
                                                   {cancellingOrderId === order.id ? (
                                                     <>
@@ -1660,7 +1725,7 @@ export default function AccountPage() {
                                             );
                                           } else {
                                             return (
-                                              <p className="text-[10px] text-zinc-500 font-bold uppercase tracking-wider">
+                                              <p className="text-[10px] text-muted-text font-bold uppercase tracking-wider">
                                                 {order.order_status === "delivered" 
                                                   ? "Return window closed (7 days from delivery exceeded)"
                                                   : order.order_status === "cancelled"
@@ -1683,7 +1748,51 @@ export default function AccountPage() {
 
                         </div>
                       );
-                    })}
+                    });
+                  })()}
+                    
+                    {/* Pagination Controls */}
+                    {orders.length > ordersPerPage && (
+                      <div className="flex items-center justify-center gap-2 mt-8 select-none">
+                        <button
+                          onClick={() => setCurrentOrderPage((p) => Math.max(1, p - 1))}
+                          disabled={currentOrderPage === 1}
+                          className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
+                            currentOrderPage === 1
+                              ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
+                              : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                          }`}
+                        >
+                          ←
+                        </button>
+                        
+                        {Array.from({ length: Math.ceil(orders.length / ordersPerPage) }, (_, i) => i + 1).map((page) => (
+                          <button
+                            key={page}
+                            onClick={() => setCurrentOrderPage(page)}
+                            className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 cursor-pointer ${
+                              currentOrderPage === page
+                                ? "border-accent bg-accent/10 text-accent font-semibold"
+                                : "border-card-border text-muted-text hover:border-zinc-400 hover:text-foreground"
+                            }`}
+                          >
+                            {String(page).padStart(2, "0")}
+                          </button>
+                        ))}
+                        
+                        <button
+                          onClick={() => setCurrentOrderPage((p) => Math.min(Math.ceil(orders.length / ordersPerPage), p + 1))}
+                          disabled={currentOrderPage === Math.ceil(orders.length / ordersPerPage)}
+                          className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
+                            currentOrderPage === Math.ceil(orders.length / ordersPerPage)
+                              ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
+                              : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                          }`}
+                        >
+                          →
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
