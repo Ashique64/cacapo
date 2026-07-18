@@ -302,29 +302,36 @@ function LoginContent() {
   };
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center text-white px-4 md:px-8 py-16 md:py-24 font-sans select-none">
+    <div className="min-h-screen bg-background flex items-center justify-center text-foreground px-4 md:px-8 py-16 md:py-24 font-sans select-none">
       <style>{`
         .custom-input {
-          background-color: #0c0c0e;
-          border: 1px solid #27272a;
-          color: white;
+          background-color: #ffffff;
+          border: 1px solid #e5e0d8;
+          color: #1a1a1a;
           padding: 0.75rem 1rem;
           width: 100%;
           outline: none;
           transition: all 0.3s ease;
           border-radius: 0px;
         }
+        .custom-input::placeholder {
+          color: #9ca3af;
+        }
         .custom-input:focus {
           border-color: #FF4D4D;
-          box-shadow: 0 0 8px rgba(255, 77, 77, 0.15);
+          box-shadow: 0 0 8px rgba(255, 77, 77, 0.12);
+        }
+        .custom-input:disabled {
+          background-color: #f9f8f6;
+          color: #9ca3af;
         }
       `}</style>
-      <div className="relative z-50 w-full max-w-md border border-zinc-900 bg-zinc-950 p-8 space-y-6 shadow-2xl">
+      <div className="relative z-50 w-full max-w-md border border-card-border bg-white p-8 space-y-6 shadow-[0_8px_40px_rgba(0,0,0,0.08)]">
         
         {/* Close Button */}
         <Link
           href={closeDestination}
-          className="absolute top-4 right-4 text-zinc-500 hover:text-white transition-colors flex items-center justify-center p-1"
+          className="absolute top-4 right-4 text-muted-text hover:text-foreground transition-colors flex items-center justify-center p-1"
           aria-label="Close"
         >
           <X className="w-4 h-4" />
@@ -332,10 +339,10 @@ function LoginContent() {
 
         {/* Header */}
         <div className="text-center space-y-2">
-          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-zinc-500">
+          <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-muted-text">
             CACAPO
           </span>
-          <h1 className="text-xl font-bold uppercase tracking-[0.15em] text-white">
+          <h1 className="text-xl font-bold uppercase tracking-[0.15em] text-foreground">
             {verificationSent 
               ? (authTab === "forgot" ? "RESET LINK SENT" : "VERIFY EMAIL") 
               : (authTab === "signin" 
@@ -346,7 +353,7 @@ function LoginContent() {
                     ? "FORGOT PASSWORD" 
                     : "UPDATE PASSWORD")}
           </h1>
-          <p className="text-[11px] text-zinc-500 font-medium uppercase tracking-widest">
+          <p className="text-[11px] text-muted-text font-medium uppercase tracking-widest">
             {verificationSent 
               ? (authTab === "forgot" ? "Please check your inbox to proceed." : "Confirm your email address to activate your account.")
               : (authTab === "forgot" 
@@ -360,20 +367,20 @@ function LoginContent() {
         {verificationSent ? (
           <div className="space-y-6 py-4 text-center">
             <div className="flex justify-center">
-              <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-zinc-900 border border-zinc-800">
+              <div className="relative flex items-center justify-center w-16 h-16 rounded-full bg-[#f9f8f6] border border-card-border">
                 <Mail className="w-6 h-6 text-accent animate-pulse" />
                 <div className="absolute inset-0 rounded-full border border-accent/20 animate-ping" />
               </div>
             </div>
             
             <div className="space-y-2">
-              <p className="text-xs text-zinc-400 leading-relaxed">
+              <p className="text-xs text-muted-text leading-relaxed">
                 {authTab === "forgot" ? "We've sent a password reset link to:" : "We've sent a verification link to:"}
               </p>
-              <p className="text-sm font-bold text-white tracking-wider break-all">
+              <p className="text-sm font-bold text-foreground tracking-wider break-all">
                 {email}
               </p>
-              <p className="text-xs text-zinc-500 leading-relaxed pt-2">
+              <p className="text-xs text-muted-text leading-relaxed pt-2">
                 {authTab === "forgot" 
                   ? "Please check your inbox and click the link to reset your password." 
                   : "Please check your inbox (and spam folder) and click the link to activate your account."}
@@ -389,7 +396,7 @@ function LoginContent() {
                 setConfirmPassword("");
                 setError(null);
               }}
-              className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 rounded-none"
+              className="w-full py-3.5 bg-foreground hover:bg-accent text-background text-xs font-bold tracking-widest uppercase transition-all duration-300 rounded-none border border-foreground hover:border-accent"
             >
               BACK TO SIGN IN
             </button>
@@ -398,7 +405,7 @@ function LoginContent() {
           <>
             {/* Tab Selector - Hide for recovery and forgot flows */}
             {authTab !== "forgot" && authTab !== "recovery" && (
-              <div className="flex border-b border-zinc-900 text-xs font-bold tracking-widest font-sans">
+              <div className="flex border-b border-card-border text-xs font-bold tracking-widest font-sans">
                 <button
                   type="button"
                   onClick={() => {
@@ -411,8 +418,8 @@ function LoginContent() {
                   }}
                   className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
                     authTab === "signin" 
-                      ? "border-accent text-white" 
-                      : "border-transparent text-zinc-500 hover:text-zinc-300"
+                      ? "border-accent text-foreground" 
+                      : "border-transparent text-muted-text hover:text-foreground"
                   }`}
                 >
                   Sign In
@@ -429,8 +436,8 @@ function LoginContent() {
                   }}
                   className={`w-1/2 py-3 text-center uppercase border-b transition-all duration-300 ${
                     authTab === "signup" 
-                      ? "border-accent text-white" 
-                      : "border-transparent text-zinc-500 hover:text-zinc-300"
+                      ? "border-accent text-foreground" 
+                      : "border-transparent text-muted-text hover:text-foreground"
                   }`}
                 >
                   Create Account
@@ -447,7 +454,7 @@ function LoginContent() {
               )}
 
               {successMessage && (
-                <div className="p-3 border border-green-500/20 bg-green-500/5 text-green-500 text-xs tracking-wider leading-relaxed text-center font-medium">
+                <div className="p-3 border border-green-500/20 bg-green-50 text-green-600 text-xs tracking-wider leading-relaxed text-center font-medium">
                   {successMessage}
                 </div>
               )}
@@ -455,7 +462,7 @@ function LoginContent() {
               {authTab === "signup" && (
                 <>
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
                       Full Name
                     </label>
                     <input
@@ -469,7 +476,7 @@ function LoginContent() {
                   </div>
 
                   <div className="space-y-1.5">
-                    <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                    <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
                       Phone Number
                     </label>
                     <input
@@ -487,7 +494,7 @@ function LoginContent() {
               {/* Email field - shown in sign in, sign up, forgot, but not recovery */}
               {authTab !== "recovery" && (
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
                     Email Address
                   </label>
                   <input
@@ -506,7 +513,7 @@ function LoginContent() {
               {/* Password field - shown in sign in, sign up, recovery, but not forgot */}
               {authTab !== "forgot" && (
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
                     {authTab === "recovery" ? "New Password" : "Password"}
                   </label>
                   <div className="relative">
@@ -522,7 +529,7 @@ function LoginContent() {
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-text hover:text-foreground transition-colors p-1 bg-transparent border-none"
                     >
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -536,7 +543,7 @@ function LoginContent() {
                           setError(null);
                           setPassword("");
                         }}
-                        className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-white transition-colors p-0 bg-transparent border-none cursor-pointer"
+                        className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors p-0 bg-transparent border-none cursor-pointer"
                       >
                         Forgot Password?
                       </button>
@@ -548,7 +555,7 @@ function LoginContent() {
               {/* Confirm Password field - shown in sign up and recovery */}
               {(authTab === "signup" || authTab === "recovery") && (
                 <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-400">
+                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
                     {authTab === "recovery" ? "Confirm New Password" : "Confirm Password"}
                   </label>
                   <div className="relative">
@@ -563,7 +570,7 @@ function LoginContent() {
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors p-1 bg-transparent border-none"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-text hover:text-foreground transition-colors p-1 bg-transparent border-none"
                     >
                       {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
@@ -574,7 +581,7 @@ function LoginContent() {
               <button
                 type="submit"
                 disabled={submitting || lockoutTime > 0}
-                className="w-full py-3.5 bg-white hover:bg-accent text-black hover:text-white text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none disabled:bg-zinc-900 disabled:text-zinc-600 disabled:border-zinc-800 disabled:cursor-not-allowed cursor-pointer"
+                className="w-full py-3.5 bg-foreground hover:bg-accent text-background text-xs font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none border border-foreground hover:border-accent disabled:bg-[#f9f8f6] disabled:text-muted-text disabled:border-card-border disabled:cursor-not-allowed cursor-pointer"
               >
                 {lockoutTime > 0 ? (
                   `LOCKED OUT (${lockoutTime}S)`
@@ -601,7 +608,7 @@ function LoginContent() {
                     setError(null);
                     setEmail("");
                   }}
-                  className="w-full py-3 border border-zinc-800 hover:border-accent text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none flex items-center justify-center gap-2 cursor-pointer bg-transparent"
+                  className="w-full py-3 border border-card-border hover:border-accent text-muted-text hover:text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none flex items-center justify-center gap-2 cursor-pointer bg-transparent"
                 >
                   BACK TO SIGN IN
                 </button>
@@ -619,7 +626,7 @@ export default function LoginPage() {
     <SmoothScroll>
       <Navbar />
       <Suspense fallback={
-        <div className="min-h-screen bg-black flex items-center justify-center text-white">
+        <div className="min-h-screen bg-background flex items-center justify-center text-foreground">
           <Loader2 className="w-8 h-8 animate-spin text-accent" />
         </div>
       }>
