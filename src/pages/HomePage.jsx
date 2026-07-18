@@ -7,7 +7,7 @@ import Footer from "@/components/layout/Footer/Footer";
 
 export default function HomePage({ initialCategories, initialProducts }) {
   return (
-    <main className="flex flex-col min-h-screen bg-black">
+    <main className="flex flex-col min-h-screen bg-background">
       <Hero />
       <Marquee />
       <Category initialCategories={initialCategories} />

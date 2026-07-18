@@ -22,7 +22,7 @@ export default function BrandEthos() {
 
     // Force initial dim state so words start gray before any scroll
     wordEls.forEach((w) => {
-      w.style.color = "#52525b";   // zinc-600
+      w.style.color = "#a1a1aa";   // zinc-400
       w.style.opacity = "0.2";
     });
 
@@ -50,8 +50,8 @@ export default function BrandEthos() {
         // Local word progress: goes 0→1 as global progress passes its threshold
         const wordP = Math.min(1, Math.max(0, (progress - threshold) * count));
         word.style.opacity = String(0.2 + wordP * 0.8);
-        // Interpolate from zinc-600 (#52525b) to white (#ffffff)
-        const l = Math.round(32 + wordP * 68);   // lightness 32% → 100%
+        // Interpolate from zinc-400 (#a1a1aa, lightness 66%) to foreground text (#111111, lightness 7%)
+        const l = Math.round(66 - wordP * 59);   // lightness 66% → 7%
         word.style.color = `hsl(0,0%,${l}%)`;
       });
 
@@ -85,7 +85,7 @@ export default function BrandEthos() {
   return (
     <section
       ref={triggerRef}
-      className="hidden md:block relative bg-black py-12 md:py-16 lg:py-24 px-6 md:px-12 lg:px-6 overflow-hidden border-zinc-900 select-none"
+      className="hidden md:block relative bg-background py-12 md:py-16 lg:py-24 px-6 md:px-12 lg:px-6 overflow-hidden border-card-border select-none"
       id="brand-ethos"
     >
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 md:gap-10 lg:gap-16 items-center">
@@ -102,7 +102,7 @@ export default function BrandEthos() {
               <span
                 key={index}
                 className="ethos-word inline-block mr-3 font-sans font-medium"
-                style={{ color: "#52525b", opacity: 0.2 }}
+                style={{ color: "#a1a1aa", opacity: 0.2 }}
               >
                 {word}
               </span>
@@ -110,21 +110,21 @@ export default function BrandEthos() {
           </p>
 
           {/* Details below reveal */}
-          <div className="mt-10 flex items-start justify-between md:justify-start gap-4 md:gap-8 lg:gap-12 border-t border-zinc-900 pt-8">
+          <div className="mt-10 flex items-start justify-between md:justify-start gap-4 md:gap-8 lg:gap-12 border-t border-card-border pt-8">
             <div>
-              <span className="text-2xl font-bold font-mono text-zinc-100 block">GLOBAL</span>
+              <span className="text-2xl font-bold font-mono text-foreground block">GLOBAL</span>
               <span className="text-[10px] text-muted-text tracking-widest uppercase mt-1 block">
                 East Asian Imports
               </span>
             </div>
             <div>
-              <span className="text-2xl font-bold font-mono text-zinc-100 block">16-30</span>
+              <span className="text-2xl font-bold font-mono text-foreground block">16-30</span>
               <span className="text-[10px] text-muted-text tracking-widest uppercase mt-1 block">
                 Gen-Z Youth Focus
               </span>
             </div>
             <div>
-              <span className="text-2xl font-bold font-mono text-zinc-100 block">WEEKLY</span>
+              <span className="text-2xl font-bold font-mono text-foreground block">WEEKLY</span>
               <span className="text-[10px] text-muted-text tracking-widest uppercase mt-1 block">
                 Fresh Curated Drops
               </span>
@@ -135,16 +135,16 @@ export default function BrandEthos() {
         {/* Visual Parallax Column */}
         <div className="md:col-span-1 lg:col-span-5 relative flex justify-center items-center w-full max-w-md mx-auto lg:max-w-none lg:mx-0">
           {/* Decorative frame elements */}
-          <div className="absolute inset-0 border border-zinc-800 rounded-none -m-4 pointer-events-none" />
+          <div className="absolute inset-0 border border-card-border rounded-none -m-4 pointer-events-none" />
           <div className="absolute top-0 right-0 w-24 h-24 border-r border-t border-accent/20 rounded-none -m-4 pointer-events-none" />
           <div className="absolute bottom-0 left-0 w-24 h-24 border-l border-b border-accent/20 rounded-none -m-4 pointer-events-none" />
 
           {/* Core Image container */}
-          <div className="w-full aspect-3/4 overflow-hidden rounded-none relative shadow-2xl border border-zinc-900 bg-zinc-950">
-            <div className="absolute inset-0 bg-linear-to-t from-black/80 via-transparent to-black/35 z-10 pointer-events-none" />
+          <div className="w-full aspect-3/4 overflow-hidden rounded-none relative shadow-2xl border border-card-border bg-card-bg">
+            <div className="absolute inset-0 bg-linear-to-t from-background/80 via-transparent to-background/35 z-10 pointer-events-none" />
             <img
               ref={imageRef}
-              src="/Images/ethos.jpg"
+              src="/Images/ethos_white.png"
               alt="Couture craftsmanship detail"
               className="w-full h-[120%] object-cover absolute top-[-10%] opacity-80"
               style={{ willChange: "transform" }}
@@ -154,7 +154,7 @@ export default function BrandEthos() {
               <span className="text-[10px] tracking-[0.3em] text-accent uppercase font-semibold">
                 CURATED IMPORT SELECTION
               </span>
-              <span className="text-sm font-semibold tracking-wider text-white block mt-1">
+              <span className="text-sm font-semibold tracking-wider text-foreground block mt-1">
                 Sourced from China, Indonesia &amp; Vietnam
               </span>
             </div>

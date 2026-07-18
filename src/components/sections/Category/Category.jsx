@@ -92,7 +92,7 @@ export default function Collections({ initialCategories }) {
   return (
     <section
       ref={sectionRef}
-      className="relative bg-black py-16 lg:py-32 px-6 overflow-hidden border-zinc-900"
+      className="relative bg-background py-16 lg:py-32 px-6 overflow-hidden border-card-border"
       id="collections"
     >
       {/* Background radial highlight */}
@@ -105,7 +105,7 @@ export default function Collections({ initialCategories }) {
             <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
               THE RANGE
             </span>
-            <h2 className="text-4xl md:text-4xl lg:text-6xl font-bold tracking-tight text-white uppercase">
+            <h2 className="text-4xl md:text-4xl lg:text-6xl font-bold tracking-tight text-foreground uppercase">
               Curated <span className="text-accent">Couture</span>
             </h2>
           </div>
@@ -116,7 +116,7 @@ export default function Collections({ initialCategories }) {
 
         {/* Loading State */}
         {loading ? (
-          <div className="flex items-center justify-center py-32 gap-3 text-zinc-500">
+          <div className="flex items-center justify-center py-32 gap-3 text-muted-text">
             <Loader2 className="w-6 h-6 animate-spin text-accent" />
             <span className="text-xs tracking-[0.3em] font-mono uppercase">Loading Collections…</span>
           </div>
@@ -128,37 +128,37 @@ export default function Collections({ initialCategories }) {
                 key={item.id || item.slug}
                 href={`/shop?category=${item.id || item.slug}`}
                 ref={(el) => (cardsRef.current[idx] = el)}
-                className={`group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-accent/40 sm:border-zinc-800/80 bg-zinc-950/20 backdrop-blur-md cursor-pointer transition-all duration-700 hover:border-accent/40 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
+                className={`group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-card-border bg-card-bg backdrop-blur-md cursor-pointer transition-all duration-500 hover:border-accent hover:ring-1 hover:ring-accent/50 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
                   idx === 2 && categories.length === 3 ? "md:col-span-2 lg:col-span-1" : ""
                 }`}
               >
                 {/* Card Image with Parallax & Hover Zoom */}
                 <div className="absolute inset-0 z-0 overflow-hidden">
-                  <div className="absolute inset-0 bg-linear-to-b from-zinc-900/10 via-zinc-950/40 to-black z-1" />
+                  <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/15 to-white/30 z-1" />
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
                       alt={item.name}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-75 lg:opacity-60 lg:group-hover:opacity-85"
+                      className="object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-95 lg:opacity-90 lg:group-hover:opacity-100"
                       loading="lazy"
                     />
                   ) : (
-                    <div className="w-full h-full bg-zinc-900" />
+                    <div className="w-full h-full bg-card-bg" />
                   )}
                 </div>
 
                 {/* Glassmorphic border glow line on top */}
-                <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-zinc-700/50 to-transparent group-hover:via-accent/50 transition-all duration-700" />
+                <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-card-border/50 to-transparent group-hover:via-accent/50 transition-all duration-700" />
 
                 {/* Card Content */}
-                <div className="relative z-10 p-6 flex flex-col justify-end h-[210px] bg-linear-to-t from-black via-black/95 to-transparent transform translate-y-0 lg:translate-y-[90px] lg:group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                <div className="relative z-10 p-6 flex flex-col justify-end h-[210px] bg-linear-to-t from-white/98 via-white/70 to-transparent transform translate-y-0 lg:translate-y-[90px] lg:group-hover:translate-y-0 transition-transform duration-500 ease-out">
                   <span className="text-[9px] tracking-[0.4em] font-semibold text-accent mb-2 block">
                     {item.tag}
                   </span>
 
-                  <h3 className="text-xl md:text-lg lg:text-xl font-bold text-white tracking-wide mb-2 flex items-center justify-between group-hover:text-accent transition-colors">
+                  <h3 className="text-xl md:text-lg lg:text-xl font-bold text-foreground tracking-wide mb-2 flex items-center justify-between group-hover:text-accent transition-colors">
                     {item.name}
                     <span className="opacity-100 translate-x-0 translate-y-0 lg:opacity-0 lg:-translate-x-2 lg:translate-y-2 lg:group-hover:opacity-100 lg:group-hover:translate-x-0 lg:group-hover:translate-y-0 transition-all duration-500 text-accent">
                       <ArrowUpRight className="w-4 h-4" />
@@ -175,9 +175,9 @@ export default function Collections({ initialCategories }) {
                     {item.description || item.shortDesc}
                   </p>
 
-                  <div className="w-full h-px bg-accent/20 lg:bg-zinc-900 lg:group-hover:bg-accent/20 mb-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-100" />
+                  <div className="w-full h-px bg-accent/20 lg:bg-card-border lg:group-hover:bg-accent/20 mb-4 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-100" />
 
-                  <span className="text-[10px] text-white/90 font-medium tracking-[0.2em] uppercase lg:group-hover:translate-x-1 inline-flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-150">
+                  <span className="text-[10px] text-foreground/90 font-medium tracking-[0.2em] uppercase lg:group-hover:translate-x-1 inline-flex items-center gap-1.5 opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-500 lg:delay-150">
                     VIEW COLLECTION <span className="text-accent transition-transform duration-500 lg:group-hover:translate-x-1">→</span>
                   </span>
                 </div>

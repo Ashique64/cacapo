@@ -82,11 +82,11 @@ export default function Navbar() {
           isVisible ? "translate-y-0" : "-translate-y-full"
         } ${
           isPastHero
-            ? "bg-black/80 backdrop-blur-md py-4 px-6"
+            ? "bg-nav-past-hero-bg/80 backdrop-blur-md py-4 px-6"
             : "bg-transparent p-6"
         } flex justify-between items-center`}
       >
-        <Link href="/" className="text-xl font-extrabold tracking-[0.3em] text-white hover:text-accent transition-colors">
+        <Link href="/" className="text-xl font-extrabold tracking-[0.3em] text-foreground hover:text-accent transition-colors">
           CACAPO
         </Link>
         
@@ -99,7 +99,7 @@ export default function Navbar() {
                 key={item.name}
                 href={item.path}
                 className={`transition-colors cursor-pointer ${
-                  isActive ? "text-accent font-semibold" : "text-muted-text hover:text-white"
+                  isActive ? "text-accent font-semibold" : "text-muted-text hover:text-foreground"
                 }`}
               >
                 {item.name}
@@ -109,7 +109,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop Actions */}
-        <div className="hidden md:flex items-center gap-4 text-white">
+        <div className="hidden md:flex items-center gap-4 text-foreground">
           <Link
             href={user ? "/account" : "/login"}
             aria-label={user ? "My Account" : "Sign In"}
@@ -124,7 +124,7 @@ export default function Navbar() {
           >
             <Heart className="w-5 h-5" />
             {wishlistCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono" aria-hidden="true">
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white font-mono" aria-hidden="true">
                 {wishlistCount}
               </span>
             )}
@@ -132,11 +132,11 @@ export default function Navbar() {
           <button 
             onClick={() => setCartOpen(true)}
             aria-label={`Shopping bag${cartCount > 0 ? `, ${cartCount} items` : ", empty"}`}
-            className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
+            className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent text-foreground"
           >
             <ShoppingBag className="w-5 h-5" />
             <span
-              className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono"
+              className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white font-mono"
               aria-hidden="true"
             >
               {cartCount}
@@ -149,7 +149,7 @@ export default function Navbar() {
           <Link
             href={user ? "/account" : "/login"}
             aria-label={user ? "My Account" : "Sign In"}
-            className="hover:text-accent transition-colors cursor-pointer p-1 text-white"
+            className="hover:text-accent transition-colors cursor-pointer p-1 text-foreground"
           >
             <User className="w-5 h-5" />
           </Link>
@@ -158,16 +158,16 @@ export default function Navbar() {
             aria-label={`Shopping bag${cartCount > 0 ? `, ${cartCount} items` : ", empty"}`}
             className="hover:text-accent transition-colors cursor-pointer p-1 relative border-none bg-transparent"
           >
-            <ShoppingBag className="w-5 h-5 text-white" />
+            <ShoppingBag className="w-5 h-5 text-foreground" />
             {cartCount > 0 && (
-              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-black font-mono" aria-hidden="true">
+              <span className="absolute -top-1 -right-1 bg-accent text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-bold text-white font-mono" aria-hidden="true">
                 {cartCount}
               </span>
             )}
           </button>
           <button
             onClick={() => setIsMobileMenuOpen(true)}
-            className="text-white hover:text-accent transition-colors p-1"
+            className="text-foreground hover:text-accent transition-colors p-1"
             aria-label="Open Menu"
           >
             <Menu className="w-6 h-6" />
@@ -177,7 +177,7 @@ export default function Navbar() {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-black/98 backdrop-blur-xl z-50 flex flex-col justify-between p-8 transition-all duration-500 ease-out md:hidden ${
+        className={`fixed inset-0 bg-mobile-menu-bg backdrop-blur-xl z-50 flex flex-col justify-between p-8 transition-all duration-500 ease-out md:hidden ${
           isMobileMenuOpen 
             ? "opacity-100 pointer-events-auto translate-y-0" 
             : "opacity-0 pointer-events-none -translate-y-4"
@@ -187,7 +187,7 @@ export default function Navbar() {
         <div className="flex justify-end items-center">
           <button
             onClick={() => setIsMobileMenuOpen(false)}
-            className="text-white hover:text-accent transition-colors p-1"
+            className="text-foreground hover:text-accent transition-colors p-1"
             aria-label="Close Menu"
           >
             <X className="w-6 h-6" />
@@ -204,7 +204,7 @@ export default function Navbar() {
                 href={item.path}
                 onClick={() => setIsMobileMenuOpen(false)}
                 className={`transition-colors cursor-pointer ${
-                  isActive ? "text-accent" : "text-muted-text hover:text-white"
+                  isActive ? "text-accent" : "text-muted-text hover:text-foreground"
                 }`}
               >
                 {item.name}
@@ -214,7 +214,7 @@ export default function Navbar() {
         </div>
 
         {/* Bottom actions */}
-        <div className="flex justify-center gap-6 text-white border-t border-zinc-900 pt-8">
+        <div className="flex justify-center gap-6 text-foreground border-t border-card-border pt-8">
           <Link href={user ? "/account" : "/login"} className="hover:text-accent transition-colors cursor-pointer flex items-center gap-1.5 text-xs tracking-widest" onClick={() => setIsMobileMenuOpen(false)}>
             <User className="w-4 h-4" /> {user ? "ACCOUNT" : "LOGIN"}
           </Link>

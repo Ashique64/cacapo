@@ -8,8 +8,27 @@ html {
 }
 
 :root {
-  --background: #000000;
-  --foreground: #ededed;
+  --background: #ffffff;
+  --foreground: #111111;
+  --muted-text: #71717a;
+  --accent: #C21A1A;
+  --card-bg: #ffffff;
+  --card-bg-hover: #ffffff;
+  --card-border: #e4e4e7;
+  --marquee-bg: #f4f4f5;
+  --marquee-border: #e4e4e7;
+  --marquee-text: #27272a;
+  --loading-bg: #ffffff;
+  --loading-border: #f4f4f5;
+  --loading-text: #111111;
+  --loading-progress-bg: #e4e4e7;
+  --nav-past-hero-bg: rgba(255, 255, 255, 0.8);
+  --mobile-menu-bg: rgba(255, 255, 255, 0.98);
+  --hero-title-text: #000000;
+  --hero-text: #111111;
+  --footer-bg: #fafafa;
+  --footer-border: #e4e4e7;
+  --footer-logo: #e4e4e7;
 }
 
 @theme inline {
@@ -18,9 +37,25 @@ html {
   --font-sans: var(--font-outfit);
   --font-serif: var(--font-playfair);
   --font-mono: var(--font-jetbrains-mono);
-  --color-accent: #FF4D4D;
-  /* --color-accent: #C9A84C; */
-  --color-muted-text: #999999;
+  --color-accent: var(--accent);
+  --color-muted-text: var(--muted-text);
+  --color-card-bg: var(--card-bg);
+  --color-card-bg-hover: var(--card-bg-hover);
+  --color-card-border: var(--card-border);
+  --color-marquee-bg: var(--marquee-bg);
+  --color-marquee-border: var(--marquee-border);
+  --color-marquee-text: var(--marquee-text);
+  --color-loading-bg: var(--loading-bg);
+  --color-loading-border: var(--loading-border);
+  --color-loading-text: var(--loading-text);
+  --color-loading-progress-bg: var(--loading-progress-bg);
+  --color-nav-past-hero-bg: var(--nav-past-hero-bg);
+  --color-mobile-menu-bg: var(--mobile-menu-bg);
+  --color-hero-title-text: var(--hero-title-text);
+  --color-hero-text: var(--hero-text);
+  --color-footer-bg: var(--footer-bg);
+  --color-footer-border: var(--footer-border);
+  --color-footer-logo: var(--footer-logo);
 }
 
 body {
@@ -40,9 +75,9 @@ body {
   scrollbar-width: none !important;  /* Firefox */
 }
 
-/* Custom radial gradient helper for dark vignetting */
+/* Custom radial gradient helper for light vignetting */
 .bg-radial-gradient {
-  background: radial-gradient(circle, rgba(0,0,0,0) 30%, rgba(0,0,0,0.85) 100%);
+  background: radial-gradient(circle, rgba(255,255,255,0) 30%, rgba(255,255,255,0.85) 100%);
 }
 
 /* Lenis support classes */

@@ -5,7 +5,7 @@ import { FaInstagram, FaFacebook, FaWhatsapp } from "react-icons/fa6";
 
 export default function Footer() {
   return (
-    <footer className="relative bg-black border-t border-zinc-900 pt-12 pb-8 md:pt-16 md:pb-10 lg:pt-24 lg:pb-12 px-6 overflow-hidden select-none">
+    <footer className="relative bg-footer-bg border-t border-footer-border pt-12 pb-8 md:pt-16 md:pb-10 lg:pt-24 lg:pb-12 px-6 overflow-hidden select-none">
       {/* Ambient glowing highlights */}
       <div className="absolute bottom-0 left-1/3 -translate-x-1/2 w-[600px] h-[300px] bg-accent/3 blur-[100px] rounded-full pointer-events-none" />
 
@@ -16,7 +16,7 @@ export default function Footer() {
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">
               THE IMPORT HOUSE
             </span>
-            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-white mb-4 uppercase leading-tight">
+            <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4 uppercase leading-tight">
               GLOBAL LUXURY <br />
               <span className="text-accent">
                 CURATED SELECTIONS
@@ -86,36 +86,36 @@ export default function Footer() {
         </div>
 
         {/* Big Decorative Title */}
-        <div className="border-t border-zinc-900 pt-10 md:pt-16 flex flex-col items-center justify-center relative overflow-hidden w-full">
+        <div className="border-t border-footer-border pt-10 md:pt-16 flex flex-col items-center justify-center relative overflow-hidden w-full">
           <div className="flex gap-8 mb-8 text-muted-text">
             {/* Instagram */}
-            <span className="hover:text-white transition-colors cursor-pointer" aria-label="Instagram">
+            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="Instagram">
               <FaInstagram className="w-5 h-5" />
             </span>
             {/* Facebook */}
-            <span className="hover:text-white transition-colors cursor-pointer" aria-label="Facebook">
+            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="Facebook">
               <FaFacebook className="w-5 h-5" />
             </span>
             {/* WhatsApp */}
-            <span className="hover:text-white transition-colors cursor-pointer" aria-label="WhatsApp">
+            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="WhatsApp">
               <FaWhatsapp className="w-5 h-5" />
             </span>
           </div>
 
           {/* Big CACAPO Logo with Letter Spacing */}
-          <h1 className="text-[12vw] lg:text-[11vw] leading-none font-black tracking-[0.2em] mr-[0.2em] text-zinc-950 font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
+          <h1 className="text-[12vw] lg:text-[11vw] leading-none font-black tracking-[0.2em] mr-[0.2em] text-footer-logo font-sans text-center transition-colors duration-1000 hover:text-accent select-none">
             CACAPO
           </h1>
         </div>
 
         {/* Copyright and Credits */}
-        <div className="mt-12 pt-6 border-t border-zinc-900/60 flex flex-col md:flex-row justify-between items-center text-[10px] tracking-[0.2em] text-muted-text font-light">
+        <div className="mt-12 pt-6 border-t border-footer-border/60 flex flex-col md:flex-row justify-between items-center text-[10px] tracking-[0.2em] text-muted-text font-light">
           <span>© 2026 CACAPO. ALL RIGHTS RESERVED.</span>
           <div className="flex gap-6 mt-4 md:mt-0">
-            <Link href="/terms-of-service" className="hover:text-white transition-colors cursor-pointer">
+            <Link href="/terms-of-service" className="hover:text-foreground transition-colors cursor-pointer">
               TERMS OF SERVICE
             </Link>
-            <Link href="/privacy-policy" className="hover:text-white transition-colors cursor-pointer">
+            <Link href="/privacy-policy" className="hover:text-foreground transition-colors cursor-pointer">
               PRIVACY POLICY
             </Link>
           </div>
