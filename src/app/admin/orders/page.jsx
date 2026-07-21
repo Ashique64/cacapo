@@ -191,26 +191,67 @@ export default function AdminOrdersDesk() {
     });
   };
 
-  const handleMarkDelivered = async (orderId) => {
-    setActionLoading(prev => ({ ...prev, [orderId]: true }));
-    try {
-      const { error: shipError } = await supabase
-        .from("orders")
-        .update({
-          order_status: "delivered"
-        })
-        .eq("id", orderId);
+  const handleMarkDelivered = (order) => {
+    const orderId = typeof order === "object" ? order.id : order;
+    const orderNo = typeof order === "object" ? order.order_number : orderId;
 
-      if (shipError) throw shipError;
-      
-      showToast("Order successfully marked as DELIVERED", "success");
-      await fetchOrders();
+    setConfirmModal({
+      title: "Confirm Order Delivery",
+      message: `Are you sure you want to mark Order #${orderNo} as DELIVERED? This will update customer status and enable Tax Invoice download and return eligibility.`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setActionLoading(prev => ({ ...prev, [orderId]: true }));
+        try {
+          const { error: shipError } = await supabase
+            .from("orders")
+            .update({
+              order_status: "delivered"
+            })
+            .eq("id", orderId);
 
-    } catch (err) {
-      showToast("Failed to update shipment status: " + err.message, "error");
-    } finally {
-      setActionLoading(prev => ({ ...prev, [orderId]: false }));
-    }
+          if (shipError) throw shipError;
+          
+          showToast(`Order #${orderNo} successfully marked as DELIVERED`, "success");
+          await fetchOrders();
+        } catch (err) {
+          showToast("Failed to update shipment status: " + err.message, "error");
+        } finally {
+          setActionLoading(prev => ({ ...prev, [orderId]: false }));
+        }
+      }
+    });
+  };
+
+  const handleRevertOrderStatus = (order, targetStatus) => {
+    const statusLabels = {
+      shipped: "Shipped (In Transit)",
+      processing: "Processing (Awaiting Dispatch)",
+      pending: "Pending"
+    };
+    const targetLabel = statusLabels[targetStatus] || targetStatus;
+
+    setConfirmModal({
+      title: "Revert Order Status",
+      message: `Are you sure you want to revert Order #${order.order_number} status back to "${targetLabel}"?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        setActionLoading(prev => ({ ...prev, [order.id]: true }));
+        try {
+          const { error: dbErr } = await supabase
+            .from("orders")
+            .update({ order_status: targetStatus })
+            .eq("id", order.id);
+
+          if (dbErr) throw dbErr;
+          showToast(`Order #${order.order_number} status reverted to ${targetLabel}`, "success");
+          await fetchOrders();
+        } catch (err) {
+          showToast("Failed to revert order status: " + err.message, "error");
+        } finally {
+          setActionLoading(prev => ({ ...prev, [order.id]: false }));
+        }
+      }
+    });
   };
 
   const handleCancelOrder = (order) => {
@@ -245,84 +286,89 @@ export default function AdminOrdersDesk() {
     });
   };
 
-  const handleCreateShipment = async (order) => {
-    const orderId = order.id;
-    setActionLoading(prev => ({ ...prev, [orderId]: true }));
-    try {
-      // 1. Create shipment on Shiprocket
-      const shipResult = await createShipment(order);
-      if (!shipResult.status) {
-        throw new Error(shipResult.error || "Failed to create shipment on Shiprocket");
-      }
+  const handleCreateShipment = (order) => {
+    setConfirmModal({
+      title: "Create Courier Shipment",
+      message: `Are you sure you want to generate courier shipment & AWB tracking for Order #${order.order_number}?`,
+      onConfirm: async () => {
+        setConfirmModal(null);
+        const orderId = order.id;
+        setActionLoading(prev => ({ ...prev, [orderId]: true }));
+        try {
+          // 1. Create shipment on Shiprocket
+          const shipResult = await createShipment(order);
+          if (!shipResult.status) {
+            throw new Error(shipResult.error || "Failed to create shipment on Shiprocket");
+          }
 
-      const { shipment_id, awb_code, courier_name } = shipResult;
-      const trackingNo = awb_code || "TRK" + Math.floor(Math.random() * 1000000);
-      const courier = courier_name || "Shiprocket Express";
-      const trackingUrl = `https://shiprocket.co/tracking/${trackingNo}`;
+          const { shipment_id, awb_code, courier_name } = shipResult;
+          const trackingNo = awb_code || "TRK" + Math.floor(Math.random() * 1000000);
+          const courier = courier_name || "Shiprocket Express";
+          const trackingUrl = `https://shiprocket.co/tracking/${trackingNo}`;
 
-      // 2. Fetch Label URL
-      let labelUrl = "";
-      const labelResult = await generateLabel(shipment_id);
-      if (labelResult.status) {
-        labelUrl = labelResult.label_url;
-      }
+          // 2. Fetch Label URL
+          let labelUrl = "";
+          const labelResult = await generateLabel(shipment_id);
+          if (labelResult.status) {
+            labelUrl = labelResult.label_url;
+          }
 
-      // 3. Update Order details in Supabase
-      const updatedAddress = {
-        ...order.shipping_address,
-        shipment_id,
-        tracking_url: trackingUrl,
-        label_url: labelUrl,
-        courier_name: courier
-      };
-
-      try {
-        const { error: dbErr } = await supabase
-          .from("orders")
-          .update({
-            order_status: "shipped",
-            shipping_carrier: courier,
-            tracking_number: trackingNo,
+          // 3. Update Order details in Supabase
+          const updatedAddress = {
+            ...order.shipping_address,
             shipment_id,
             tracking_url: trackingUrl,
-            shipping_address: updatedAddress
-          })
-          .eq("id", orderId);
+            label_url: labelUrl,
+            courier_name: courier
+          };
 
-        if (dbErr) {
-          // Fallback if columns are not in DB schema yet
-          const { error: fbErr } = await supabase
-            .from("orders")
-            .update({
-              order_status: "shipped",
-              shipping_carrier: courier,
-              tracking_number: trackingNo,
-              shipping_address: updatedAddress
-            })
-            .eq("id", orderId);
-          if (fbErr) throw fbErr;
+          try {
+            const { error: dbErr } = await supabase
+              .from("orders")
+              .update({
+                order_status: "shipped",
+                shipping_carrier: courier,
+                tracking_number: trackingNo,
+                shipment_id,
+                tracking_url: trackingUrl,
+                shipping_address: updatedAddress
+              })
+              .eq("id", orderId);
+
+            if (dbErr) {
+              const { error: fbErr } = await supabase
+                .from("orders")
+                .update({
+                  order_status: "shipped",
+                  shipping_carrier: courier,
+                  tracking_number: trackingNo,
+                  shipping_address: updatedAddress
+                })
+                .eq("id", orderId);
+              if (fbErr) throw fbErr;
+            }
+          } catch (err) {
+            const { error: fbErr } = await supabase
+              .from("orders")
+              .update({
+                order_status: "shipped",
+                shipping_carrier: courier,
+                tracking_number: trackingNo,
+                shipping_address: updatedAddress
+              })
+              .eq("id", orderId);
+            if (fbErr) throw fbErr;
+          }
+
+          showToast(`Shipment created on Shiprocket! AWB: ${trackingNo}`, "success");
+          await fetchOrders();
+        } catch (err) {
+          showToast(err.message, "error");
+        } finally {
+          setActionLoading(prev => ({ ...prev, [order.id]: false }));
         }
-      } catch (err) {
-        // Fallback for direct update if DB throws exceptions
-        const { error: fbErr } = await supabase
-          .from("orders")
-          .update({
-            order_status: "shipped",
-            shipping_carrier: courier,
-            tracking_number: trackingNo,
-            shipping_address: updatedAddress
-          })
-          .eq("id", orderId);
-        if (fbErr) throw fbErr;
       }
-
-      showToast(`Shipment created on Shiprocket! AWB: ${trackingNo}`, "success");
-      await fetchOrders();
-    } catch (err) {
-      showToast(err.message, "error");
-    } finally {
-      setActionLoading(prev => ({ ...prev, [orderId]: false }));
-    }
+    });
   };
 
   const toggleOrderExpand = (id) => {
@@ -746,7 +792,7 @@ export default function AdminOrdersDesk() {
                             {order.order_status === "shipped" && (
                               <button
                                 type="button"
-                                onClick={() => handleMarkDelivered(order.id)}
+                                onClick={() => handleMarkDelivered(order)}
                                 disabled={actionLoading[order.id]}
                                 className="w-full py-2 bg-green-500 text-white hover:bg-green-600 text-[9px] font-extrabold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer border-none flex items-center justify-center"
                               >
@@ -755,8 +801,18 @@ export default function AdminOrdersDesk() {
                             )}
 
                             {order.order_status === "delivered" && (
-                              <div className="bg-green-500/5 border border-green-500/20 p-2 text-center text-[9px] text-green-500 font-bold tracking-widest uppercase">
-                                Delivered
+                              <div className="space-y-2">
+                                <div className="bg-green-500/5 border border-green-500/20 p-2 text-center text-[9px] text-green-500 font-bold tracking-widest uppercase flex items-center justify-center gap-1.5">
+                                  <CheckCircle2 className="w-3.5 h-3.5" /> Delivered
+                                </div>
+                                <button
+                                  type="button"
+                                  onClick={() => handleRevertOrderStatus(order, "shipped")}
+                                  disabled={actionLoading[order.id]}
+                                  className="w-full py-1.5 border border-zinc-800 hover:border-amber-500/40 text-zinc-400 hover:text-amber-400 text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-transparent"
+                                >
+                                  Revert Status to Shipped
+                                </button>
                               </div>
                             )}
                           </div>
