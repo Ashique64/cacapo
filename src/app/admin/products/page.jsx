@@ -626,9 +626,9 @@ export default function AdminCatalogDesk() {
 
         <button
           onClick={activeTab === "products" ? handleOpenAddProduct : handleOpenAddCategory}
-          className="px-5 py-2.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-1.5 rounded-none cursor-pointer border-none"
+          className="px-5 py-2.5 bg-accent border border-accent text-white hover:bg-transparent hover:text-accent text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-1.5 rounded-none cursor-pointer group shadow"
         >
-          <Plus className="w-4 h-4" /> Add {activeTab === "products" ? "Product" : "Category"}
+          <Plus className="w-4 h-4 text-white group-hover:text-accent transition-colors" /> Add {activeTab === "products" ? "Product" : "Category"}
         </button>
       </div>
 
@@ -694,7 +694,7 @@ export default function AdminCatalogDesk() {
         ) : (
           <>
             <div className="border border-zinc-900 bg-black overflow-x-auto">
-              <table className="w-full text-left border-collapse min-w-[800px] text-xs tracking-wider">
+              <table className="w-full text-left border-collapse min-w-200 text-xs tracking-wider">
                 <thead>
                   <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
                     <th className="p-4 w-16">Image</th>
@@ -792,7 +792,7 @@ export default function AdminCatalogDesk() {
           </div>
         ) : (
           <div className="border border-zinc-900 bg-black overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[700px] text-xs tracking-wider">
+            <table className="w-full text-left border-collapse min-w-175 text-xs tracking-wider">
               <thead>
                 <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
                   <th className="p-4 w-16">Asset</th>
@@ -817,7 +817,7 @@ export default function AdminCatalogDesk() {
                       </td>
                       <td className="p-4 font-mono font-bold text-zinc-400">{cat.slug}</td>
                       <td className="p-4 font-bold text-white uppercase">{cat.name}</td>
-                      <td className="p-4 text-zinc-500 truncate max-w-[200px]">{cat.description || "-"}</td>
+                      <td className="p-4 text-zinc-500 truncate max-w-50">{cat.description || "-"}</td>
                       <td className="p-4 text-zinc-400 font-medium uppercase">{parentName}</td>
                       <td className="p-4 text-center">
                         <div className="flex gap-3 justify-center">
@@ -1089,7 +1089,7 @@ export default function AdminCatalogDesk() {
                       ))}
 
                       {/* Add Image Upload Card */}
-                      <label className="relative aspect-3/4 border border-zinc-800 hover:border-accent bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors flex flex-col items-center justify-center cursor-pointer border-dashed group min-h-[90px]">
+                      <label className="relative aspect-3/4 border border-zinc-800 hover:border-accent bg-zinc-900/40 hover:bg-zinc-900/60 transition-colors flex flex-col items-center justify-center cursor-pointer border-dashed group min-h-22.5">
                         <input
                           type="file"
                           accept="image/*"
@@ -1133,7 +1133,7 @@ export default function AdminCatalogDesk() {
                 {productVariants.length === 0 ? (
                   <p className="text-[10px] text-zinc-600 tracking-wider">No variants defined. Master stock count is used.</p>
                 ) : (
-                  <div className="space-y-3 max-h-[220px] overflow-y-auto pr-1">
+                  <div className="space-y-3 max-h-55 overflow-y-auto pr-1">
                     {productVariants.map((v, index) => (
                       <div key={index} className="flex flex-wrap items-center gap-3 bg-zinc-900/40 p-3 border border-zinc-900 relative">
                         
@@ -1191,7 +1191,7 @@ export default function AdminCatalogDesk() {
                         </div>
 
                         {/* SKU */}
-                        <div className="flex-1 min-w-[120px] space-y-1">
+                        <div className="flex-1 min-w-30 space-y-1">
                           <span className="block text-[8px] font-bold uppercase tracking-widest text-zinc-500">Variant SKU</span>
                           <input
                             type="text"

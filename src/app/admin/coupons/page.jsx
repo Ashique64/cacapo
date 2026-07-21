@@ -261,9 +261,9 @@ export default function AdminCouponsDesk() {
 
         <button
           onClick={handleOpenAdd}
-          className="px-5 py-2.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-1.5 rounded-none cursor-pointer border-none"
+          className="px-5 py-2.5 bg-accent border border-accent text-white hover:bg-transparent hover:text-accent text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-1.5 rounded-none cursor-pointer group shadow"
         >
-          <Plus className="w-4 h-4" /> Create Coupon
+          <Plus className="w-4 h-4 text-white group-hover:text-accent transition-colors" /> Create Coupon
         </button>
       </div>
 
@@ -306,7 +306,7 @@ export default function AdminCouponsDesk() {
         </div>
       ) : (
         <div className="border border-zinc-900 bg-black overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px] text-xs tracking-wider">
+          <table className="w-full text-left border-collapse min-w-200 text-xs tracking-wider">
             <thead>
               <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
                 <th className="p-4 w-12 text-center">Status</th>
@@ -368,14 +368,14 @@ export default function AdminCouponsDesk() {
 
                     {/* Constraints */}
                     <td className="p-4 space-y-1 text-zinc-400 font-medium">
-                      <div className="flex justify-between max-w-[150px]">
+                      <div className="flex justify-between max-w-37.5">
                         <span>Min spend:</span>
                         <span className="font-mono font-bold text-white">
                           {coupon.minimum_amount > 0 ? formatPrice(coupon.minimum_amount) : "₹0"}
                         </span>
                       </div>
                       {coupon.discount_type === "percentage" && coupon.max_discount && (
-                        <div className="flex justify-between max-w-[150px]">
+                        <div className="flex justify-between max-w-37.5">
                           <span>Max cap:</span>
                           <span className="font-mono font-bold text-white">
                             {formatPrice(coupon.max_discount)}

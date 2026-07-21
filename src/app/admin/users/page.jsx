@@ -412,7 +412,7 @@ export default function AdminUsersDesk() {
           </div>
 
           {/* Sort Dropdown */}
-          <div className="relative min-w-[200px] z-20">
+          <div className="relative min-w-50 z-20">
             <button
               onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
               className="w-full flex items-center justify-between gap-4 px-4 py-3 bg-zinc-950/50 border border-zinc-900 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all hover:border-zinc-800 rounded-none cursor-pointer"

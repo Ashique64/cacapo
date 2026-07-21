@@ -201,7 +201,23 @@ html.lenis, html.lenis body {
 .admin-root.admin-light .bg-green-500,
 .admin-root.admin-light .bg-red-500,
 .admin-root.admin-light .bg-red-600 {
+  background-color: var(--accent, #C21A1A) !important;
   color: #ffffff !important;
+}
+
+/* Ensure SVG icons inside buttons always have transparent background */
+.admin-root button svg,
+.admin-root.admin-light button svg {
+  background-color: transparent !important;
+  background: none !important;
+}
+
+.admin-root button.bg-accent svg,
+.admin-root.admin-light button.bg-accent svg {
+  color: #ffffff !important;
+  stroke: #ffffff !important;
+  background-color: transparent !important;
+  background: none !important;
 }
 
 /* Sidebar Nav Link Colors (Only ACTIVE tab gets accent text) */
@@ -383,5 +399,20 @@ html.lenis, html.lenis body {
 .admin-root.admin-light button.bg-white:hover {
   background-color: var(--accent, #C21A1A) !important;
   color: #ffffff !important;
+}
+
+.admin-root button.bg-accent:hover,
+.admin-root.admin-light button.bg-accent:hover {
+  background-color: transparent !important;
+  color: var(--accent, #C21A1A) !important;
+  border-color: var(--accent, #C21A1A) !important;
+}
+
+.admin-root button.bg-accent:hover svg,
+.admin-root.admin-light button.bg-accent:hover svg {
+  color: var(--accent, #C21A1A) !important;
+  stroke: var(--accent, #C21A1A) !important;
+  background-color: transparent !important;
+  background: none !important;
 }
 

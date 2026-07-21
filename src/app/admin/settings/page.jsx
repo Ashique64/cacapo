@@ -330,15 +330,15 @@ export default function AdminSettingsDesk() {
             <button
               type="submit"
               disabled={submitting}
-              className="px-8 py-3.5 bg-white text-black hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer border-none disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-8 py-3.5 bg-accent border border-accent text-white hover:bg-transparent hover:text-accent text-[10px] font-bold tracking-widest uppercase transition-all flex items-center gap-2 rounded-none cursor-pointer group shadow disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {submitting ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" /> Saving Changes
+                  <Loader2 className="w-4 h-4 animate-spin text-white group-hover:text-accent transition-colors" /> Saving Changes
                 </>
               ) : (
                 <>
-                  <Save className="w-4 h-4" /> Save Configuration
+                  <Save className="w-4 h-4 text-white group-hover:text-accent transition-colors" /> Save Configuration
                 </>
               )}
             </button>
