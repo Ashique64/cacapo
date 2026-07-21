@@ -22,8 +22,10 @@ import {
   Upload,
   X,
   CheckCircle,
-  ShieldCheck
+  ShieldCheck,
+  FileText
 } from "lucide-react";
+import { generateTaxInvoice } from "@/lib/invoiceGenerator";
 import { useAuthStore } from "@/store/useAuthStore";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/layout/Header/Navbar";
@@ -1555,6 +1557,15 @@ export default function AccountPage() {
                                         GSTIN: {gstNumber}
                                       </p>
                                     )}
+                                    {order.order_status === "delivered" && (
+                                      <button
+                                        type="button"
+                                        onClick={() => generateTaxInvoice(order, gstNumber)}
+                                        className="mt-3 px-3.5 py-2 border border-card-border hover:border-foreground bg-white text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                      >
+                                        <FileText className="w-3.5 h-3.5 text-accent" /> Tax Invoice
+                                      </button>
+                                    )}
                                   </div>
                                 </div>
                               </div>
@@ -1994,7 +2005,7 @@ export default function AccountPage() {
                     return (
                       <div key={item.id} className="pt-4 first:pt-0 space-y-3 text-xs tracking-wider">
                         <div className="flex justify-between items-center font-bold">
-                          <span className="text-white uppercase truncate max-w-[280px]">{prodName}</span>
+                          <span className="text-white uppercase truncate max-w-70">{prodName}</span>
                           <span className="text-zinc-500 uppercase text-[9px]">Original: Size {item.variant?.size}</span>
                         </div>
 
