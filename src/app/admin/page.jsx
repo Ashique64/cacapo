@@ -3,6 +3,7 @@
 import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { supabase } from "@/lib/supabase";
+import { getOrderStatusBadgeClass, getPaymentStatusBadgeClass } from "@/lib/badgeUtils";
 import { 
   TrendingUp, 
   ShoppingBag, 
@@ -803,16 +804,12 @@ export default function AdminDashboardPage() {
                             <span className="font-mono font-bold text-white text-[13px]">{order.order_number}</span>
                             
                             {/* Payment Status Badging */}
-                            <span className={`text-[8px] font-extrabold tracking-widest px-2.5 py-0.5 rounded-none font-mono ${
-                              order.payment_status === "paid"
-                                ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                : "bg-accent/10 border border-accent/20 text-accent"
-                            }`}>
+                            <span className={`text-[8px] font-extrabold tracking-widest px-2.5 py-0.5 rounded-none font-mono ${getPaymentStatusBadgeClass(order.payment_status)}`}>
                               {order.payment_status?.toUpperCase() || "UNPAID"}
                             </span>
 
                             {/* Order Status Badging */}
-                            <span className={`text-[8px] font-extrabold tracking-widest px-2.5 py-0.5 rounded-none font-mono bg-zinc-800 border border-zinc-700 text-zinc-300`}>
+                            <span className={`text-[8px] font-extrabold tracking-widest px-2.5 py-0.5 rounded-none font-mono ${getOrderStatusBadgeClass(order.order_status)}`}>
                               {order.order_status?.toUpperCase() || "PENDING"}
                             </span>
                           </div>

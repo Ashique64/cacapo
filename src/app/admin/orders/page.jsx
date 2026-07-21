@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import { getOrderStatusBadgeClass, getPaymentStatusBadgeClass } from "@/lib/badgeUtils";
 import { createShipment, generateLabel } from "@/lib/delivery";
 import { generateTaxInvoice, generatePackagingSlip } from "@/lib/invoiceGenerator";
 import AdminPagination from "@/components/ui/AdminPagination";
@@ -524,36 +525,12 @@ export default function AdminOrdersDesk() {
                       </span>
 
                       {/* Payment Status Badge */}
-                      <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                        order.payment_status === "paid" 
-                          ? "bg-green-500/10 border border-green-500/20 text-green-500" 
-                          : "bg-red-500/10 border border-red-500/20 text-red-400"
-                      }`}>
+                      <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${getPaymentStatusBadgeClass(order.payment_status)}`}>
                         {order.payment_status?.toUpperCase()}
                       </span>
 
                       {/* Order Status Badge */}
-                      <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${
-                        order.order_status === "pending" || order.order_status === "pending_payment"
-                          ? "bg-amber-500/10 border border-amber-500/20 text-amber-500"
-                          : order.order_status === "processing"
-                            ? "bg-blue-500/10 border border-blue-500/20 text-blue-400"
-                            : order.order_status === "shipped"
-                              ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
-                              : order.order_status === "delivered"
-                                ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                                : order.order_status === "cancelled"
-                                  ? "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
-                                  : order.order_status === "return_requested"
-                                    ? "bg-red-500/10 border border-red-500/20 text-red-400"
-                                    : order.order_status === "returned"
-                                      ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400"
-                                      : order.order_status === "exchange_requested"
-                                        ? "bg-purple-500/10 border border-purple-500/20 text-purple-400"
-                                        : order.order_status === "exchanged"
-                                          ? "bg-teal-500/10 border border-teal-500/20 text-teal-400"
-                                          : "bg-zinc-800 border border-zinc-700/50 text-zinc-500"
-                      }`}>
+                      <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${getOrderStatusBadgeClass(order.order_status)}`}>
                         {order.order_status?.toUpperCase()?.replace("_", " ")}
                       </span>
                     </div>

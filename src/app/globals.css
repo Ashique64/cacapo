@@ -159,3 +159,229 @@ html.lenis, html.lenis body {
   animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* ==========================================================================
+   ADMIN PORTAL LIGHT THEME OVERRIDES (Admin Side Only)
+   Does not affect the public customer store.
+   ========================================================================== */
+
+.admin-root.admin-light,
+.admin-root.admin-light .admin-content-area,
+.admin-root.admin-light .admin-main-content {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.admin-root.admin-light aside,
+.admin-root.admin-light [class*="bg-black"],
+.admin-root.admin-light [class*="bg-zinc-950"] {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+}
+
+.admin-root.admin-light header,
+.admin-root.admin-light [class*="bg-zinc-900"] {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+.admin-root.admin-light [class*="bg-zinc-800"] {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+.admin-root.admin-light [class*="text-white"],
+.admin-root.admin-light .admin-user-email {
+  color: #0f172a !important;
+}
+
+/* Preserve crisp white text on solid accent background buttons & badges */
+.admin-root.admin-light .bg-accent:not([class*="bg-accent/"]),
+.admin-root.admin-light button.bg-accent,
+.admin-root.admin-light span.bg-accent,
+.admin-root.admin-light .bg-green-500,
+.admin-root.admin-light .bg-red-500,
+.admin-root.admin-light .bg-red-600 {
+  color: #ffffff !important;
+}
+
+/* Sidebar Nav Link Colors (Only ACTIVE tab gets accent text) */
+.admin-root.admin-light aside nav a:not(.border-accent) {
+  color: #475569 !important;
+}
+
+.admin-root.admin-light aside nav a:not(.border-accent) svg {
+  color: #64748b !important;
+}
+
+.admin-root.admin-light aside nav a:not(.border-accent):hover {
+  color: #0f172a !important;
+  background-color: #f1f5f9 !important;
+}
+
+.admin-root.admin-light aside nav a:not(.border-accent):hover svg {
+  color: var(--accent, #C21A1A) !important;
+}
+
+.admin-root.admin-light aside nav a.border-accent,
+.admin-root.admin-light aside nav a.border-accent * {
+  color: var(--accent, #C21A1A) !important;
+  background-color: rgba(194, 26, 26, 0.06) !important;
+  border-color: var(--accent, #C21A1A) !important;
+}
+
+.admin-root.admin-light .text-accent {
+  color: var(--accent, #C21A1A) !important;
+}
+
+/* Category Badge Light Mode Colors */
+.admin-root.admin-light [class*="text-emerald"] {
+  color: #047857 !important;
+  background-color: #ecfdf5 !important;
+  border-color: #a7f3d0 !important;
+}
+
+.admin-root.admin-light [class*="text-indigo"] {
+  color: #4338ca !important;
+  background-color: #eef2ff !important;
+  border-color: #c7d2fe !important;
+}
+
+.admin-root.admin-light [class*="text-cyan"] {
+  color: #0e7490 !important;
+  background-color: #ecfeff !important;
+  border-color: #a5f3fc !important;
+}
+
+.admin-root.admin-light [class*="text-amber"] {
+  color: #b45309 !important;
+  background-color: #fffbeb !important;
+  border-color: #fde68a !important;
+}
+
+.admin-root.admin-light [class*="text-red"] {
+  color: #b91c1c !important;
+  background-color: #fef2f2 !important;
+  border-color: #fecaca !important;
+}
+
+.admin-root.admin-light [class*="text-rose"] {
+  color: #be123c !important;
+  background-color: #fff1f2 !important;
+  border-color: #fecdd3 !important;
+}
+
+.admin-root.admin-light [class*="text-purple"] {
+  color: #6d28d9 !important;
+  background-color: #f5f3ff !important;
+  border-color: #ddd6fe !important;
+}
+
+.admin-root.admin-light [class*="text-zinc-100"],
+.admin-root.admin-light [class*="text-zinc-200"],
+.admin-root.admin-light [class*="text-zinc-300"] {
+  color: #1e293b !important;
+}
+
+.admin-root.admin-light [class*="text-zinc-400"],
+.admin-root.admin-light [class*="text-zinc-500"] {
+  color: #475569 !important;
+}
+
+.admin-root.admin-light [class*="text-zinc-600"] {
+  color: #64748b !important;
+}
+
+.admin-root.admin-light [class*="border-zinc-900"],
+.admin-root.admin-light [class*="border-zinc-800"],
+.admin-root.admin-light [class*="border-zinc-700"] {
+  border-color: #cbd5e1 !important;
+}
+
+.admin-root.admin-light input,
+.admin-root.admin-light select,
+.admin-root.admin-light textarea {
+  background-color: #ffffff !important;
+  color: #0f172a !important;
+  border-color: #cbd5e1 !important;
+}
+
+.admin-root.admin-light input::placeholder,
+.admin-root.admin-light textarea::placeholder {
+  color: #94a3b8 !important;
+}
+
+.admin-root.admin-light .admin-theme-switcher {
+  background-color: #e2e8f0 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.admin-root.admin-light table th {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+  border-color: #e2e8f0 !important;
+}
+
+.admin-root.admin-light table td {
+  border-color: #e2e8f0 !important;
+}
+
+.admin-root.admin-light tr:hover td {
+  background-color: #f1f5f9 !important;
+}
+
+.admin-root.admin-light .shadow-2xl {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.05) !important;
+}
+
+/* ==========================================================================
+   ADMIN LIGHT MODE HOVER EFFECTS
+   ========================================================================== */
+
+/* 1. Sidebar Link Hover */
+.admin-root.admin-light aside nav a:not(.border-accent):hover {
+  color: #0f172a !important;
+  background-color: #f1f5f9 !important;
+  border-color: #cbd5e1 !important;
+}
+
+.admin-root.admin-light aside nav a:not(.border-accent):hover svg {
+  color: var(--accent, #C21A1A) !important;
+}
+
+/* 2. Interactive Cards & Desk Tiles Hover */
+.admin-root.admin-light [class*="hover:bg-zinc-900"]:hover,
+.admin-root.admin-light [class*="hover:bg-zinc-800"]:hover {
+  background-color: #e2e8f0 !important;
+}
+
+.admin-root.admin-light [class*="hover:border-zinc-700"]:hover,
+.admin-root.admin-light [class*="hover:border-zinc-800"]:hover {
+  border-color: #94a3b8 !important;
+}
+
+.admin-root.admin-light [class*="hover:border-accent"]:hover {
+  border-color: var(--accent, #C21A1A) !important;
+}
+
+.admin-root.admin-light [class*="hover:text-white"]:hover {
+  color: #0f172a !important;
+}
+
+/* 3. Group Hover Accent Color Trigger */
+.admin-root.admin-light .group:hover [class*="group-hover:text-accent"],
+.admin-root.admin-light a:hover [class*="group-hover:text-accent"],
+.admin-root.admin-light button:hover [class*="group-hover:text-accent"] {
+  color: var(--accent, #C21A1A) !important;
+}
+
+.admin-root.admin-light .group:hover [class*="group-hover:text-white"],
+.admin-root.admin-light a:hover [class*="group-hover:text-white"] {
+  color: #0f172a !important;
+}
+
+/* 4. Action Buttons Hover */
+.admin-root.admin-light button.bg-white:hover {
+  background-color: var(--accent, #C21A1A) !important;
+  color: #ffffff !important;
+}
+
