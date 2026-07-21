@@ -557,7 +557,7 @@ export default function AdminDashboardPage() {
                       left: `${(hoveredPoint.x / chartWidth) * 90}%`,
                       top: `${(hoveredPoint.y / chartHeight) * 70}%`,
                     }}
-                    className="z-20 bg-zinc-950 border border-accent/30 p-2.5 shadow-xl pointer-events-none min-w-[100px] text-left animate-fadeIn"
+                    className="z-20 bg-zinc-950 border border-accent/30 p-2.5 shadow-xl pointer-events-none min-w-25 text-left animate-fadeIn"
                   >
                     <span className="text-[8px] font-bold tracking-widest text-zinc-500 uppercase block">
                       {hoveredPoint.label}
@@ -645,7 +645,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   lowStockItems.map((item, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-zinc-950/40 border border-zinc-900/60">
-                      <span className="text-[10px] font-semibold text-zinc-300 truncate max-w-[190px] uppercase tracking-wide">
+                      <span className="text-[10px] font-semibold text-zinc-300 truncate max-w-47.5 uppercase tracking-wide">
                         {item.name}
                       </span>
                       <span className={`text-[9px] font-bold tracking-widest px-2 py-0.5 font-mono ${
@@ -688,7 +688,7 @@ export default function AdminDashboardPage() {
                 ) : (
                   topProducts.map((p, idx) => (
                     <div key={idx} className="flex justify-between items-center p-3 bg-zinc-950/40 border border-zinc-900/60">
-                      <span className="text-[10px] font-semibold text-zinc-300 truncate max-w-[180px] uppercase tracking-wide">
+                      <span className="text-[10px] font-semibold text-zinc-300 truncate max-w-45 uppercase tracking-wide">
                         {p.name}
                       </span>
                       <span className="text-[10px] font-black text-white font-mono">

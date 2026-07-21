@@ -59,7 +59,7 @@ export default function AdminLayoutClient({ user, adminUser, children }) {
               </div>
             )}
 
-            <div className="text-[10px] font-bold tracking-wider text-zinc-400 truncate max-w-[140px] sm:max-w-none">
+            <div className="text-[10px] font-bold tracking-wider text-zinc-400 truncate max-w-35 sm:max-w-none">
               Authenticated: <span className="text-white font-semibold admin-user-email">{user?.email}</span>
             </div>
           </div>
