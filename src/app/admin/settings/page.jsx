@@ -33,7 +33,7 @@ export default function AdminSettingsDesk() {
     upi_id: "pay@cacapo",
     upi_qr_url: "",
     support_email: "care@cacapo.com",
-    support_phone: "+91 98765 43210"
+    support_phone: "+91 62386 76820"
   });
 
   useEffect(() => {
@@ -298,7 +298,7 @@ export default function AdminSettingsDesk() {
                       onChange={handleChange}
                       required
                       className="w-full bg-black border border-zinc-800 text-xs pl-11 pr-4 py-3 hover:border-zinc-700 focus:border-accent outline-none text-white tracking-wider font-semibold transition-all rounded-none"
-                      placeholder="e.g. +91 98765 43210"
+                      placeholder="e.g. +91 62386 76820"
                     />
                   </div>
                 </div>

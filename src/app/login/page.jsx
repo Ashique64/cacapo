@@ -485,7 +485,7 @@ function LoginContent() {
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
                       className="custom-input text-xs tracking-wider py-2.5 px-3"
-                      placeholder="e.g. +91 98765 43210"
+                      placeholder="e.g. +91 62386 76820"
                     />
                   </div>
                 </>

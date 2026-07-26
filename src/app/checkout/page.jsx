@@ -97,7 +97,7 @@ export default function CheckoutPage() {
     upi_id: "pay@cacapoclothing",
     gst_number: "",
     upi_qr_url: "",
-    support_phone: "+91 98765 43210"
+    support_phone: "+91 62386 76820"
   });
 
   useEffect(() => {
@@ -819,7 +819,7 @@ export default function CheckoutPage() {
                               onChange={handleInputChange}
                               disabled={selectedAddressId && selectedAddressId !== "new"}
                               className="custom-input text-sm tracking-wide"
-                              placeholder="e.g. +91 98765 43210"
+                              placeholder="e.g. +91 62386 76820"
                             />
                             {formErrors.phone && (
                               <p className="text-accent text-[11px] tracking-wider font-medium">{formErrors.phone}</p>

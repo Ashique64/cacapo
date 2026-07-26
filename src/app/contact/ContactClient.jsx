@@ -94,12 +94,12 @@ export default function ContactPage() {
                 {
                   icon: <Phone className="w-4 h-4 text-accent" />,
                   title: "CLIENT HOTLINE SUPPORT",
-                  detail: "+91 98460 00000"
+                  detail: "+91 62386 76820"
                 },
                 {
                   icon: <MapPin className="w-4 h-4 text-accent" />,
                   title: "ATELIER SHOWROOM DESK",
-                  detail: "Cacapo House, 4th Floor, Design District, Mumbai, India"
+                  detail: "Building No: 15/451B,452B, Ottu company building, Pandikkad road, Melattur, Kerala 679326"
                 }
               ].map((item, idx) => (
                 <div key={idx} className="flex gap-4 items-start">

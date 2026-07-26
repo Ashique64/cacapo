@@ -7,7 +7,7 @@ export default function Footer() {
   return (
     <footer className="relative bg-footer-bg border-t border-footer-border pt-12 pb-8 md:pt-16 md:pb-10 lg:pt-24 lg:pb-12 px-6 overflow-hidden select-none">
       {/* Ambient glowing highlights */}
-      <div className="absolute bottom-0 left-1/3 -translate-x-1/2 w-[600px] h-[300px] bg-accent/3 blur-[100px] rounded-full pointer-events-none" />
+      <div className="absolute bottom-0 left-1/3 -translate-x-1/2 w-150 h-75 bg-accent/3 blur-[100px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-12 gap-x-6 gap-y-12 md:gap-12 mb-10 lg:mb-20">
@@ -97,9 +97,15 @@ export default function Footer() {
               <FaFacebook className="w-5 h-5" />
             </span>
             {/* WhatsApp */}
-            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="WhatsApp">
+            <a 
+              href="https://wa.me/916238676820" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-foreground transition-colors cursor-pointer" 
+              aria-label="WhatsApp"
+            >
               <FaWhatsapp className="w-5 h-5" />
-            </span>
+            </a>
           </div>
 
           {/* Big CACAPO Logo with Letter Spacing */}
