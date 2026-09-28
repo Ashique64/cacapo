@@ -26,49 +26,105 @@ export function formatINR(amountInPaiseOrRupees) {
  */
 function buildEmailWrapper({ title, previewText, contentHtml }) {
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns="http://www.w3.org/1999/xhtml" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:o="urn:schemas-microsoft-com:office:office">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="x-apple-disable-message-reformatting">
   <title>${title}</title>
+  <style type="text/css">
+    html, body {
+      margin: 0 !important;
+      padding: 0 !important;
+      height: 100% !important;
+      width: 100% !important;
+      background-color: #000000;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    }
+    table, td {
+      mso-table-lspace: 0pt !important;
+      mso-table-rspace: 0pt !important;
+      border-collapse: collapse !important;
+    }
+    img {
+      -ms-interpolation-mode: bicubic;
+      border: 0;
+      height: auto;
+      line-height: 100%;
+      outline: none;
+      text-decoration: none;
+    }
+    * {
+      box-sizing: border-box !important;
+    }
+    @media screen and (max-width: 600px) {
+      .email-container {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: auto !important;
+      }
+      .stack-column {
+        display: block !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        direction: ltr !important;
+      }
+      .mobile-padding {
+        padding-left: 16px !important;
+        padding-right: 16px !important;
+      }
+    }
+  </style>
 </head>
 <body style="margin: 0; padding: 0; background-color: #000000; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; -webkit-font-smoothing: antialiased; color: #FFFFFF;">
   <!-- Preview Text -->
-  <div style="display: none; max-height: 0px; overflow: hidden;">${previewText || title}</div>
+  <div style="display: none; max-height: 0px; overflow: hidden; font-size: 1px; line-height: 1px; color: #000000; opacity: 0;">${previewText || title}</div>
   
-  <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="background-color: #000000; padding: 40px 10px;">
+  <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="background-color: #000000; table-layout: fixed; width: 100%;">
     <tr>
-      <td align="center">
-        <table role="presentation" width="100%" border="0" cellspacing="0" cellpadding="0" style="max-width: 600px; background-color: #09090b; border: 1px solid #1f1f23; border-top: 3px solid #FF4D4D;">
+      <td align="center" style="padding: 20px 8px;">
+        <!--[if mso]>
+        <table role="presentation" align="center" border="0" cellspacing="0" cellpadding="0" width="600">
+        <tr>
+        <td>
+        <![endif]-->
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" class="email-container" style="max-width: 600px; margin: 0 auto; background-color: #09090b; border: 1px solid #1f1f23; border-top: 3px solid #FF4D4D; overflow: hidden;">
           
           <!-- Header -->
           <tr>
-            <td style="padding: 30px 30px 20px 30px; text-align: center; border-bottom: 1px solid #1f1f23;">
-              <h1 style="font-size: 26px; font-weight: 900; letter-spacing: 0.3em; text-transform: uppercase; margin: 0; color: #FFFFFF;">CACAPO</h1>
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.35em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 6px;">COUTURE &amp; PRIVATE CLIENT SERVICES</span>
+            <td style="padding: 32px 24px 20px 24px; text-align: center; border-bottom: 1px solid #1f1f23;">
+              <h1 style="font-size: 26px; font-weight: 900; letter-spacing: 0.35em; text-transform: uppercase; margin: 0; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">CACAPO</h1>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.4em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 8px;">COUTURE &amp; ATELIER</span>
             </td>
           </tr>
 
           <!-- Main Content -->
           <tr>
-            <td style="padding: 30px;">
+            <td class="mobile-padding" style="padding: 28px 24px; word-break: break-word; word-wrap: break-word;">
               ${contentHtml}
             </td>
           </tr>
 
           <!-- Footer -->
           <tr>
-            <td style="padding: 25px 30px; background-color: #040405; border-top: 1px solid #1f1f23; text-align: center;">
-              <p style="font-size: 11px; color: #71717a; margin: 0 0 10px 0; letter-spacing: 0.05em;">
-                Need assistance? Contact our concierge at <a href="mailto:support@cacapoclothing.com" style="color: #FF4D4D; text-decoration: none;">support@cacapoclothing.com</a>
+            <td class="mobile-padding" style="padding: 24px; background-color: #040405; border-top: 1px solid #1f1f23; text-align: center;">
+              <p style="font-size: 11px; color: #71717a; margin: 0 0 10px 0; letter-spacing: 0.05em; line-height: 1.5;">
+                Need assistance? Contact our concierge at <a href="mailto:support@cacapoclothing.com" style="color: #FF4D4D; text-decoration: none; font-weight: 600;">support@cacapoclothing.com</a>
               </p>
-              <p style="font-size: 9px; color: #52525b; margin: 0; letter-spacing: 0.1em; text-transform: uppercase;">
+              <p style="font-size: 9px; color: #52525b; margin: 0; letter-spacing: 0.12em; text-transform: uppercase;">
                 &copy; ${new Date().getFullYear()} CACAPO HOUSE OF FASHION. ALL RIGHTS RESERVED.
               </p>
             </td>
           </tr>
 
         </table>
+        <!--[if mso]>
+        </td>
+        </tr>
+        </table>
+        <![endif]-->
       </td>
     </tr>
   </table>
@@ -97,12 +153,12 @@ export function renderOrderConfirmationEmail({
     const total = formatINR((item.price || item.unit_price || 0) * qty);
 
     return `<tr style="border-bottom: 1px solid #18181b;">
-      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 600;">
+      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 600; word-break: break-word;">
         ${itemName}
         ${variantStr ? `<br/><span style="font-size: 10px; color: #71717a; font-weight: 400; text-transform: uppercase;">Variant: ${variantStr}</span>` : ""}
       </td>
-      <td style="padding: 12px 0; color: #a1a1aa; font-size: 12px; text-align: center;">x${qty}</td>
-      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 700; text-align: right;">${total}</td>
+      <td style="padding: 12px 0; color: #a1a1aa; font-size: 12px; text-align: center; white-space: nowrap;">x${qty}</td>
+      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 700; text-align: right; white-space: nowrap;">${total}</td>
     </tr>`;
   }).join("");
 
@@ -121,18 +177,18 @@ export function renderOrderConfirmationEmail({
   ].filter(Boolean).join(", ");
 
   const contentHtml = `
-    <h2 style="font-size: 16px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 10px 0; border-left: 3px solid #FF4D4D; padding-left: 10px;">
+    <h2 style="font-size: 15px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 12px 0; border-left: 3px solid #FF4D4D; padding-left: 10px; line-height: 1.4;">
       Order Confirmed #${orderNumber}
     </h2>
-    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin-bottom: 25px;">
+    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin: 0 0 24px 0;">
       Dear ${name},<br/>
       Thank you for your order with CACAPO. We have received your order details and are preparing your collection pieces for dispatch.
     </p>
 
     <!-- Order Items -->
-    <div style="margin-bottom: 25px;">
+    <div style="margin-bottom: 24px;">
       <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 10px;">Items Ordered</span>
-      <table style="width: 100%; border-collapse: collapse;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="border-bottom: 1px solid #27272a; text-align: left;">
             <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em;">Item</th>
@@ -146,33 +202,34 @@ export function renderOrderConfirmationEmail({
       </table>
     </div>
 
-    <!-- Summary & Address -->
-    <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; background-color: #030303; border: 1px solid #18181b; padding: 15px;">
-      <tr>
-        <td style="padding: 15px; vertical-align: top; width: 50%; border-right: 1px solid #18181b;">
-          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 8px;">Shipping Destination</span>
-          <p style="font-size: 12px; color: #e4e4e7; margin: 0; line-height: 1.5;">
-            <strong>${shippingAddress?.full_name || name}</strong><br/>
-            ${addressLine || "Address on file"}<br/>
-            ${shippingAddress?.phone ? `Phone: ${shippingAddress.phone}` : ""}
-          </p>
-        </td>
-        <td style="padding: 15px; vertical-align: top; width: 50%;">
-          <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 8px;">Order Summary</span>
-          <table style="width: 100%; font-size: 12px;">
-            <tr><td style="color: #71717a;">Subtotal</td><td style="text-align: right; color: #e4e4e7;">${subtotalFormatted}</td></tr>
-            ${totals.discount > 0 ? `<tr><td style="color: #FF4D4D;">Discount</td><td style="text-align: right; color: #FF4D4D;">-${discountFormatted}</td></tr>` : ""}
-            <tr><td style="color: #71717a;">Shipping</td><td style="text-align: right; color: #e4e4e7;">${shippingFormatted}</td></tr>
-            <tr><td style="color: #71717a;">GST / Tax</td><td style="text-align: right; color: #e4e4e7;">${taxFormatted}</td></tr>
-            <tr style="border-top: 1px solid #27272a;"><td style="color: #FFFFFF; font-weight: 700; padding-top: 6px;">Total Paid</td><td style="text-align: right; color: #FFFFFF; font-weight: 700; padding-top: 6px;">${totalFormatted}</td></tr>
-            <tr><td style="color: #71717a; font-size: 10px; padding-top: 4px;">Method</td><td style="text-align: right; color: #a1a1aa; font-size: 10px; padding-top: 4px; text-transform: uppercase;">${paymentMethod}</td></tr>
-          </table>
-        </td>
-      </tr>
-    </table>
+    <!-- Summary & Address Blocks (Stacked vertically for zero overflow) -->
+    <div style="margin-bottom: 24px;">
+      <!-- Shipping Card -->
+      <div style="background-color: #030303; border: 1px solid #18181b; padding: 16px; margin-bottom: 12px; border-radius: 4px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 8px;">Shipping Destination</span>
+        <p style="font-size: 12px; color: #e4e4e7; margin: 0; line-height: 1.5; word-break: break-word;">
+          <strong style="color: #FFFFFF;">${shippingAddress?.full_name || name}</strong><br/>
+          ${addressLine || "Address on file"}<br/>
+          ${shippingAddress?.phone ? `<span style="color: #a1a1aa;">Phone: ${shippingAddress.phone}</span>` : ""}
+        </p>
+      </div>
 
-    <div style="text-align: center; margin-top: 25px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px;">View Order Status</a>
+      <!-- Payment Summary Card -->
+      <div style="background-color: #030303; border: 1px solid #18181b; padding: 16px; border-radius: 4px;">
+        <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 10px;">Order Summary</span>
+        <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; font-size: 12px; border-collapse: collapse;">
+          <tr><td style="padding: 3px 0; color: #71717a;">Subtotal</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${subtotalFormatted}</td></tr>
+          ${totals.discount > 0 ? `<tr><td style="padding: 3px 0; color: #FF4D4D;">Discount</td><td style="padding: 3px 0; text-align: right; color: #FF4D4D;">-${discountFormatted}</td></tr>` : ""}
+          <tr><td style="padding: 3px 0; color: #71717a;">Shipping</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${shippingFormatted}</td></tr>
+          <tr><td style="padding: 3px 0; color: #71717a;">GST / Tax</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${taxFormatted}</td></tr>
+          <tr style="border-top: 1px solid #27272a;"><td style="padding: 8px 0 3px 0; color: #FFFFFF; font-weight: 700;">Total Paid</td><td style="padding: 8px 0 3px 0; text-align: right; color: #FFFFFF; font-weight: 700;">${totalFormatted}</td></tr>
+          <tr><td style="padding: 2px 0; color: #71717a; font-size: 10px;">Payment Method</td><td style="padding: 2px 0; text-align: right; color: #a1a1aa; font-size: 10px; text-transform: uppercase;">${paymentMethod}</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Order Status</a>
     </div>
   `;
 
@@ -201,10 +258,10 @@ export function renderShippingUpdateEmail({
   const statusBadgeColor = isDelivered ? "#22c55e" : "#f97316";
 
   const contentHtml = `
-    <h2 style="font-size: 16px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 10px 0; border-left: 3px solid ${statusBadgeColor}; padding-left: 10px;">
+    <h2 style="font-size: 15px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 12px 0; border-left: 3px solid ${statusBadgeColor}; padding-left: 10px; line-height: 1.4;">
       ${statusTitle} #${orderNumber}
     </h2>
-    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin-bottom: 25px;">
+    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin: 0 0 24px 0;">
       Dear ${name},<br/>
       ${isDelivered
         ? `Great news! Your package for Order #${orderNumber} has been successfully delivered. We hope you love your new CACAPO piece.`
@@ -212,16 +269,16 @@ export function renderShippingUpdateEmail({
     </p>
 
     <!-- Tracking Details Box -->
-    <div style="background-color: #030303; border: 1px solid #18181b; border-left: 3px solid ${statusBadgeColor}; padding: 20px; margin-bottom: 25px;">
+    <div style="background-color: #030303; border: 1px solid #18181b; border-left: 3px solid ${statusBadgeColor}; padding: 18px; margin-bottom: 24px; border-radius: 4px;">
       <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 12px;">Shipment Intelligence</span>
-      <table style="width: 100%; font-size: 13px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; font-size: 13px; border-collapse: collapse;">
         <tr style="border-bottom: 1px solid #18181b;">
           <td style="padding: 8px 0; color: #71717a; width: 40%;">Courier Partner</td>
           <td style="padding: 8px 0; color: #FFFFFF; font-weight: 600;">${courierName}</td>
         </tr>
         ${trackingNumber ? `<tr style="border-bottom: 1px solid #18181b;">
           <td style="padding: 8px 0; color: #71717a;">Tracking Waybill (AWB)</td>
-          <td style="padding: 8px 0; color: #FF4D4D; font-family: monospace; font-weight: 700;">${trackingNumber}</td>
+          <td style="padding: 8px 0; color: #FF4D4D; font-family: monospace; font-weight: 700; word-break: break-all;">${trackingNumber}</td>
         </tr>` : ""}
         <tr>
           <td style="padding: 8px 0; color: #71717a;">Current Status</td>
@@ -230,10 +287,10 @@ export function renderShippingUpdateEmail({
       </table>
     </div>
 
-    ${trackingUrl ? `<div style="text-align: center; margin-top: 25px;">
-      <a href="${trackingUrl}" target="_blank" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px;">Track Shipment Live</a>
-    </div>` : `<div style="text-align: center; margin-top: 25px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px;">View Account Dashboard</a>
+    ${trackingUrl ? `<div style="text-align: center; margin-top: 28px;">
+      <a href="${trackingUrl}" target="_blank" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">Track Shipment Live</a>
+    </div>` : `<div style="text-align: center; margin-top: 28px;">
+      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Account Dashboard</a>
     </div>`}
   `;
 
@@ -284,18 +341,18 @@ export function renderReturnStatusEmail({
   }
 
   const contentHtml = `
-    <h2 style="font-size: 16px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 10px 0; border-left: 3px solid ${statusColor}; padding-left: 10px;">
+    <h2 style="font-size: 15px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin: 0 0 12px 0; border-left: 3px solid ${statusColor}; padding-left: 10px; line-height: 1.4;">
       ${statusTitle}
     </h2>
-    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin-bottom: 25px;">
+    <p style="font-size: 13px; color: #a1a1aa; line-height: 1.6; margin: 0 0 24px 0;">
       Dear ${name},<br/>
       ${statusDescription}
     </p>
 
     <!-- Details -->
-    <div style="background-color: #030303; border: 1px solid #18181b; padding: 20px; margin-bottom: 25px;">
+    <div style="background-color: #030303; border: 1px solid #18181b; padding: 18px; margin-bottom: 24px; border-radius: 4px;">
       <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 12px;">Case Information</span>
-      <table style="width: 100%; font-size: 13px;">
+      <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; font-size: 13px; border-collapse: collapse;">
         <tr style="border-bottom: 1px solid #18181b;">
           <td style="padding: 8px 0; color: #71717a; width: 40%;">Order Number</td>
           <td style="padding: 8px 0; color: #FFFFFF; font-weight: 600;">#${orderNumber}</td>
@@ -314,14 +371,14 @@ export function renderReturnStatusEmail({
         </tr>
       </table>
 
-      ${adminNotes ? `<div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #18181b;">
+      ${adminNotes ? `<div style="margin-top: 14px; padding-top: 14px; border-top: 1px solid #18181b;">
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 6px;">Client Desk Note</span>
-        <p style="font-size: 12px; color: #d4d4d8; margin: 0; line-height: 1.5; italic;">"${adminNotes}"</p>
+        <p style="font-size: 12px; color: #d4d4d8; margin: 0; line-height: 1.5; font-style: italic;">"${adminNotes}"</p>
       </div>` : ""}
     </div>
 
-    <div style="text-align: center; margin-top: 25px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px;">Manage Returns in Account</a>
+    <div style="text-align: center; margin-top: 28px;">
+      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">Manage Returns in Account</a>
     </div>
   `;
 
@@ -341,7 +398,7 @@ export async function sendEmail({ to, subject, html }) {
   }
 
   const apiKey = process.env.RESEND_API_KEY;
-  const fromAddress = "CACAPO Concierge <no-reply@cacapoclothing.com>";
+  const fromAddress = "CACAPO <no-reply@cacapoclothing.com>";
 
   // Sandbox / Mock fallback if RESEND_API_KEY is not configured
   if (!apiKey || apiKey.includes("mock")) {
@@ -413,3 +470,4 @@ export async function sendNotificationEmail({ type, to, data }) {
 
   return sendEmail({ to, subject, html });
 }
+
