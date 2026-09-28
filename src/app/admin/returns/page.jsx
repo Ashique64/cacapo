@@ -377,6 +377,31 @@ export default function AdminReturnsDesk() {
         }
       }
 
+      // Dispatch Return Status Email Notification to Customer
+      if (updates.status) {
+        const recipientEmail = requestObject.order?.shipping_address?.email;
+        if (recipientEmail) {
+          fetch("/api/email/send", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              type: "return_status",
+              to: recipientEmail,
+              data: {
+                orderNumber: requestObject.order?.order_number || requestObject.order_id?.slice(0, 8).toUpperCase(),
+                customerName: requestObject.order?.shipping_address?.full_name,
+                requestId: reqId,
+                requestType: requestObject.request_type || "return",
+                status: updates.status,
+                reason: requestObject.reason,
+                adminNotes: updates.admin_notes || requestObject.admin_notes,
+                refundAmount: updates.refund_amount || requestObject.refund_amount
+              }
+            })
+          }).catch(e => console.warn("Return status email error:", e));
+        }
+      }
+
       showToast(alertMessage, "success");
       
       // Update selected drawer state locally
@@ -676,7 +701,7 @@ export default function AdminReturnsDesk() {
         </div>
 
         {/* Sort Dropdown */}
-        <div className="relative flex items-center border border-zinc-850 bg-zinc-950 text-xs tracking-wider min-w-[220px]">
+        <div className="relative flex items-center border border-zinc-850 bg-zinc-950 text-xs tracking-wider min-w-55">
           <select
             value={sortBy}
             onChange={(e) => { setSortBy(e.target.value); setCurrentPage(1); }}

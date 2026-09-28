@@ -82,7 +82,7 @@ export default function CartSidebar() {
       {/* Sliding Sidebar Panel */}
       <div
         data-lenis-prevent
-        className={`fixed top-0 right-0 h-screen w-full sm:w-[440px] bg-card-bg border-l border-card-border z-50 flex flex-col justify-between shadow-2xl transition-transform duration-500 ease-in-out select-none ${
+        className={`fixed top-0 right-0 h-screen w-full sm:w-110 bg-card-bg border-l border-card-border z-50 flex flex-col justify-between shadow-2xl transition-transform duration-500 ease-in-out select-none ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -113,15 +113,16 @@ export default function CartSidebar() {
               <h3 className="text-sm font-bold tracking-widest text-foreground uppercase mb-2">
                 YOUR BAG IS EMPTY
               </h3>
-              <p className="text-xs text-muted-text tracking-wide font-light max-w-[240px] mb-8 leading-relaxed">
+              <p className="text-xs text-muted-text tracking-wide font-light max-w-60 mb-8 leading-relaxed">
                 Add statement pieces from our collections to customize your look.
               </p>
-              <button
+              <Link
+                href="/shop"
                 onClick={handleClose}
-                className="px-6 py-2.5 border border-foreground bg-foreground text-background text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-accent hover:text-white hover:border-accent uppercase"
+                className="inline-block px-6 py-2.5 border border-foreground bg-foreground text-background text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-accent hover:text-white hover:border-accent uppercase"
               >
                 Continue Shopping
-              </button>
+              </Link>
             </div>
           ) : (
             items.map((item) => {
@@ -154,10 +155,10 @@ export default function CartSidebar() {
                   </div>
 
                   {/* Item Specifications & Quantities */}
-                  <div className="flex-1 flex flex-col justify-between min-h-[85px]">
+                  <div className="flex-1 flex flex-col justify-between min-h-21.25">
                     <div>
                       <div className="flex justify-between gap-2">
-                        <h4 className="text-xs font-semibold tracking-wide text-foreground truncate max-w-[200px] uppercase">
+                        <h4 className="text-xs font-semibold tracking-wide text-foreground truncate max-w-50 uppercase">
                           {product.name || "ITEM"}
                         </h4>
                         <button

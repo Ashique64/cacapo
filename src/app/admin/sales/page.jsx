@@ -389,13 +389,13 @@ export default function SalesReportDesk() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-zinc-950 border border-zinc-900 p-6 hover:border-zinc-800 transition-colors">
           <div className="flex items-center gap-3 text-accent mb-4">
             <DollarSign className="w-5 h-5" />
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Total Revenue</h3>
           </div>
-          <div className="text-4xl font-extrabold tracking-wider">
+          <div className="text-3xl font-extrabold tracking-wider">
             {formatPrice(metrics.totalRevenue)}
           </div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-2">
@@ -408,11 +408,37 @@ export default function SalesReportDesk() {
             <FileText className="w-5 h-5" />
             <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Total Orders</h3>
           </div>
-          <div className="text-4xl font-extrabold tracking-wider">
+          <div className="text-3xl font-extrabold tracking-wider">
             {metrics.ordersCount}
           </div>
           <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-2">
             Matching transactions
+          </p>
+        </div>
+
+        <div className="bg-zinc-950 border border-zinc-900 p-6 hover:border-zinc-800 transition-colors">
+          <div className="flex items-center gap-3 text-accent mb-4">
+            <TrendingUp className="w-5 h-5" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Average Order Value</h3>
+          </div>
+          <div className="text-3xl font-extrabold tracking-wider">
+            {formatPrice(metrics.ordersCount > 0 ? metrics.totalRevenue / metrics.ordersCount : 0)}
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-2">
+            Basket size average
+          </p>
+        </div>
+
+        <div className="bg-zinc-950 border border-zinc-900 p-6 hover:border-zinc-800 transition-colors">
+          <div className="flex items-center gap-3 text-accent mb-4">
+            <Percent className="w-5 h-5" />
+            <h3 className="text-xs font-bold uppercase tracking-widest text-zinc-400">Discounts Allowed</h3>
+          </div>
+          <div className="text-3xl font-extrabold tracking-wider text-red-400">
+            {formatPrice(filteredOrders.reduce((sum, o) => sum + (o.discount || 0), 0))}
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500 mt-2">
+            Total coupon savings
           </p>
         </div>
       </div>
@@ -561,7 +587,7 @@ export default function SalesReportDesk() {
         </div>
       ) : (
         <div className="border border-zinc-900 bg-black overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[950px] text-xs tracking-wider">
+          <table className="w-full text-left border-collapse min-w-237.5 text-xs tracking-wider">
             <thead>
               <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
                 <th className="p-4 w-32">Date</th>

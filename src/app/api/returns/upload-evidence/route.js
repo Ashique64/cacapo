@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import exifr from "exifr";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 /**
  * POST /api/returns/upload-evidence
@@ -13,6 +14,14 @@ import exifr from "exifr";
  * and updates the return request record with evidence paths and metadata flags.
  */
 export async function POST(request) {
+  // Rate limit: 10 evidence uploads per IP per 10 minutes
+  // (higher than submit because a single return can have multiple files)
+  const limited = rateLimit(getClientIp(request), "returns:upload-evidence", {
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const formData = await request.formData();
     const returnRequestId = formData.get("return_request_id");

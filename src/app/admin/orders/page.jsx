@@ -211,6 +211,28 @@ export default function AdminOrdersDesk() {
             .eq("id", orderId);
 
           if (shipError) throw shipError;
+
+          // Dispatch Shipping Update Email
+          const targetObj = typeof order === "object" ? order : orders.find(o => o.id === orderId);
+          const recipientEmail = targetObj?.shipping_address?.email;
+          if (recipientEmail) {
+            fetch("/api/email/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "shipping_update",
+                to: recipientEmail,
+                data: {
+                  orderNumber: orderNo,
+                  customerName: targetObj?.shipping_address?.full_name,
+                  status: "delivered",
+                  trackingNumber: targetObj?.tracking_number,
+                  courierName: targetObj?.courier_name || "Express Delivery",
+                  shippingAddress: targetObj?.shipping_address
+                }
+              })
+            }).catch(e => console.warn("Delivery email update error:", e));
+          }
           
           showToast(`Order #${orderNo} successfully marked as DELIVERED`, "success");
           await fetchOrders();

@@ -837,9 +837,7 @@ export default function AccountPage() {
 
   return (
     <SmoothScroll>
-      <Navbar />
-
-      <style>{`
+      <Navbar />      <style>{`
         .account-page-wrapper {
           color: var(--foreground) !important;
           background-color: var(--background) !important;
@@ -847,9 +845,7 @@ export default function AccountPage() {
         .account-page-wrapper h1, 
         .account-page-wrapper h2, 
         .account-page-wrapper h3, 
-        .account-page-wrapper h4, 
-        .account-page-wrapper span.text-white,
-        .account-page-wrapper div.text-white {
+        .account-page-wrapper h4 {
           color: var(--foreground) !important;
         }
         .account-page-wrapper .bg-zinc-950,
@@ -916,7 +912,7 @@ export default function AccountPage() {
         }
       `}</style>
 
-      <div className="min-h-screen bg-background text-foreground py-24 md:py-32 font-sans select-none account-page-wrapper">
+      <div className="min-h-screen bg-background text-foreground pt-32 pb-24 md:pt-40 md:pb-32 font-sans select-none account-page-wrapper">
         <div className="max-w-7xl mx-auto px-4 md:px-8">
           
           {/* Header */}
@@ -932,9 +928,9 @@ export default function AccountPage() {
             
             <button
               onClick={handleLogout}
-              className="px-6 py-2.5 border border-card-border hover:border-accent hover:text-accent bg-transparent text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 flex items-center justify-center gap-2 rounded-none self-start md:self-auto"
+              className="px-6 py-2.5 border border-foreground/30 hover:border-accent text-foreground hover:bg-accent hover:text-white bg-white text-[10px] font-extrabold tracking-[0.2em] uppercase transition-all duration-300 flex items-center justify-center gap-2.5 rounded-none cursor-pointer shadow-xs group self-start md:self-auto"
             >
-              <LogOut className="w-3.5 h-3.5 text-accent" /> Sign Out
+              <LogOut className="w-3.5 h-3.5 text-accent group-hover:text-white transition-colors" /> Sign Out
             </button>
           </div>
 
@@ -978,7 +974,7 @@ export default function AccountPage() {
                   {!showPasswordForm && (
                     <button
                       onClick={() => { setShowPasswordForm(true); setPasswordError(null); setPasswordSuccess(false); }}
-                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors"
+                      className="px-3.5 py-1.5 border border-foreground/30 hover:border-accent text-foreground hover:bg-accent hover:text-white bg-transparent text-[9px] font-extrabold tracking-widest uppercase transition-all duration-300 rounded-none cursor-pointer shadow-2xs"
                     >
                       Change Password
                     </button>
@@ -1000,7 +996,7 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => setShowNewPassword(!showNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-foreground transition-colors"
                         >
                           {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -1020,7 +1016,7 @@ export default function AccountPage() {
                         <button
                           type="button"
                           onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-foreground transition-colors"
                         >
                           {showConfirmNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>
@@ -1028,13 +1024,13 @@ export default function AccountPage() {
                     </div>
 
                     {passwordError && (
-                      <p className="text-accent text-[10px] tracking-wider flex items-center gap-1">
+                      <p className="text-accent text-[10px] tracking-wider flex items-center gap-1 font-bold">
                         <AlertCircle className="w-3 h-3" /> {passwordError}
                       </p>
                     )}
 
                     {passwordSuccess && (
-                      <p className="text-green-500 text-[10px] tracking-wider flex items-center gap-1">
+                      <p className="text-emerald-600 text-[10px] tracking-wider flex items-center gap-1 font-bold">
                         <Check className="w-3 h-3" /> Password updated successfully!
                       </p>
                     )}
@@ -1043,14 +1039,14 @@ export default function AccountPage() {
                       <button
                         type="button"
                         onClick={() => { setShowPasswordForm(false); setNewPassword(""); setConfirmNewPassword(""); setPasswordError(null); }}
-                        className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all duration-300 rounded-none"
+                        className="w-1/2 py-2.5 border border-zinc-300 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-extrabold tracking-[0.2em] text-[10px] uppercase transition-all duration-300 rounded-none cursor-pointer text-center flex items-center justify-center"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={passwordSubmitting}
-                        className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none flex items-center justify-center gap-1.5"
+                        className="w-1/2 py-2.5 border border-accent bg-accent text-white hover:bg-zinc-900 hover:border-zinc-900 font-extrabold tracking-[0.2em] text-[10px] uppercase transition-all duration-300 rounded-none cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {passwordSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Update"}
                       </button>
@@ -1070,7 +1066,7 @@ export default function AccountPage() {
                   {!showAddressForm && (
                     <button
                       onClick={() => setShowAddressForm(true)}
-                      className="text-[10px] font-bold uppercase tracking-widest text-accent hover:text-foreground transition-colors flex items-center gap-1"
+                      className="px-3.5 py-1.5 border border-foreground/30 hover:border-accent text-foreground hover:bg-accent hover:text-white bg-transparent text-[9px] font-extrabold tracking-widest uppercase transition-all duration-300 flex items-center gap-1 rounded-none cursor-pointer shadow-2xs"
                     >
                       <Plus className="w-3.5 h-3.5" /> ADD NEW
                     </button>
@@ -1171,7 +1167,7 @@ export default function AccountPage() {
                     </div>
 
                     <div className="flex items-center gap-3 pt-2">
-                      <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-zinc-400 hover:text-white transition-colors">
+                      <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-foreground hover:text-accent transition-colors font-medium">
                         <input
                           type="checkbox"
                           name="isDefault"
@@ -1187,14 +1183,14 @@ export default function AccountPage() {
                       <button
                         type="button"
                         onClick={() => setShowAddressForm(false)}
-                        className="w-1/2 py-2 border border-zinc-800 text-white text-[10px] font-bold tracking-widest uppercase hover:border-zinc-600 transition-all duration-300 rounded-none"
+                        className="w-1/2 py-2.5 border border-zinc-300 bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-extrabold tracking-[0.2em] text-[10px] uppercase transition-all duration-300 rounded-none cursor-pointer text-center flex items-center justify-center"
                       >
                         Cancel
                       </button>
                       <button
                         type="submit"
                         disabled={addressSubmitting}
-                        className="w-1/2 py-2 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none flex items-center justify-center gap-1.5"
+                        className="w-1/2 py-2.5 border border-accent bg-accent text-white hover:bg-zinc-900 hover:border-zinc-900 font-extrabold tracking-[0.2em] text-[10px] uppercase transition-all duration-300 rounded-none cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                       >
                         {addressSubmitting ? <Loader2 className="w-3 h-3 animate-spin" /> : "Save"}
                       </button>
@@ -1232,7 +1228,8 @@ export default function AccountPage() {
                             <button
                               type="button"
                               onClick={() => handleDeleteAddress(addr.id)}
-                              className="text-zinc-500 hover:text-accent transition-colors p-1"
+                              title="Delete Address"
+                              className="p-2 border border-transparent hover:border-accent/30 text-zinc-400 hover:text-accent hover:bg-accent/10 transition-all rounded-none cursor-pointer"
                             >
                               <Trash2 className="w-4 h-4" />
                             </button>
@@ -1262,7 +1259,7 @@ export default function AccountPage() {
                     <p className="text-zinc-500 text-xs tracking-wider">You haven&apos;t placed any orders yet.</p>
                     <Link 
                       href="/shop" 
-                      className="inline-block px-6 py-2.5 bg-white text-black text-[10px] font-bold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none"
+                      className="inline-block px-6 py-2.5 bg-zinc-900 text-white text-[10px] font-extrabold tracking-widest uppercase hover:bg-accent hover:text-white transition-all duration-300 rounded-none shadow-xs"
                     >
                       Shop Catalog
                     </Link>
@@ -1401,7 +1398,7 @@ export default function AccountPage() {
                                             document.getElementById(`badge-evidence-input-${order.id}`).click();
                                           }}
                                           disabled={uploadingDirectOrderId === order.id}
-                                          className="text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono bg-accent hover:bg-white hover:text-black text-white transition-all cursor-pointer border-none"
+                                          className="text-[8px] font-extrabold tracking-widest px-2.5 py-1 rounded-none font-mono bg-accent hover:bg-zinc-900 text-white transition-all cursor-pointer border-none shadow-2xs"
                                         >
                                           {uploadingDirectOrderId === order.id ? "UPLOADING..." : "ADD EVIDENCE"}
                                         </button>
@@ -1561,9 +1558,9 @@ export default function AccountPage() {
                                       <button
                                         type="button"
                                         onClick={() => generateTaxInvoice(order, gstNumber)}
-                                        className="mt-3 px-3.5 py-2 border border-card-border hover:border-foreground bg-white text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 flex items-center gap-1.5 cursor-pointer shadow-xs"
+                                        className="mt-3 px-4 py-2 border border-foreground/30 hover:border-accent bg-white text-foreground hover:text-accent hover:bg-accent/5 text-[10px] font-extrabold tracking-widest uppercase transition-all duration-300 flex items-center gap-2 cursor-pointer shadow-2xs group"
                                       >
-                                        <FileText className="w-3.5 h-3.5 text-accent" /> Tax Invoice
+                                        <FileText className="w-3.5 h-3.5 text-accent group-hover:scale-110 transition-transform" /> Tax Invoice
                                       </button>
                                     )}
                                   </div>
@@ -1642,7 +1639,7 @@ export default function AccountPage() {
                                                   type="button"
                                                   onClick={() => document.getElementById(`inline-evidence-input-${order.id}`).click()}
                                                   disabled={uploadingDirectOrderId === order.id}
-                                                  className="px-3 py-1.5 bg-foreground border border-foreground text-background text-[9px] font-bold tracking-widest uppercase hover:bg-accent hover:border-accent transition-colors cursor-pointer"
+                                                  className="px-4 py-2 bg-zinc-900 border border-zinc-900 text-white text-[9px] font-extrabold tracking-widest uppercase hover:bg-accent hover:border-accent transition-all duration-300 cursor-pointer shadow-xs"
                                                 >
                                                   {uploadingDirectOrderId === order.id ? "UPLOADING..." : "UPLOAD EVIDENCE NOW"}
                                                 </button>
@@ -1707,7 +1704,7 @@ export default function AccountPage() {
                                             return (
                                               <button
                                                 onClick={() => handleOpenReturnModal(order)}
-                                                className="px-5 py-2.5 bg-foreground text-background hover:bg-accent hover:text-white text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer"
+                                                className="px-5 py-2.5 bg-zinc-900 text-white hover:bg-accent hover:text-white text-[10px] font-extrabold tracking-widest uppercase transition-all duration-300 cursor-pointer shadow-xs"
                                               >
                                                 Initiate Return / Exchange
                                               </button>
@@ -1721,11 +1718,11 @@ export default function AccountPage() {
                                                 <button
                                                   onClick={() => handleCancelOrder(order)}
                                                   disabled={cancellingOrderId === order.id}
-                                                  className="px-5 py-2.5 border border-red-200 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-[10px] font-bold tracking-widest uppercase transition-all duration-300 cursor-pointer flex items-center gap-2"
+                                                  className="px-5 py-2.5 border border-red-300 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white hover:border-red-600 text-[10px] font-extrabold tracking-widest uppercase transition-all duration-300 cursor-pointer flex items-center gap-2 shadow-xs"
                                                 >
                                                   {cancellingOrderId === order.id ? (
                                                     <>
-                                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                                       CANCELLING...
                                                     </>
                                                   ) : (
@@ -1764,14 +1761,14 @@ export default function AccountPage() {
                     
                     {/* Pagination Controls */}
                     {orders.length > ordersPerPage && (
-                      <div className="flex items-center justify-center gap-2 mt-8 select-none">
+                      <div className="flex items-center justify-center gap-2.5 mt-8 select-none">
                         <button
                           onClick={() => setCurrentOrderPage((p) => Math.max(1, p - 1))}
                           disabled={currentOrderPage === 1}
-                          className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
+                          className={`w-9 h-9 flex items-center justify-center border text-xs tracking-widest font-mono transition-all duration-300 ${
                             currentOrderPage === 1
-                              ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
-                              : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                              ? "border-card-border text-zinc-300 opacity-40 cursor-not-allowed"
+                              : "border-card-border bg-white text-foreground hover:border-accent hover:text-accent cursor-pointer shadow-xs"
                           }`}
                         >
                           ←
@@ -1781,10 +1778,10 @@ export default function AccountPage() {
                           <button
                             key={page}
                             onClick={() => setCurrentOrderPage(page)}
-                            className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 cursor-pointer ${
+                            className={`w-9 h-9 flex items-center justify-center border text-xs tracking-widest font-mono transition-all duration-300 cursor-pointer ${
                               currentOrderPage === page
-                                ? "border-accent bg-accent/10 text-accent font-semibold"
-                                : "border-card-border text-muted-text hover:border-zinc-400 hover:text-foreground"
+                                ? "border-accent bg-accent text-white font-bold shadow-xs scale-105"
+                                : "border-card-border bg-white text-muted-text hover:border-accent hover:text-foreground"
                             }`}
                           >
                             {String(page).padStart(2, "0")}
@@ -1794,10 +1791,10 @@ export default function AccountPage() {
                         <button
                           onClick={() => setCurrentOrderPage((p) => Math.min(Math.ceil(orders.length / ordersPerPage), p + 1))}
                           disabled={currentOrderPage === Math.ceil(orders.length / ordersPerPage)}
-                          className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
+                          className={`w-9 h-9 flex items-center justify-center border text-xs tracking-widest font-mono transition-all duration-300 ${
                             currentOrderPage === Math.ceil(orders.length / ordersPerPage)
-                              ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
-                              : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                              ? "border-card-border text-zinc-300 opacity-40 cursor-not-allowed"
+                              : "border-card-border bg-white text-foreground hover:border-accent hover:text-accent cursor-pointer shadow-xs"
                           }`}
                         >
                           →

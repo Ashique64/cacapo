@@ -1,7 +1,15 @@
 import Razorpay from "razorpay";
 import { NextResponse } from "next/server";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 export async function POST(request) {
+  // Rate limit: 10 order creations per IP per 10 minutes
+  const limited = rateLimit(getClientIp(request), "razorpay:create-order", {
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { amount, orderNumber } = await request.json();
 

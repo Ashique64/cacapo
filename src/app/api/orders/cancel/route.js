@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
 
 /**
  * POST /api/orders/cancel
@@ -8,6 +9,13 @@ import { createClient } from "@supabase/supabase-js";
  * for order items, updates order_status to 'cancelled', and bypasses RLS.
  */
 export async function POST(request) {
+  // Rate limit: 5 cancellations per IP per 10 minutes
+  const limited = rateLimit(getClientIp(request), "orders:cancel", {
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { orderId } = await request.json();
 

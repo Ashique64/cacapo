@@ -164,8 +164,69 @@ export default async function ProductDetailsPage({ params }) {
     console.error("Error fetching related products on server:", err);
   }
 
+  // Build Schema.org Product & Breadcrumb JSON-LD structured data
+  const productJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    "name": product.name,
+    "image": product.images.map(img => img.startsWith("http") ? img : `https://cacapoclothing.com${img}`),
+    "description": product.short_description || product.description || `Shop ${product.name} at CACAPO.`,
+    "sku": product.sku || product.slug,
+    "brand": {
+      "@type": "Brand",
+      "name": product.brand || "CACAPO"
+    },
+    "offers": {
+      "@type": "Offer",
+      "url": `https://cacapoclothing.com/shop/${product.slug}`,
+      "priceCurrency": "INR",
+      "price": product.price,
+      "availability": (product.stock_quantity > 0 || (product.variants && product.variants.some(v => v.stock_quantity > 0)))
+        ? "https://schema.org/InStock"
+        : "https://schema.org/OutOfStock",
+      "itemCondition": "https://schema.org/NewCondition",
+      "seller": {
+        "@type": "Organization",
+        "name": "CACAPO"
+      }
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://cacapoclothing.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "https://cacapoclothing.com/shop"
+      },
+      {
+        "@type": "ListItem",
+        "position": 3,
+        "name": product.name,
+        "item": `https://cacapoclothing.com/shop/${product.slug}`
+      }
+    ]
+  };
+
   return (
     <SmoothScroll>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(productJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
       <Navbar />
       <main className="bg-background text-foreground min-h-screen pt-24 overflow-x-hidden">
         <ProductDetailsClient product={product} relatedProducts={relatedProducts} />

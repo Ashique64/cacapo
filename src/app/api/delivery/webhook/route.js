@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { sendNotificationEmail } from "@/lib/email";
 
 export async function POST(request) {
   try {
@@ -60,6 +61,27 @@ export async function POST(request) {
 
         if (updateErr) throw updateErr;
         console.log(`Updated Order ${forwardOrder.order_number} status to ${nextStatus}`);
+
+        // Send Shipping Update Email
+        try {
+          const recipientEmail = forwardOrder.shipping_address?.email;
+          if (recipientEmail) {
+            await sendNotificationEmail({
+              type: "shipping_update",
+              to: recipientEmail,
+              data: {
+                orderNumber: forwardOrder.order_number,
+                customerName: forwardOrder.shipping_address?.full_name,
+                status: nextStatus,
+                trackingNumber: awb || forwardOrder.tracking_number,
+                courierName: forwardOrder.courier_name || "Express Logistics",
+                shippingAddress: forwardOrder.shipping_address
+              }
+            }).catch(e => console.warn("[delivery-webhook] Email delivery warning:", e.message));
+          }
+        } catch (emailErr) {
+          console.warn("[delivery-webhook] Could not send shipping update email:", emailErr.message);
+        }
       }
 
       return NextResponse.json({ success: true, type: "forward", order_id: forwardOrder.id });

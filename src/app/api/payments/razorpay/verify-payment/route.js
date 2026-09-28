@@ -1,8 +1,18 @@
 import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { supabase } from "@/lib/supabase";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { verifyRazorpaySignature } from "@/lib/razorpayUtils";
+import { sendNotificationEmail } from "@/lib/email";
 
 export async function POST(request) {
+  // Rate limit: 10 verification attempts per IP per 10 minutes
+  const limited = rateLimit(getClientIp(request), "razorpay:verify-payment", {
+    limit: 10,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, order_id } = await request.json();
 
@@ -22,13 +32,14 @@ export async function POST(request) {
         return NextResponse.json({ error: "Missing verification parameters" }, { status: 400 });
       }
 
-      const bodyText = `${razorpay_order_id}|${razorpay_payment_id}`;
-      const expectedSignature = crypto
-        .createHmac("sha256", keySecret)
-        .update(bodyText)
-        .digest("hex");
+      const isValid = verifyRazorpaySignature(
+        razorpay_order_id,
+        razorpay_payment_id,
+        razorpay_signature,
+        keySecret
+      );
 
-      if (expectedSignature !== razorpay_signature) {
+      if (!isValid) {
         return NextResponse.json({ error: "Signature verification failed" }, { status: 400 });
       }
     } else {
@@ -91,6 +102,45 @@ export async function POST(request) {
       if (payInsertErr) {
         console.warn("Payments insert warning:", payInsertErr.message);
       }
+    }
+
+    // 4. Send Order Confirmation Email asynchronously
+    try {
+      const { data: fullOrder } = await supabase
+        .from("orders")
+        .select("*, order_items(*, product:products(name))")
+        .eq("id", order_id)
+        .maybeSingle();
+
+      if (fullOrder && fullOrder.shipping_address) {
+        const customerEmail = fullOrder.shipping_address.email;
+        if (customerEmail) {
+          await sendNotificationEmail({
+            type: "order_confirmation",
+            to: customerEmail,
+            data: {
+              orderNumber: fullOrder.order_number,
+              customerName: fullOrder.shipping_address.full_name,
+              items: (fullOrder.order_items || []).map(i => ({
+                name: i.product?.name || "Couture Item",
+                quantity: i.quantity,
+                price: i.price
+              })),
+              totals: {
+                subtotal: fullOrder.subtotal,
+                discount: fullOrder.discount,
+                shipping: fullOrder.shipping_charge,
+                tax: fullOrder.tax,
+                total: fullOrder.total_amount
+              },
+              paymentMethod: "Razorpay (Online)",
+              shippingAddress: fullOrder.shipping_address
+            }
+          }).catch(e => console.warn("[verify-payment] Email delivery warning:", e.message));
+        }
+      }
+    } catch (emailErr) {
+      console.warn("[verify-payment] Could not send confirmation email:", emailErr.message);
     }
 
     return NextResponse.json({ success: true, transaction_id: transactionId });

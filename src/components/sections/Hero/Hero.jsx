@@ -31,7 +31,7 @@ export default function Hero() {
     // Preload the background images
     const imagesToPreload = isMobileDevice 
       ? ["/Images/mobile_hero_bg_white.png"] 
-      : ["/Images/desktop_hero_bg.png"];
+      : ["/Images/desktop_hero_bg_v5.png"];
     
     let loadedCount = 0;
     
@@ -122,12 +122,24 @@ export default function Hero() {
     >
       {/* Background Image Layer */}
       <div className="absolute inset-0 w-full h-full overflow-hidden z-10">
+        {/* Mobile Hero Background */}
         <Image
-          src={isMobile ? "/Images/mobile_hero_bg_white.png" : "/Images/desktop_hero_bg_v5.png"}
+          src="/Images/mobile_hero_bg_white.png"
           alt="CACAPO Couture — House of Modern Luxury Fashion"
           fill
-          sizes="100vw"
-          className="object-cover opacity-60 scale-110 animate-swing"
+          sizes="(max-width: 1023px) 100vw, 0px"
+          className="object-cover opacity-60 scale-110 animate-swing block lg:hidden"
+          priority
+          quality={75}
+        />
+
+        {/* Desktop Hero Background */}
+        <Image
+          src="/Images/desktop_hero_bg_v5.png"
+          alt="CACAPO Couture — House of Modern Luxury Fashion"
+          fill
+          sizes="(min-width: 1024px) 100vw, 0px"
+          className="object-cover opacity-60 scale-110 animate-swing hidden lg:block"
           priority
           quality={75}
         />

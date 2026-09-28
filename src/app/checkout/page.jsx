@@ -517,6 +517,33 @@ export default function CheckoutPage() {
             .update({ order_status: "processing" })
             .eq("id", generatedOrderId);
 
+          // Send Order Confirmation Email
+          const recipientEmail = finalAddressJson?.email || user?.email;
+          if (recipientEmail) {
+            fetch("/api/email/send", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                type: "order_confirmation",
+                to: recipientEmail,
+                data: {
+                  orderNumber: orderNumber,
+                  customerName: finalAddressJson?.full_name,
+                  items: cartItems.map(i => ({
+                    name: i.name || i.product?.name || "Couture Piece",
+                    quantity: i.quantity,
+                    price: i.price,
+                    size: i.size,
+                    color: i.color
+                  })),
+                  totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
+                  paymentMethod: "Cash on Delivery (COD)",
+                  shippingAddress: finalAddressJson
+                }
+              })
+            }).catch(e => console.warn("COD email confirmation error:", e));
+          }
+
           setPlacedOrder({
             orderId: generatedOrderId,
             orderNumber: orderNumber,

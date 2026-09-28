@@ -17,5 +17,49 @@ export const metadata = {
 };
 
 export default function ShopPage() {
-  return <ShopClientPage />;
+  const collectionJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "name": "Shop The Archive — CACAPO",
+    "description": "Browse CACAPO's full collection of premium luxury clothing, footwear, and accessories.",
+    "url": "https://cacapoclothing.com/shop",
+    "isPartOf": {
+      "@type": "WebSite",
+      "name": "CACAPO",
+      "url": "https://cacapoclothing.com"
+    }
+  };
+
+  const breadcrumbJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    "itemListElement": [
+      {
+        "@type": "ListItem",
+        "position": 1,
+        "name": "Home",
+        "item": "https://cacapoclothing.com"
+      },
+      {
+        "@type": "ListItem",
+        "position": 2,
+        "name": "Shop",
+        "item": "https://cacapoclothing.com/shop"
+      }
+    ]
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(collectionJsonLd) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
+      />
+      <ShopClientPage />
+    </>
+  );
 }

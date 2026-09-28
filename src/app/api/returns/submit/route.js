@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { sendNotificationEmail } from "@/lib/email";
 
 /**
  * POST /api/returns/submit
@@ -9,6 +11,13 @@ import { createClient } from "@supabase/supabase-js";
  * updates the order status, and creates/updates return request metadata.
  */
 export async function POST(request) {
+  // Rate limit: 5 return submissions per IP per 10 minutes
+  const limited = rateLimit(getClientIp(request), "returns:submit", {
+    limit: 5,
+    windowMs: 10 * 60 * 1000,
+  });
+  if (limited) return limited;
+
   try {
     const body = await request.json();
     const { order_id, request_type, reason, reason_notes, items, exchange_details, bank_details, user_id } = body;
@@ -179,6 +188,28 @@ export async function POST(request) {
 
     if (orderStatusErr) {
       console.error("[returns/submit] Failed to update order_status:", orderStatusErr.message);
+    }
+
+    // 6. Send Return Status Email Notification
+    try {
+      const recipientEmail = order.shipping_address?.email;
+      if (recipientEmail) {
+        await sendNotificationEmail({
+          type: "return_status",
+          to: recipientEmail,
+          data: {
+            orderNumber: order.order_number || order.id.slice(0, 8).toUpperCase(),
+            customerName: order.shipping_address?.full_name,
+            requestId: returnRequestId,
+            requestType: request_type,
+            status: "pending",
+            reason: reason,
+            refundAmount: refundAmount
+          }
+        }).catch(e => console.warn("[returns/submit] Email notification warning:", e.message));
+      }
+    } catch (emailErr) {
+      console.warn("[returns/submit] Could not dispatch email notification:", emailErr.message);
     }
 
     return NextResponse.json({

@@ -104,13 +104,31 @@ export default function AdminDashboardPage() {
       const totalOrders = activeOrders.length;
       const paidOrders = activeOrders.filter(o => o.payment_status === "paid");
       const totalRevenue = paidOrders.reduce((sum, o) => sum + (o.total_amount || 0), 0);
+      const totalDiscounts = paidOrders.reduce((sum, o) => sum + (o.discount || 0), 0);
+      const totalTaxes = paidOrders.reduce((sum, o) => sum + (o.tax || 0), 0);
+      const netRevenue = Math.max(0, totalRevenue - totalDiscounts - totalTaxes);
+      
       const pendingCount = activeOrders.filter(o => o.order_status === "pending" || o.order_status === "pending_payment").length;
+      const deliveredCount = activeOrders.filter(o => o.order_status === "delivered").length;
+      const fulfillmentRate = totalOrders > 0 ? Math.round((deliveredCount / totalOrders) * 100) : 100;
+      
+      const onlineOrders = activeOrders.filter(o => o.payment_method === "razorpay" || o.payment_method === "upi");
+      const codOrders = activeOrders.filter(o => o.payment_method === "cod");
+      const onlineRatio = totalOrders > 0 ? Math.round((onlineOrders.length / totalOrders) * 100) : 50;
+
       const aovVal = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
       setStats({
         revenue: totalRevenue,
+        netRevenue: netRevenue,
+        discountsTotal: totalDiscounts,
+        taxesTotal: totalTaxes,
         ordersCount: totalOrders,
         pendingOrders: pendingCount,
+        deliveredCount: deliveredCount,
+        fulfillmentRate: fulfillmentRate,
+        onlineRatio: onlineRatio,
+        codRatio: 100 - onlineRatio,
         productsCount: products ? products.length : 0,
         usersCount: usersCount || 0,
         aov: aovVal,
@@ -199,7 +217,7 @@ export default function AdminDashboardPage() {
 
   const buildChartData = (orders) => {
     const now = new Date();
-    const daysToGenerate = timeframe === "7D" ? 7 : 30;
+    const daysToGenerate = timeframe === "7D" ? 7 : timeframe === "30D" ? 30 : 90;
     const data = [];
 
     for (let i = daysToGenerate - 1; i >= 0; i--) {

@@ -79,12 +79,48 @@ export const metadata = {
 };
 
 export default function RootLayout({ children }) {
+  const organizationJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    "name": "CACAPO",
+    "url": "https://cacapoclothing.com",
+    "logo": "https://cacapoclothing.com/icon.png",
+    "sameAs": [
+      "https://instagram.com/cacapoclothing"
+    ],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "support@cacapoclothing.com",
+      "contactType": "customer service"
+    }
+  };
+
+  const websiteJsonLd = {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "CACAPO — House of Couture",
+    "url": "https://cacapoclothing.com",
+    "potentialAction": {
+      "@type": "SearchAction",
+      "target": "https://cacapoclothing.com/shop?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  };
+
   return (
     <html
       lang="en"
       className={`${outfit.variable} ${playfair.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         {children}
         <CartSidebar />
         <AuthHashRedirect />

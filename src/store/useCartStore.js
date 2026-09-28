@@ -1,7 +1,44 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/lib/supabase";
+import { diffCartItems } from "@/lib/cartSyncUtils";
 
+// ─── Private helper ────────────────────────────────────────────────────────
+// Gets the existing cart record for a user, or creates one if it doesn't exist.
+// Extracted to eliminate the identical 3-copy pattern across fetchCart, syncCart, addItem.
+async function getOrCreateCart(userId) {
+  let { data: cart, error } = await supabase
+    .from("carts")
+    .select("id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw error;
+
+  if (!cart) {
+    const { data: newCart, error: createError } = await supabase
+      .from("carts")
+      .insert({ user_id: userId })
+      .select("id")
+      .single();
+
+    if (createError) throw createError;
+    if (!newCart) throw new Error("Failed to create cart record");
+    cart = newCart;
+  }
+
+  if (!cart) throw new Error("Cart record is missing");
+  return cart;
+}
+
+// UUID validation — used to distinguish real DB ids from guest/mock temp ids
+const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isRealUuid(value) {
+  return typeof value === "string" && uuidRegex.test(value);
+}
+
+// ─── Store ─────────────────────────────────────────────────────────────────
 export const useCartStore = create(
   persist(
     (set, get) => ({
@@ -14,32 +51,11 @@ export const useCartStore = create(
       fetchCart: async (userId) => {
         if (!userId) return;
         set({ loading: true });
-        
+
         try {
-          // Get or create cart
-          let { data: cart, error } = await supabase
-            .from("carts")
-            .select("id")
-            .eq("user_id", userId)
-            .maybeSingle();
+          const cart = await getOrCreateCart(userId);
 
-          if (error) throw error;
-
-          if (!cart) {
-            const { data: newCart, error: createError } = await supabase
-              .from("carts")
-              .insert({ user_id: userId })
-              .select("id")
-              .single();
-
-            if (createError) throw createError;
-            if (!newCart) throw new Error("Failed to create cart record");
-            cart = newCart;
-          }
-
-          if (!cart) throw new Error("Cart record is missing");
-
-          // Fetch cart items with product_images nested relation
+          // Single query: fetch all cart items with nested product + images + variant
           const { data: dbItems, error: itemsError } = await supabase
             .from("cart_items")
             .select(`
@@ -61,93 +77,87 @@ export const useCartStore = create(
         }
       },
 
-      // Sync local cart items to database upon login
+      // Sync local (guest) cart items into the database upon login.
+      //
+      // PREVIOUS BEHAVIOUR (N+1):
+      //   For each of N local items → SELECT + UPDATE/INSERT = up to 2N round-trips.
+      //
+      // NEW BEHAVIOUR (batch):
+      //   1. One SELECT to fetch all existing cart_items for this cart.
+      //   2. In-memory diff: find which local items already exist in DB vs which are new.
+      //   3. One batch INSERT (upsert) for genuinely new items.
+      //   4. Parallel Promise.all updates for items that need quantity increments.
+      //   5. One final fetchCart to refresh state.
+      //   Total DB calls: 3 fixed + 1 parallel batch (regardless of cart size).
       syncCart: async (userId) => {
         if (!userId) return;
+
         const localItems = get().items;
         if (localItems.length === 0) {
-          // Just fetch what's in the DB if local is empty
+          // Nothing local — just load whatever is already in the DB
           await get().fetchCart(userId);
           return;
         }
 
         try {
-          // Get or create cart
-          let { data: cart, error: selectErr } = await supabase
-            .from("carts")
-            .select("id")
-            .eq("user_id", userId)
-            .maybeSingle();
+          const cart = await getOrCreateCart(userId);
 
-          if (selectErr) throw selectErr;
+          // Separate real product items from mock/guest placeholder items
+          const realItems = localItems.filter(
+            (item) =>
+              isRealUuid(item.product_id) &&
+              (item.variant_id == null || isRealUuid(item.variant_id))
+          );
+          const mockItems = localItems.filter(
+            (item) =>
+              !isRealUuid(item.product_id) ||
+              (item.variant_id != null && !isRealUuid(item.variant_id))
+          );
 
-          if (!cart) {
-            const { data: newCart, error: createError } = await supabase
-              .from("carts")
-              .insert({ user_id: userId })
-              .select("id")
-              .single();
-            if (createError) throw createError;
-            if (!newCart) throw new Error("Failed to create cart record");
-            cart = newCart;
-          }
-
-          if (!cart) throw new Error("Cart record is missing");
-
-          const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-          const localItemsToKeep = [];
-
-          // Merge local items with database
-          for (const item of localItems) {
-            const isMockProduct = !uuidRegex.test(item.product_id) || (item.variant_id && !uuidRegex.test(item.variant_id));
-            if (isMockProduct) {
-              localItemsToKeep.push(item);
-              continue;
-            }
-
-            // Correct query matching null/non-null variants
-            let query = supabase
+          if (realItems.length > 0) {
+            // ── Step 1: Single query — fetch ALL existing cart_items for this cart ──
+            const { data: existingDbItems, error: fetchErr } = await supabase
               .from("cart_items")
-              .select("id, quantity")
-              .eq("cart_id", cart.id)
-              .eq("product_id", item.product_id);
+              .select("id, product_id, variant_id, quantity")
+              .eq("cart_id", cart.id);
 
-            if (item.variant_id) {
-              query = query.eq("variant_id", item.variant_id);
-            } else {
-              query = query.is("variant_id", null);
-            }
+            if (fetchErr) throw fetchErr;
 
-            const { data: existing, error: existingErr } = await query.maybeSingle();
-            if (existingErr) throw existingErr;
+          // ── Step 2–3: In-memory diff → batch insert + parallel updates ─────
+            const { toInsert, toUpdate } = diffCartItems(
+              realItems,
+              existingDbItems || [],
+              cart.id
+            );
 
-            if (existing) {
-              // Update quantity
-              const { error: updateErr } = await supabase
-                .from("cart_items")
-                .update({ quantity: existing.quantity + item.quantity })
-                .eq("id", existing.id);
-              if (updateErr) throw updateErr;
-            } else {
-              // Insert new
+            // ── Step 4: Batch insert new items (single round-trip) ────────────
+            if (toInsert.length > 0) {
               const { error: insertErr } = await supabase
                 .from("cart_items")
-                .insert({
-                  cart_id: cart.id,
-                  product_id: item.product_id,
-                  variant_id: item.variant_id || null,
-                  quantity: item.quantity
-                });
+                .insert(toInsert);
+
               if (insertErr) throw insertErr;
+            }
+
+            // ── Step 5: Parallel quantity updates ─────────────────────────────
+            if (toUpdate.length > 0) {
+              await Promise.all(
+                toUpdate.map(({ id, newQuantity }) =>
+                  supabase
+                    .from("cart_items")
+                    .update({ quantity: newQuantity })
+                    .eq("id", id)
+                )
+              );
             }
           }
 
-          // Re-fetch final merged cart from database
+          // ── Step 5: Re-fetch merged cart from DB ──────────────────────────────
           await get().fetchCart(userId);
 
-          // Restore mock items in local state
-          if (localItemsToKeep.length > 0) {
-            set({ items: [...get().items, ...localItemsToKeep] });
+          // Restore mock/placeholder items alongside real DB items
+          if (mockItems.length > 0) {
+            set({ items: [...get().items, ...mockItems] });
           }
         } catch (err) {
           console.error("Failed to sync cart:", err);
@@ -156,84 +166,70 @@ export const useCartStore = create(
 
       addItem: async (product, variant = null, quantity = 1, userId = null) => {
         const currentItems = get().items;
-        const variantId = variant?.id || null;
-        
-        // Check if item already in cart (for guest mode)
+        const variantId = variant?.id ?? null;
+
+        // Check if item already in cart (for guest mode local update)
         const existingIndex = currentItems.findIndex(
           (item) => item.product_id === product.id && item.variant_id === variantId
         );
 
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        const isMockProduct = !uuidRegex.test(product.id) || (variantId && !uuidRegex.test(variantId));
+        const isMockProduct =
+          !isRealUuid(product.id) || (variantId != null && !isRealUuid(variantId));
 
         if (userId && !isMockProduct) {
-          // Sync with database
+          // ── Logged-in user: sync with database ──────────────────────────────
           try {
-            let { data: cart, error: selectErr } = await supabase
-              .from("carts")
-              .select("id")
-              .eq("user_id", userId)
-              .maybeSingle();
+            const cart = await getOrCreateCart(userId);
 
-            if (selectErr) throw selectErr;
-
-            if (!cart) {
-              const { data: newCart, error: createError } = await supabase
-                .from("carts")
-                .insert({ user_id: userId })
-                .select("id")
-                .single();
-              if (createError) throw createError;
-              if (!newCart) throw new Error("Failed to create cart record");
-              cart = newCart;
-            }
-
-            if (!cart) throw new Error("Cart record is missing");
-
-            // Look up existing database row to avoid UUID mismatch/guest ID clash
+            // Single lookup for existing row
             let query = supabase
               .from("cart_items")
               .select("id, quantity")
               .eq("cart_id", cart.id)
               .eq("product_id", product.id);
 
-            if (variantId) {
-              query = query.eq("variant_id", variantId);
-            } else {
-              query = query.is("variant_id", null);
-            }
+            query = variantId
+              ? query.eq("variant_id", variantId)
+              : query.is("variant_id", null);
 
             const { data: dbItem, error: dbItemErr } = await query.maybeSingle();
             if (dbItemErr) throw dbItemErr;
 
             if (dbItem) {
-              const newQty = dbItem.quantity + quantity;
+              // Item exists — increment quantity
               const { error: updateErr } = await supabase
                 .from("cart_items")
-                .update({ quantity: newQty })
+                .update({ quantity: dbItem.quantity + quantity })
                 .eq("id", dbItem.id);
               if (updateErr) throw updateErr;
             } else {
+              // New item — insert
               const { error: insertErr } = await supabase
                 .from("cart_items")
                 .insert({
                   cart_id: cart.id,
                   product_id: product.id,
                   variant_id: variantId,
-                  quantity
+                  quantity,
                 });
               if (insertErr) {
-                console.error("Supabase insert error details:", insertErr.message, insertErr.details, insertErr.hint);
+                console.error(
+                  "Supabase insert error details:",
+                  insertErr.message,
+                  insertErr.details,
+                  insertErr.hint
+                );
                 throw insertErr;
               }
             }
+
             // Refresh state from DB
             await get().fetchCart(userId);
           } catch (err) {
             console.error("Failed to add item to DB:", err?.message || err, err);
           }
         } else {
-          // Guest mode or Mock product fallback (localStorage only)
+          // ── Guest mode or mock product: localStorage only ──────────────────
           const newItems = [...currentItems];
           if (existingIndex > -1) {
             newItems[existingIndex].quantity += quantity;
@@ -244,7 +240,7 @@ export const useCartStore = create(
               variant_id: variantId,
               quantity,
               product,
-              variant
+              variant,
             });
           }
           set({ items: newItems });
@@ -252,8 +248,7 @@ export const useCartStore = create(
       },
 
       removeItem: async (itemId, userId = null) => {
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        const isLocalItem = !uuidRegex.test(itemId) || itemId.toString().startsWith("temp-");
+        const isLocalItem = !isRealUuid(itemId) || itemId.toString().startsWith("temp-");
 
         if (userId && !isLocalItem) {
           try {
@@ -268,7 +263,7 @@ export const useCartStore = create(
           }
         } else {
           set({
-            items: get().items.filter((item) => item.id !== itemId)
+            items: get().items.filter((item) => item.id !== itemId),
           });
         }
       },
@@ -279,8 +274,7 @@ export const useCartStore = create(
           return;
         }
 
-        const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-        const isLocalItem = !uuidRegex.test(itemId) || itemId.toString().startsWith("temp-");
+        const isLocalItem = !isRealUuid(itemId) || itemId.toString().startsWith("temp-");
 
         if (userId && !isLocalItem) {
           try {
@@ -297,7 +291,7 @@ export const useCartStore = create(
           set({
             items: get().items.map((item) =>
               item.id === itemId ? { ...item, quantity } : item
-            )
+            ),
           });
         }
       },
@@ -321,11 +315,11 @@ export const useCartStore = create(
         } else {
           set({ items: [] });
         }
-      }
+      },
     }),
     {
       name: "cacapo-cart-storage",
-      partialize: (state) => ({ items: state.items })
+      partialize: (state) => ({ items: state.items }),
     }
   )
 );
