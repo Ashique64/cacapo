@@ -5,18 +5,18 @@ import gsap from "gsap";
 
 export default function LoadingScreen({ preloaderRef, loadingProgress, isPreloaderRemoved }) {
   useEffect(() => {
-    // Trigger initial preloader entrance animations on mount
+    // Fast, crisp entrance animation on mount
     gsap.to(".preloader-brand", {
       y: 0,
       opacity: 1,
-      duration: 1.4,
-      ease: "power4.out",
-      delay: 0.2
+      duration: 0.4,
+      ease: "power3.out",
+      delay: 0.05
     });
     gsap.to(".preloader-subtext", {
       opacity: 1,
-      duration: 1.2,
-      delay: 0.6
+      duration: 0.35,
+      delay: 0.15
     });
   }, []);
 
@@ -28,10 +28,10 @@ export default function LoadingScreen({ preloaderRef, loadingProgress, isPreload
       className="fixed inset-0 z-50 flex flex-col justify-between select-none overflow-hidden"
     >
       {/* Top Sliding Panel */}
-      <div className="preloader-top-panel absolute top-0 left-0 w-full h-[50vh] bg-loading-bg border-b border-loading-border z-10 select-none" />
+      <div className="preloader-top-panel absolute top-0 left-0 w-full h-[50vh] bg-loading-bg z-10 select-none" />
 
       {/* Bottom Sliding Panel */}
-      <div className="preloader-bottom-panel absolute bottom-0 left-0 w-full h-[50vh] bg-loading-bg border-t border-loading-border z-10 select-none" />
+      <div className="preloader-bottom-panel absolute bottom-0 left-0 w-full h-[50vh] bg-loading-bg z-10 select-none" />
 
       {/* Center Brand / Progress Layer */}
       <div className="absolute inset-0 z-20 flex flex-col justify-between p-8 md:p-16 pointer-events-none">

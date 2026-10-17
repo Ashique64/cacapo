@@ -14,7 +14,46 @@ export default function Hero() {
   const [isPreloaderRemoved, setIsPreloaderRemoved] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
 
-  // Preload Background Images
+  const dismissPreloader = () => {
+    setIsLoaded(true);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("cacapo_preloader_done", "true");
+    }
+
+    if (preloaderRef.current) {
+      gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui, .preloader-top-panel, .preloader-bottom-panel");
+      const tl = gsap.timeline({
+        onComplete: () => {
+          setIsPreloaderRemoved(true);
+          document.body.style.overflow = "auto";
+        }
+      });
+
+      tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
+        opacity: 0,
+        y: -15,
+        duration: 0.25,
+        ease: "power2.in"
+      });
+
+      tl.to(".preloader-top-panel", {
+        y: "-100%",
+        duration: 0.5,
+        ease: "power3.inOut"
+      }, "-=0.1");
+
+      tl.to(".preloader-bottom-panel", {
+        y: "100%",
+        duration: 0.5,
+        ease: "power3.inOut"
+      }, "-=0.5");
+    } else {
+      setIsPreloaderRemoved(true);
+      document.body.style.overflow = "auto";
+    }
+  };
+
+  // Preload Background Images & Smooth Progress
   useEffect(() => {
     const isMobileDevice = window.innerWidth < 1024;
     setIsMobile(isMobileDevice);
@@ -25,71 +64,46 @@ export default function Hero() {
       setLoadingProgress(100);
       setIsLoaded(true);
       setIsPreloaderRemoved(true);
+      document.body.style.overflow = "auto";
       return;
     }
 
-    // Preload the background images
-    const imagesToPreload = isMobileDevice 
-      ? ["/Images/mobile_hero_bg_white.png"] 
-      : ["/Images/desktop_hero_bg_v5.png"];
-    
-    let loadedCount = 0;
-    
-    imagesToPreload.forEach((src) => {
-      const img = new window.Image();
-      img.src = src;
-      const handleLoad = () => {
-        loadedCount++;
-        const progress = Math.min(100, Math.round((loadedCount / imagesToPreload.length) * 100));
-        setLoadingProgress(progress);
-
-        if (loadedCount === imagesToPreload.length) {
-          setIsLoaded(true);
-          setTimeout(() => {
-            if (preloaderRef.current) {
-              gsap.killTweensOf(".preloader-brand, .preloader-subtext, .preloader-ui");
-              const tl = gsap.timeline({
-                onComplete: () => {
-                  setIsPreloaderRemoved(true);
-                  sessionStorage.setItem("cacapo_preloader_done", "true");
-                  document.body.style.overflow = "auto";
-                }
-              });
-
-              tl.to(".preloader-brand, .preloader-subtext, .preloader-ui", {
-                opacity: 0,
-                y: -20,
-                duration: 0.6,
-                stagger: 0.1,
-                ease: "power2.in"
-              });
-
-              tl.to(".preloader-top-panel", {
-                y: "-100%",
-                duration: 1.0,
-                ease: "power4.inOut"
-              }, "-=0.4");
-
-              tl.to(".preloader-bottom-panel", {
-                y: "100%",
-                duration: 1.0,
-                ease: "power4.inOut"
-              }, "-=1.0");
-            } else {
-              setIsPreloaderRemoved(true);
-              sessionStorage.setItem("cacapo_preloader_done", "true");
-              document.body.style.overflow = "auto";
-            }
-          }, 800);
-        }
-      };
-      
-      img.onload = handleLoad;
-      img.onerror = handleLoad;
-    });
-
     document.body.style.overflow = "hidden";
+
+    let finished = false;
+    let animFrame;
+    const startTime = performance.now();
+    const duration = 400; // Snappy 400ms progress ticker
+
+    const completeLoading = () => {
+      if (finished) return;
+      finished = true;
+      setLoadingProgress(100);
+      setTimeout(() => {
+        dismissPreloader();
+      }, 50);
+    };
+
+    const animateProgress = (now) => {
+      const elapsed = now - startTime;
+      const progress = Math.min(100, Math.round((elapsed / duration) * 100));
+      setLoadingProgress(progress);
+
+      if (progress < 100) {
+        animFrame = requestAnimationFrame(animateProgress);
+      } else {
+        completeLoading();
+      }
+    };
+
+    animFrame = requestAnimationFrame(animateProgress);
+
+    // Hard fallback safety: never stay locked more than 600ms
+    const safetyTimeout = setTimeout(completeLoading, 600);
+
     return () => {
+      cancelAnimationFrame(animFrame);
+      clearTimeout(safetyTimeout);
       document.body.style.overflow = "auto";
     };
   }, []);
@@ -99,8 +113,8 @@ export default function Hero() {
     if (!isLoaded) return;
     
     gsap.fromTo(".hero-title-main", 
-      { opacity: 0, y: 30 },
-      { opacity: 1, y: 0, duration: 1.5, ease: "power4.out", delay: 0.2 }
+      { opacity: 0, y: 20 },
+      { opacity: 1, y: 0, duration: 0.8, ease: "power3.out", delay: 0.1 }
     );
   }, [isLoaded]);
 
