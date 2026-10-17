@@ -1,4 +1,7 @@
+import { supabase } from "@/lib/supabase";
 import ShopClientPage from "./ShopClient";
+
+export const revalidate = 60; // Cache shop catalog on server for 60 seconds
 
 export const metadata = {
   title: "Shop — Latest Drops",
@@ -16,7 +19,43 @@ export const metadata = {
   },
 };
 
-export default function ShopPage() {
+export default async function ShopPage() {
+  let categories = [];
+  let products = [];
+
+  try {
+    const [catRes, prodRes] = await Promise.all([
+      supabase.from("categories").select("*").order("name"),
+      supabase
+        .from("products")
+        .select(`
+          *,
+          product_images(image_url, sort_order),
+          product_variants(*)
+        `)
+        .in("status", ["active", "draft"])
+        .order("created_at", { ascending: false })
+    ]);
+
+    if (catRes.data) {
+      categories = catRes.data;
+    }
+
+    if (prodRes.data) {
+      products = prodRes.data.map((p) => ({
+        ...p,
+        images: p.product_images
+          ? p.product_images
+              .sort((a, b) => a.sort_order - b.sort_order)
+              .map((img) => img.image_url)
+          : [],
+        variants: p.product_variants || []
+      }));
+    }
+  } catch (err) {
+    console.error("Error prefetching shop catalog on server:", err);
+  }
+
   const collectionJsonLd = {
     "@context": "https://schema.org",
     "@type": "CollectionPage",
@@ -59,7 +98,7 @@ export default function ShopPage() {
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbJsonLd) }}
       />
-      <ShopClientPage />
+      <ShopClientPage initialProducts={products} initialCategories={categories} />
     </>
   );
 }

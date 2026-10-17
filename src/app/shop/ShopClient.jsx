@@ -3,6 +3,7 @@
 import { useEffect, useState, Suspense, useMemo, useCallback, memo } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { supabase } from "@/lib/supabase";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
@@ -11,7 +12,7 @@ import { ShoppingBag, Heart, SlidersHorizontal, Search, ArrowUpDown, X, Loader2 
 import Navbar from "@/components/layout/Header/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 
-function ProductCard({ product }) {
+function ProductCard({ product, index = 0 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const { user } = useAuthStore();
@@ -68,20 +69,31 @@ function ProductCard({ product }) {
       className="shrink-0 w-full flex flex-col bg-card-bg rounded-none relative overflow-hidden group transition-all duration-500"
     >
       {/* Product Image — tall, image-dominant */}
-      <div className="w-full aspect-3/4 overflow-hidden relative">
+      <div className="w-full aspect-3/4 overflow-hidden relative bg-[#f4f3f0]">
         <Link href={`/shop/${product.slug}`} className="block w-full h-full">
           <div
             className="flex h-full w-full transition-transform duration-700 ease-in-out"
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
           >
-            {images.map((img, i) => (
-              <img
-                key={i}
-                src={img}
-                alt={product.name}
-                className="w-full h-full object-cover shrink-0 transform scale-100 group-hover:scale-102 transition-transform duration-700"
-              />
-            ))}
+            {images.map((img, i) => {
+              // Only mount secondary hover images when card is hovered or sliding
+              if (i > 0 && !isHovered && currentImageIndex === 0) return null;
+
+              return (
+                <div key={i} className="relative w-full h-full shrink-0">
+                  <Image
+                    src={img}
+                    alt={`${product.name} — view ${i + 1}`}
+                    fill
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw"
+                    className="object-cover transform scale-100 group-hover:scale-102 transition-transform duration-700"
+                    loading={index < 4 && i === 0 ? "eager" : "lazy"}
+                    priority={index < 4 && i === 0}
+                    quality={75}
+                  />
+                </div>
+              );
+            })}
           </div>
 
           {/* Sold Out Overlay */}
@@ -141,16 +153,30 @@ function ProductCard({ product }) {
 
 const MemoizedProductCard = memo(ProductCard);
 
-function ShopContent() {
-  const [products, setProducts] = useState([]);
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
+function ShopContent({ initialProducts = [], initialCategories = [] }) {
+  const formattedInitialCategories = useMemo(() => {
+    if (initialCategories && initialCategories.length > 0) {
+      return [{ id: "all", name: "All Collections", slug: "all" }, ...initialCategories];
+    }
+    return [{ id: "all", name: "All Collections", slug: "all" }];
+  }, [initialCategories]);
+
+  const initialMaxPrice = useMemo(() => {
+    if (initialProducts && initialProducts.length > 0) {
+      return Math.max(...initialProducts.map((p) => p.price));
+    }
+    return 400000;
+  }, [initialProducts]);
+
+  const [products, setProducts] = useState(initialProducts);
+  const [categories, setCategories] = useState(formattedInitialCategories);
+  const [loading, setLoading] = useState(initialProducts.length === 0);
 
   // Filters State
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const [priceRange, setPriceRange] = useState(400000); // Default ₹4,000 in cents, dynamically adjusted later
-  const [maxPriceLimit, setMaxPriceLimit] = useState(400000); // Dynamic maximum price limit
+  const [priceRange, setPriceRange] = useState(initialMaxPrice);
+  const [maxPriceLimit, setMaxPriceLimit] = useState(initialMaxPrice);
   const [sortBy, setSortBy] = useState("newest");
 
   // Mobile Drawer Toggles
@@ -166,6 +192,11 @@ function ShopContent() {
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
+    // If server already provided products and categories, avoid redundant client fetch
+    if (initialProducts.length > 0 && initialCategories.length > 0) {
+      return;
+    }
+
     async function loadData() {
       setLoading(true);
       try {
@@ -226,7 +257,7 @@ function ShopContent() {
       }
     }
     loadData();
-  }, []);
+  }, [initialProducts, initialCategories]);
 
   // Pre-filter by ?category= URL query param once categories are loaded
   useEffect(() => {
@@ -445,8 +476,8 @@ function ShopContent() {
             ) : filteredProducts.length > 0 ? (
               <>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
-                {paginatedProducts.map((product) => (
-                  <MemoizedProductCard key={product.id} product={product} />
+                {paginatedProducts.map((product, idx) => (
+                  <MemoizedProductCard key={product.id} product={product} index={idx} />
                 ))}
               </div>
 
@@ -702,7 +733,7 @@ function ShopContent() {
   );
 }
 
-export default function ShopClientPage() {
+export default function ShopClientPage({ initialProducts = [], initialCategories = [] }) {
   return (
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-muted-text gap-3">
@@ -710,7 +741,7 @@ export default function ShopClientPage() {
         <span className="text-xs tracking-[0.2em] font-mono">LOADING COLLECTION...</span>
       </div>
     }>
-      <ShopContent />
+      <ShopContent initialProducts={initialProducts} initialCategories={initialCategories} />
     </Suspense>
   );
 }
