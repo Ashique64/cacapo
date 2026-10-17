@@ -125,7 +125,7 @@ export default function Hero() {
         {/* Mobile Hero Background */}
         <Image
           src="/Images/mobile_hero_bg_white.png"
-          alt="CACAPO Couture — House of Modern Luxury Fashion"
+          alt="CACAPO — Trendy Imported Fashion for Girls"
           fill
           sizes="(max-width: 1023px) 100vw, 0px"
           className="object-cover opacity-60 scale-110 animate-swing block lg:hidden"
@@ -136,7 +136,7 @@ export default function Hero() {
         {/* Desktop Hero Background */}
         <Image
           src="/Images/desktop_hero_bg_v5.png"
-          alt="CACAPO Couture — House of Modern Luxury Fashion"
+          alt="CACAPO — Trendy Imported Fashion for Girls"
           fill
           sizes="(min-width: 1024px) 100vw, 0px"
           className="object-cover opacity-60 scale-110 animate-swing hidden lg:block"
@@ -157,7 +157,7 @@ export default function Hero() {
             CACAPO
           </h1>
           <p className="text-xs sm:text-sm md:text-sm lg:text-sm tracking-[0.3em] sm:tracking-[0.6em] text-accent mt-4 uppercase">
-            The Art of Modern Couture
+            Trendy Imported Fashion for Girls
           </p>
           <div className="mt-8 flex justify-center pointer-events-auto">
             <button

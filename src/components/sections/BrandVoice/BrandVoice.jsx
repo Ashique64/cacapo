@@ -145,7 +145,7 @@ export default function BrandEthos() {
             <img
               ref={imageRef}
               src="/Images/ethos_white.png"
-              alt="Couture craftsmanship detail"
+              alt="Imported fashion detail"
               className="w-full h-[120%] object-cover absolute top-[-10%] opacity-80"
               style={{ willChange: "transform" }}
             />

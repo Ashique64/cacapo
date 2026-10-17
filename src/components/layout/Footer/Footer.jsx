@@ -11,19 +11,19 @@ export default function Footer() {
 
       <div className="max-w-7xl mx-auto relative z-10">
         <div className="grid grid-cols-2 md:grid-cols-12 gap-x-6 gap-y-12 md:gap-12 mb-10 lg:mb-20">
-          {/* Atelier Studio Details Column */}
+          {/* Import Studio Details Column */}
           <div className="col-span-2 md:col-span-6 flex flex-col justify-start">
             <span className="text-[10px] tracking-[0.4em] font-semibold text-accent uppercase mb-4 block">
-              THE IMPORT HOUSE
+              TRENDY IMPORTED FASHION
             </span>
             <h3 className="text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4 uppercase leading-tight">
-              GLOBAL LUXURY <br />
+              TRENDING IMPORTS <br />
               <span className="text-accent">
                 CURATED SELECTIONS
               </span>
             </h3>
             <p className="text-muted-text text-sm tracking-wide font-light max-w-sm mb-4">
-              Curating premium imported ready-to-wear collections, accessories, and sculpted footwear from global fashion capitals, delivered directly from our hub in Kerala.
+              Trendy imported fashion for girls: fit-checked, fast-delivered, and curated with weekly limited drops straight from our hub in Kerala.
             </p>
             {/* <div className="border-t border-zinc-900 pt-4 max-w-sm">
               <span className="text-zinc-500 text-[10px] tracking-widest uppercase block font-medium">Flagship Showroom</span>
@@ -39,7 +39,7 @@ export default function Footer() {
             <ul className="flex flex-col gap-3 text-xs tracking-widest text-muted-text font-light">
               <li>
                 <Link href="/shop?category=clothing" className="hover:text-accent transition-colors cursor-pointer uppercase block">
-                  Atelier Apparel
+                  Trendy Apparel
                 </Link>
               </li>
               <li>
@@ -49,7 +49,7 @@ export default function Footer() {
               </li>
               <li>
                 <Link href="/shop?category=accessories" className="hover:text-accent transition-colors cursor-pointer uppercase block">
-                  Couture Accents
+                  Style Accents
                 </Link>
               </li>
             </ul>

@@ -15,7 +15,7 @@
  *   ⚠️  Resets on cold starts (Vercel serverless)
  *   ⚠️  Does not coordinate across multiple instances
  *
- *   For a luxury boutique with low traffic volumes, this is the right
+ *   For a fashion store with low traffic volumes, this is the right
  *   choice. If you later scale to high traffic, swap `requestLog` for
  *   an Upstash Redis client — no route changes needed.
  *

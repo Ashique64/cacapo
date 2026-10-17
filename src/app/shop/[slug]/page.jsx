@@ -35,7 +35,7 @@ export async function generateMetadata({ params }) {
   const description =
     product.short_description ||
     product.description ||
-    `Shop ${product.name} at CACAPO. Premium luxury fashion available now.`;
+    `Shop ${product.name} at CACAPO. Trendy imported fashion available now.`;
   const priceStr = product.price ? `Starting from ₹${product.price.toLocaleString("en-IN")}` : "";
   const fullDescription = priceStr ? `${description} ${priceStr}.` : description;
 

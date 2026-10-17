@@ -357,7 +357,7 @@ function LoginContent() {
             {verificationSent 
               ? (authTab === "forgot" ? "Please check your inbox to proceed." : "Confirm your email address to activate your account.")
               : (authTab === "forgot" 
-                ? "Retrieve access to your premium Cacapo account." 
+                ? "Retrieve access to your CACAPO account." 
                 : authTab === "recovery"
                   ? "Define a new secure password for your account."
                   : "Sign in or create an account to finalize your order details securely.")}

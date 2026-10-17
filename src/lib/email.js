@@ -22,7 +22,7 @@ export function formatINR(amountInPaiseOrRupees) {
 }
 
 /**
- * Common HTML wrapper layout matching CACAPO luxury dark aesthetic
+ * Common HTML wrapper layout matching CACAPO dark aesthetic
  */
 function buildEmailWrapper({ title, previewText, contentHtml }) {
   return `<!DOCTYPE html>
@@ -96,7 +96,7 @@ function buildEmailWrapper({ title, previewText, contentHtml }) {
           <tr>
             <td style="padding: 32px 24px 20px 24px; text-align: center; border-bottom: 1px solid #1f1f23;">
               <h1 style="font-size: 26px; font-weight: 900; letter-spacing: 0.35em; text-transform: uppercase; margin: 0; color: #FFFFFF; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;">CACAPO</h1>
-              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.4em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 8px;">COUTURE &amp; ATELIER</span>
+              <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.4em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 8px;">IMPORTED FASHION</span>
             </td>
           </tr>
 
@@ -111,10 +111,10 @@ function buildEmailWrapper({ title, previewText, contentHtml }) {
           <tr>
             <td class="mobile-padding" style="padding: 24px; background-color: #040405; border-top: 1px solid #1f1f23; text-align: center;">
               <p style="font-size: 11px; color: #71717a; margin: 0 0 10px 0; letter-spacing: 0.05em; line-height: 1.5;">
-                Need assistance? Contact our concierge at <a href="mailto:support@cacapoclothing.com" style="color: #FF4D4D; text-decoration: none; font-weight: 600;">support@cacapoclothing.com</a>
+                Need assistance? Contact our support team at <a href="mailto:support@cacapoclothing.com" style="color: #FF4D4D; text-decoration: none; font-weight: 600;">support@cacapoclothing.com</a>
               </p>
               <p style="font-size: 9px; color: #52525b; margin: 0; letter-spacing: 0.12em; text-transform: uppercase;">
-                &copy; ${new Date().getFullYear()} CACAPO HOUSE OF FASHION. ALL RIGHTS RESERVED.
+                &copy; ${new Date().getFullYear()} CACAPO. ALL RIGHTS RESERVED.
               </p>
             </td>
           </tr>
@@ -145,7 +145,7 @@ export function renderOrderConfirmationEmail({
 }) {
   const name = customerName || shippingAddress?.full_name || "Valued Client";
   const itemsListHtml = items.map((item) => {
-    const itemName = item.name || item.product?.name || "Couture Piece";
+    const itemName = item.name || item.product?.name || "Fashion Item";
     const size = item.size || item.variant?.size || "";
     const color = item.color || item.variant?.color || "";
     const variantStr = [size, color].filter(Boolean).join(" / ");

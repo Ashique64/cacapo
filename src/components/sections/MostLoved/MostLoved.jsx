@@ -296,7 +296,7 @@ export default function ProductShowcase({ initialProducts }) {
                 </h2>
               </div>
               <p className="text-muted-text text-sm md:text-sm lg:text-base max-w-sm tracking-wide font-light">
-                Explore our newest seasonal drops. A fresh curation of contemporary silhouettes, refined textures, and modern essentials designed to elevate your wardrobe for the season ahead.
+                Explore our newest drops. Trendy imported fashion for girls: fit-checked, fast-delivered, and curated in limited quantities before they sell out.
               </p>
             </div>
           </div>
@@ -348,7 +348,7 @@ export default function ProductShowcase({ initialProducts }) {
                 LATEST <span className="text-accent">RELEASES</span>
               </h2>
               <p className="text-muted-text text-xs sm:text-sm md:text-sm lg:text-base tracking-wide mt-4 md:mt-6 leading-relaxed font-light max-w-sm">
-                Explore our newest seasonal drops. A fresh curation of contemporary silhouettes, refined textures, and modern essentials designed to elevate your wardrobe for the season ahead.
+                Explore our newest drops. Trendy imported fashion for girls: fit-checked, fast-delivered, and curated in limited quantities before they sell out.
               </p>
               <div className="mt-8 flex items-center gap-3 text-xs tracking-widest text-muted-text">
                 <Sparkles className="w-4 h-4 text-accent animate-pulse" />

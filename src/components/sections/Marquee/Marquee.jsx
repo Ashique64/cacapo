@@ -6,7 +6,7 @@ export default function Marquee() {
   const marqueeItems = [
     "CURATED STREETWEAR",
     "EAST ASIAN IMPORTS",
-    "ATELIER COUTURE",
+    "IMPORTED FASHION",
     "NEW RELEASES",
     "GEN-Z STYLE EXPRESSIONS",
     "WEEKLY FRESH DROPS",

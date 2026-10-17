@@ -22,26 +22,26 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata = {
   metadataBase: new URL("https://cacapoclothing.com"),
   title: {
-    default: "CACAPO — House of Couture",
+    default: "CACAPO — Trendy Imported Fashion for Girls",
     template: "%s | CACAPO",
   },
   description:
-    "Experience premium couture, tailored drapes, and architectural silhouettes by CACAPO. Discover our curated collections of luxury clothing, footwear, and accessories.",
+    "Shop CACAPO for trendy imported fashion — fit-checked, fast-delivered, limited drops. Curated streetwear, clothing, footwear & accessories for Gen-Z girls across India.",
   keywords: [
     "CACAPO",
-    "luxury clothing India",
-    "premium fashion Kerala",
-    "architectural couture",
+    "trendy fashion India",
+    "imported clothing Kerala",
+    "Gen-Z fashion India",
     "imported streetwear India",
-    "luxury fashion online",
-    "designer clothes India",
-    "minimalist fashion",
-    "premium accessories",
-    "bespoke fashion",
+    "affordable fashion online",
+    "trendy clothes girls",
+    "limited drops fashion",
+    "Korean fashion India",
+    "fast fashion India",
   ],
-  authors: [{ name: "House of CACAPO", url: "https://cacapoclothing.com" }],
-  creator: "House of CACAPO",
-  publisher: "House of CACAPO",
+  authors: [{ name: "CACAPO", url: "https://cacapoclothing.com" }],
+  creator: "CACAPO",
+  publisher: "CACAPO",
   robots: {
     index: true,
     follow: true,
@@ -57,23 +57,23 @@ export const metadata = {
     locale: "en_IN",
     url: "https://cacapoclothing.com",
     siteName: "CACAPO",
-    title: "CACAPO — House of Couture",
+    title: "CACAPO — Trendy Imported Fashion for Girls",
     description:
-      "Experience premium couture, tailored drapes, and architectural silhouettes by CACAPO. Discover our curated collections of luxury clothing, footwear, and accessories.",
+      "Shop CACAPO for trendy imported fashion — fit-checked, fast-delivered, limited drops. Curated streetwear, clothing, footwear & accessories for Gen-Z girls across India.",
     images: [
       {
         url: "/og-image.jpg",
         width: 1200,
         height: 630,
-        alt: "CACAPO — House of Couture",
+        alt: "CACAPO — Trendy Imported Fashion for Girls",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "CACAPO — House of Couture",
+    title: "CACAPO — Trendy Imported Fashion for Girls",
     description:
-      "Experience premium couture, tailored drapes, and architectural silhouettes by CACAPO.",
+      "Trendy imported fashion — fit-checked, fast-delivered, limited drops. Shop CACAPO now.",
     images: ["/og-image.jpg"],
   },
 };
@@ -98,7 +98,7 @@ export default function RootLayout({ children }) {
   const websiteJsonLd = {
     "@context": "https://schema.org",
     "@type": "WebSite",
-    "name": "CACAPO — House of Couture",
+    "name": "CACAPO — Trendy Imported Fashion",
     "url": "https://cacapoclothing.com",
     "potentialAction": {
       "@type": "SearchAction",

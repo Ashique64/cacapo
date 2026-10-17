@@ -3,7 +3,7 @@ import ContactClient from "./ContactClient";
 export const metadata = {
   title: "Contact Us",
   description:
-    "Reach out to the House of CACAPO. Get in touch for style consultations, order support, exchange requests, or business inquiries. We respond within 12 hours.",
+    "Reach out to CACAPO. Get in touch for sizing guidance, order support, exchange requests, or business inquiries. We respond within 12 hours.",
   alternates: {
     canonical: "https://cacapoclothing.com/contact",
   },

@@ -314,7 +314,7 @@ function ShopContent() {
                 <div className="relative flex items-center border-b border-card-border focus-within:border-accent transition-colors duration-300 py-1.5">
                   <input
                     type="text"
-                    placeholder="SEARCH ARCHIVE..."
+                    placeholder="SEARCH COLLECTION..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="bg-transparent text-xs tracking-wider font-light placeholder-zinc-400 focus:outline-none w-full uppercase"
@@ -567,7 +567,7 @@ function ShopContent() {
                     <Search className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
                     <input
                       type="text"
-                      placeholder="SEARCH ARCHIVE..."
+                      placeholder="SEARCH COLLECTION..."
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
                       className="bg-transparent text-xs tracking-wider font-light placeholder-zinc-400 focus:outline-none w-full uppercase"
@@ -707,7 +707,7 @@ export default function ShopClientPage() {
     <Suspense fallback={
       <div className="flex flex-col items-center justify-center min-h-screen bg-background text-muted-text gap-3">
         <Loader2 className="w-8 h-8 animate-spin text-accent" />
-        <span className="text-xs tracking-[0.2em] font-mono">LOADING ARCHIVE...</span>
+        <span className="text-xs tracking-[0.2em] font-mono">LOADING COLLECTION...</span>
       </div>
     }>
       <ShopContent />

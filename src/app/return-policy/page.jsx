@@ -7,7 +7,7 @@ import { ArrowRight, RefreshCw, ShieldAlert, Clock, HelpCircle, FileText } from 
 export const metadata = {
   title: "Returns & Exchanges Policy",
   description:
-    "Review the 7-day return window, eligibility guidelines, and size exchange process for ready-to-wear luxury garments and bespoke creations at House of CACAPO.",
+    "Review the 7-day return window, eligibility guidelines, and size exchange process for all fashion items at CACAPO.",
   alternates: {
     canonical: "https://cacapoclothing.com/return-policy",
   },
@@ -55,14 +55,14 @@ export default function ReturnPolicyPage() {
             <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-28">
               <div className="space-y-3">
                 <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
-                  SATISFACTION ACCORD
+                  EASY RETURNS & EXCHANGES
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
-                  OUR GUARANTEE <br />OF EXCELLENCE
+                  FIT GUARANTEE <br />& EASY RETURNS
                 </h2>
               </div>
               <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
-                At House of CACAPO, every silhouette is imported from premier international makers, carefully curated, and rigorously inspected at our Kerala hub before dispatch. If a ready-to-wear piece does not sit correctly on your frame, we are fully committed to coordinating exchanges or returns.
+                At CACAPO, every item is imported, curated, and fit-checked at our Kerala hub before dispatch. If a piece doesn't fit you right or isn't what you expected, we make exchanges and returns easy and fast.
               </p>
               <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Support Hours</span>
@@ -92,7 +92,7 @@ export default function ReturnPolicyPage() {
                   <br />
                   • <strong className="text-foreground font-semibold">7 Days</strong> for size/fit, wrong-item, or not-as-described claims.
                   <br />
-                  • Changed-mind claims on bespoke or final-sale archive items are strictly ineligible.
+                  • Changed-mind claims on custom or final-sale items are strictly ineligible.
                 </p>
               </div>
 
@@ -138,7 +138,7 @@ export default function ReturnPolicyPage() {
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed">
-                  Imported final sale archive items, customized size orders, and intimate apparel are strictly non-returnable. We encourage you to carefully cross-reference your measurements with our sizing charts before placing orders.
+                  Imported final sale drop items, customized orders, and intimate apparel are non-returnable. We encourage you to check size guidelines before placing orders.
                 </p>
               </div>
 

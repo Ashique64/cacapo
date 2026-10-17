@@ -264,7 +264,7 @@ export default function AdminInventoryDesk() {
           </div>
         ) : (
           <div className="border border-zinc-900 bg-black overflow-x-auto">
-            <table className="w-full text-left border-collapse min-w-[950px] text-xs tracking-wider">
+            <table className="w-full text-left border-collapse min-w-237.5 text-xs tracking-wider">
               <thead>
                 <tr className="border-b border-zinc-900 bg-zinc-950/40 text-zinc-500 font-bold uppercase">
                   <th className="p-4 w-14">Image</th>
@@ -344,7 +344,7 @@ export default function AdminInventoryDesk() {
         </div>
       )}
 
-      {/* Premium Luxury Toast Notifications */}
+      {/* Toast Notifications */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
           toast.type === "success" 

@@ -626,7 +626,7 @@ export default function AdminCouponsDesk() {
         </div>
       )}
 
-      {/* Premium Luxury Toast Notifications */}
+      {/* Toast Notifications */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
           toast.type === "success" 

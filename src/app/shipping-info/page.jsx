@@ -7,7 +7,7 @@ import { ArrowRight, Truck, Plane, Sparkles, MapPin } from "lucide-react";
 export const metadata = {
   title: "Shipping & Delivery Information",
   description:
-    "Learn about CACAPO's ready-to-wear shipping rates, delivery timelines (5–7 days standard, 2–3 days express), order dispatch schedules, and premium atelier packaging.",
+    "Learn about CACAPO's shipping rates, delivery timelines (5–7 days standard, 2–3 days express), order dispatch schedules, and secure packaging.",
   alternates: {
     canonical: "https://cacapoclothing.com/shipping-info",
   },
@@ -42,7 +42,7 @@ export default function ShippingInfoPage() {
             </h1>
             <div className="w-16 h-px bg-accent mx-auto mt-6" />
             <p className="text-muted-text text-xs sm:text-sm max-w-lg mx-auto tracking-widest uppercase mt-4">
-              Bespoke packaging and premium courier logistics for structural protection.
+              Secure packaging and reliable courier logistics for safe delivery.
             </p>
           </div>
         </section>
@@ -55,21 +55,21 @@ export default function ShippingInfoPage() {
             <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-28">
               <div className="space-y-3">
                 <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
-                  DELIVERY COMPACT
+                  DELIVERY POLICY
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
-                  GLOBAL DISPATCH <br />OF STRUCTURAL PIECES
+                  FAST DISPATCH <br />ACROSS INDIA
                 </h2>
               </div>
               <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
-                To guarantee that your garments arrive in pristine, unblemished condition, House of CACAPO coordinates with elite global courier channels. Every order is fully insured and packed in custom structural frames to prevent wrinkles and layout distortion during transport.
+                To guarantee that your pieces arrive fast and in perfect condition, CACAPO coordinates with top courier partners. Every order is fit-checked, securely packed, and dispatched straight from our Kerala hub.
               </p>
               <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Dispatch Location</span>
                 <p className="text-muted-text text-[11px] tracking-wider leading-relaxed">
                   All orders are dispatched directly from our import hub:
                   <br />
-                  House of CACAPO Hub • Kerala, India.
+                  CACAPO Fulfillment Hub • Kerala, India.
                 </p>
               </div>
             </div>
@@ -92,7 +92,7 @@ export default function ShippingInfoPage() {
                   <br />
                   • <strong className="text-foreground font-semibold">Express Shipping:</strong> 2 to 3 business days.
                   <br /><br />
-                  All pieces are imported from global fashion capitals and thoroughly checked at our Kerala center before final delivery.
+                  All pieces are imported, fit-checked, and thoroughly inspected at our Kerala center before final delivery.
                 </p>
               </div>
 
@@ -127,11 +127,11 @@ export default function ShippingInfoPage() {
                 <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <Sparkles className="w-4.5 h-4.5 text-accent" />
                   <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
-                    Signature Atelier Packaging
+                    Signature CACAPO Packaging
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed">
-                  Every garment is enclosed in a breathable, protective designer dust bag and packed inside a rigid, secure double-walled custom box. Accessories and footwear include structural supports and signature luxury catalog boxes.
+                  Every garment is enclosed in a breathable, protective dust bag and packed inside a rigid, secure double-walled custom box. Accessories and footwear include structural supports and branded boxes.
                 </p>
               </div>
 

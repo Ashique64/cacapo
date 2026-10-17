@@ -878,7 +878,7 @@ export default function AdminCatalogDesk() {
                       value={productForm.name}
                       onChange={handleProductNameChange}
                       className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all"
-                      placeholder="e.g. SILK COUTURE TRENCH"
+                      placeholder="e.g. OVERSIZED GRAPHIC TEE"
                     />
                   </div>
 
@@ -891,7 +891,7 @@ export default function AdminCatalogDesk() {
                       value={productForm.slug}
                       onChange={(e) => setProductForm(prev => ({ ...prev, slug: e.target.value.toLowerCase() }))}
                       className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none font-mono transition-all"
-                      placeholder="silk-couture-trench"
+                      placeholder="oversized-graphic-tee"
                     />
                   </div>
 
@@ -1384,7 +1384,7 @@ export default function AdminCatalogDesk() {
         </div>
       )}
 
-      {/* Premium Luxury Toast Notifications */}
+      {/* Toast Notifications */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
           toast.type === "success" 

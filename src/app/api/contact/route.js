@@ -46,20 +46,20 @@ export async function POST(request) {
               <!-- Brand Header -->
               <div style="text-align: center; margin-bottom: 30px; border-bottom: 1px solid #1f1f23; padding-bottom: 20px;">
                 <h1 style="font-size: 24px; font-weight: 900; letter-spacing: 0.25em; text-transform: uppercase; margin: 0; color: #FFFFFF;">CACAPO</h1>
-                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.35em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 5px;">Client Services Desk</span>
+                <span style="font-size: 9px; font-weight: 700; letter-spacing: 0.35em; color: #FF4D4D; text-transform: uppercase; display: block; margin-top: 5px;">Support Desk</span>
               </div>
 
               <!-- Content Body -->
               <div style="margin-bottom: 30px;">
                 <h2 style="font-size: 14px; font-weight: 800; letter-spacing: 0.15em; text-transform: uppercase; color: #FFFFFF; margin-bottom: 20px; border-left: 2px solid #FF4D4D; padding-left: 10px;">
-                  Concierge Inquiry Received
+                  Customer Inquiry Received
                 </h2>
                 
                 <!-- Metadata table -->
                 <table style="width: 100%; border-collapse: collapse; margin-bottom: 25px; font-size: 13px;">
                   <tbody>
                     <tr style="border-bottom: 1px solid #18181b;">
-                      <td style="padding: 10px 0; color: #71717a; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; width: 35%;">Client Name</td>
+                      <td style="padding: 10px 0; color: #71717a; font-weight: 600; text-transform: uppercase; font-size: 10px; letter-spacing: 0.1em; width: 35%;">Customer Name</td>
                       <td style="padding: 10px 0; color: #e4e4e7; font-weight: 700;">${name}</td>
                     </tr>
                     <tr style="border-bottom: 1px solid #18181b;">

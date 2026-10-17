@@ -63,7 +63,7 @@ export default function ContactPage() {
               CONNECT WITH <span className="text-accent">CACAPO</span>
             </h1>
             <p className="text-muted-text text-xs sm:text-sm tracking-wide font-light max-w-md mx-auto leading-relaxed">
-              Inquiries regarding bespoke sizing orders, shipping tracking, or collection consultation.
+              Inquiries regarding size guidance, shipping tracking, or collection consultation.
             </p>
           </div>
         </section>
@@ -75,7 +75,7 @@ export default function ContactPage() {
           <div className="lg:col-span-5 space-y-12">
             <div className="space-y-4">
               <h2 className="text-xs font-bold tracking-[0.3em] text-accent uppercase border-b border-card-border pb-3">
-                THE ATELIER HEADQUARTERS
+                CACAPO HEADQUARTERS
               </h2>
               <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
                 Our customer assistance team is available Monday through Friday, 10:00 AM to 6:00 PM IST. 
@@ -98,7 +98,7 @@ export default function ContactPage() {
                 },
                 {
                   icon: <MapPin className="w-4 h-4 text-accent" />,
-                  title: "ATELIER SHOWROOM DESK",
+                  title: "CACAPO OFFICE",
                   detail: "Building No: 15/451B,452B, Ottu company building, Pandikkad road, Melattur, Kerala 679326"
                 }
               ].map((item, idx) => (
@@ -131,7 +131,7 @@ export default function ContactPage() {
                 <div className="space-y-2">
                   <h3 className="text-sm font-bold tracking-widest text-foreground uppercase">MESSAGE TRANSMITTED</h3>
                   <p className="text-muted-text text-xs font-light tracking-wide max-w-sm mx-auto leading-relaxed">
-                    Thank you. Your concierge request has been safely logged. A CACAPO advisor will contact you within 24 hours.
+                    Thank you. Your message has been received! Our support team will get back to you within 24 hours.
                   </p>
                 </div>
                 <button
@@ -144,7 +144,7 @@ export default function ContactPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-6 text-xs tracking-wider">
                 <h3 className="text-[10px] font-bold tracking-widest text-muted-text uppercase border-b border-card-border pb-3 flex items-center gap-2">
-                  CONCIERGE DIRECT INQUIRY
+                  SEND US A MESSAGE
                 </h3>
                 
                 {error && (
@@ -190,7 +190,7 @@ export default function ContactPage() {
                     value={form.subject}
                     onChange={(e) => setForm(prev => ({ ...prev, subject: e.target.value }))}
                     className="w-full bg-background border border-card-border focus:border-accent text-foreground px-3.5 py-2.5 outline-none rounded-none transition-all"
-                    placeholder="e.g. Order Tracking or Bespoke Sizing consultation"
+                    placeholder="e.g. Order Tracking or Size Guidance"
                   />
                 </div>
 

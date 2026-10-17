@@ -588,7 +588,7 @@ export default function AdminOrdersDesk() {
 
                         <div className="space-y-3 divide-y divide-zinc-900/60">
                           {order.order_items?.map((item, idx) => {
-                            const pName = item.product?.name || "Archived Piece";
+                            const pName = item.product?.name || "Fashion Item";
                             const pImg = item.product?.product_images?.[0]?.image_url || "/Images/clothing.jpg";
                             
                             return (
@@ -917,7 +917,7 @@ export default function AdminOrdersDesk() {
         </div>
       )}
 
-      {/* Premium Luxury Toast Notifications */}
+      {/* Toast Notifications */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
           toast.type === "success" 

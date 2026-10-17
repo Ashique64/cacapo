@@ -260,13 +260,13 @@ export default function AdminDashboardPage() {
 
     setLowStockItems([
       { name: "HAMPAGNE STRAP HEELS (38 / BLACK)", stock: 2 },
-      { name: "DRAPED CASHMERE TRENCH (M / CHARCOAL)", stock: 3 },
+      { name: "DRAPED KNIT TRENCH (M / CHARCOAL)", stock: 3 },
       { name: "GEOMETRIC CLASP TOTE (OS / MATTE BLACK)", stock: 0 },
     ]);
 
     setTopProducts([
       { name: "HAMPAGNE STRAP HEELS", quantity: 8, revenue: 880000 },
-      { name: "DRAPED CASHMERE TRENCH", quantity: 5, revenue: 1450000 },
+      { name: "DRAPED KNIT TRENCH", quantity: 5, revenue: 1450000 },
       { name: "GEOMETRIC CLASP TOTE", quantity: 3, revenue: 420000 },
     ]);
 

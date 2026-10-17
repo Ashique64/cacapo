@@ -6,16 +6,16 @@ import HomePage from "@/pages/HomePage";
 export const revalidate = 60; // Cache and revalidate every minute
 
 export const metadata = {
-  title: "House of Couture — Luxury Fashion & Architectural Silhouettes",
+  title: "CACAPO — Trendy Imported Fashion | Fit-Checked, Fast-Delivered, Limited Drops",
   description:
-    "Shop CACAPO's curated collections of luxury clothing, footwear, and accessories. Premium imported ready-to-wear fashion, architectural silhouettes, and sustainable couture delivered across India.",
+    "Shop CACAPO's curated collections of trendy imported clothing, footwear, and accessories. Fresh drops every week — fit-checked and fast-delivered across India.",
   alternates: {
     canonical: "https://cacapoclothing.com",
   },
   openGraph: {
-    title: "CACAPO — House of Couture",
+    title: "CACAPO — Trendy Imported Fashion for Girls",
     description:
-      "Shop CACAPO's curated collections of luxury clothing, footwear, and accessories. Premium imported ready-to-wear fashion delivered across India.",
+      "Shop CACAPO's curated collections of trendy imported clothing, footwear, and accessories. Fast-delivered across India.",
     url: "https://cacapoclothing.com",
     type: "website",
   },

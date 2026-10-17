@@ -1436,7 +1436,7 @@ export default function AccountPage() {
                               {/* Order Items listing */}
                               <div className="space-y-3 divide-y divide-card-border">
                                 {order.order_items?.map((item, idx) => {
-                                  const prodName = item.product?.name || "Product Archive Piece";
+                                  const prodName = item.product?.name || "Fashion Item";
                                   const prodImg = item.product?.product_images?.[0]?.image_url || "/Images/clothing.jpg";
                                   
                                   return (

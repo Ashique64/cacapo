@@ -51,7 +51,7 @@ export default function LoadingScreen({ preloaderRef, loadingProgress, isPreload
             />
           </div>
           <p className="preloader-subtext text-[10px] tracking-[0.5em] text-accent font-light uppercase opacity-0">
-            ATELIER COUTURE
+            IMPORTED FASHION
           </p>
         </div>
 

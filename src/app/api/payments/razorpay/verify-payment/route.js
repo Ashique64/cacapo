@@ -122,7 +122,7 @@ export async function POST(request) {
               orderNumber: fullOrder.order_number,
               customerName: fullOrder.shipping_address.full_name,
               items: (fullOrder.order_items || []).map(i => ({
-                name: i.product?.name || "Couture Item",
+                name: i.product?.name || "Fashion Item",
                 quantity: i.quantity,
                 price: i.price
               })),

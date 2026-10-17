@@ -226,7 +226,7 @@ export default function AdminUsersDesk() {
           { id: "addr-1", full_name: "Jane Doe", phone: "+91 9988776655", address_line1: "404 Runway Avenue", city: "Mumbai", state: "Maharashtra", pincode: "400001", country: "India", is_default: true }
         ]);
         setUserOrders([
-          { id: "ord-1", order_number: "CCP-88219", total_amount: 1450000, order_status: "pending", created_at: new Date().toISOString(), order_items: [{ product: { name: "Silk Slip Archive Dress" }, quantity: 1, price: 1450000 }] }
+          { id: "ord-1", order_number: "CCP-88219", total_amount: 185000, order_status: "pending", created_at: new Date().toISOString(), order_items: [{ product: { name: "Oversized Graphic Tee" }, quantity: 1, price: 185000 }] }
         ]);
       }
     } finally {
@@ -830,7 +830,7 @@ export default function AdminUsersDesk() {
         }
       `}</style>
 
-      {/* Custom Luxury Confirm Modal */}
+      {/* Custom Confirm Modal */}
       {deleteConfirmOpen && (
         <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-zinc-950 border border-zinc-900 p-6 max-w-sm w-full space-y-6 rounded-none shadow-2xl">
@@ -863,7 +863,7 @@ export default function AdminUsersDesk() {
         </div>
       )}
 
-      {/* Premium Luxury Toast Notifications */}
+      {/* Toast Notifications */}
       {toast && (
         <div className={`fixed bottom-8 right-8 z-9999 flex items-center gap-3 px-5 py-4 bg-zinc-950/90 backdrop-blur-md border animate-slideInRight duration-300 rounded-none shadow-2xl ${
           toast.type === "success" 

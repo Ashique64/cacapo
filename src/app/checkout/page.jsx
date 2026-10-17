@@ -29,7 +29,7 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 const FALLBACK_COUPONS = {
   WELCOME10: { code: "WELCOME10", discount_type: "percentage", discount_value: 10, minimum_amount: 0 },
   CACAPO20: { code: "CACAPO20", discount_type: "percentage", discount_value: 20, minimum_amount: 500000 }, // min ₹5,000 (in cents)
-  COUTURE15: { code: "COUTURE15", discount_type: "percentage", discount_value: 15, minimum_amount: 250000 }  // min ₹2,500 (in cents)
+  STYLE15: { code: "STYLE15", discount_type: "percentage", discount_value: 15, minimum_amount: 250000 }  // min ₹2,500 (in cents)
 };
 
 
@@ -530,7 +530,7 @@ export default function CheckoutPage() {
                   orderNumber: orderNumber,
                   customerName: finalAddressJson?.full_name,
                   items: cartItems.map(i => ({
-                    name: i.name || i.product?.name || "Couture Piece",
+                    name: i.name || i.product?.name || "Fashion Item",
                     quantity: i.quantity,
                     price: i.price,
                     size: i.size,

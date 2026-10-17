@@ -55,14 +55,14 @@ export default function TermsOfServicePage() {
             <div className="lg:col-span-5 space-y-8 lg:sticky lg:top-28">
               <div className="space-y-3">
                 <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
-                  ATELIER ACCORD
+                  STORE POLICY
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
                   GOVERNING RETAIL <br />& DESIGN USE
                 </h2>
               </div>
               <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
-                These Terms of Service outline the code of conduct, ownership rights, and purchasing guidelines between clients and the House of CACAPO studio. By accessing this platform or acquiring structural silhouettes, you confirm your acceptance of these terms.
+                These Terms of Service outline the code of conduct, ownership rights, and purchasing guidelines between customers and CACAPO. By accessing this platform or ordering items, you confirm your acceptance of these terms.
               </p>
               <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Last Updated</span>
@@ -86,7 +86,7 @@ export default function TermsOfServicePage() {
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed text-justify">
-                  All digital and material contents on this platform—including structural dress designs, shoe designs, visual layouts, patterns, brand imagery, codebase, and logos—are the exclusive intellectual property of House of CACAPO. Any unauthorized replication, commercial resale, or distribution of these structural concepts is strictly prohibited.
+                  All digital and material contents on this platform—including apparel photos, footwear designs, visual layouts, brand imagery, codebase, and logos—are the exclusive intellectual property of CACAPO. Any unauthorized replication, commercial resale, or distribution of these brand assets is strictly prohibited.
                 </p>
               </div>
 
@@ -112,11 +112,11 @@ export default function TermsOfServicePage() {
                 <div className="flex items-center gap-3 border-b border-card-border pb-3">
                   <Info className="w-4.5 h-4.5 text-accent" />
                   <h3 className="text-xs font-bold tracking-[0.2em] text-foreground uppercase">
-                    3. Imported Collections & Archive Sales
+                    3. Imported Collections & Final Drops
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed text-justify">
-                  All apparel, footwear, and accessories are premium readymade goods imported from global fashion capitals to Kerala, India. Final sale archive items and select intimate wear are non-refundable and exempt from standard return/exchange windows. Sizing specifications must be reviewed carefully prior to purchase.
+                  All apparel, footwear, and accessories are trendy readymade goods imported and quality checked at our Kerala hub. Final sale drop items and select intimate wear are non-refundable and exempt from standard return/exchange windows. Sizing specifications must be reviewed carefully prior to purchase.
                 </p>
               </div>
 

@@ -101,7 +101,7 @@ html.lenis, html.lenis body {
   pointer-events: none;
 }
 
-/* Hide scrollbar globally for clean luxury layout */
+/* Hide scrollbar globally for clean layout */
 ::-webkit-scrollbar {
   display: none !important;
   width: 0 !important;

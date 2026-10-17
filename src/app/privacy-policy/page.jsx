@@ -7,7 +7,7 @@ import { ArrowRight, Eye, ShieldAlert, Cpu, Lock } from "lucide-react";
 export const metadata = {
   title: "Privacy Policy",
   description:
-    "Review CACAPO's Privacy Policy governing personal data collection, data usage, Row Level Security protocols, and cookies at House of CACAPO.",
+    "Review CACAPO's Privacy Policy governing personal data collection, data usage, account security, and cookies.",
   alternates: {
     canonical: "https://cacapoclothing.com/privacy-policy",
   },
@@ -58,11 +58,11 @@ export default function PrivacyPolicyPage() {
                   SECURITY STATUTE
                 </span>
                 <h2 className="text-2xl sm:text-3xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
-                  PROTECTING CLIENT <br />DATA INTEGRITY
+                  PROTECTING CUSTOMER <br />DATA PRIVACY
                 </h2>
               </div>
               <p className="text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
-                At House of CACAPO, we treat client data with the same precision and structural care as our garments. We utilize encrypted pathways and restricted database policies to ensure that your address directories, purchase logs, and identity information are protected at all times.
+                At CACAPO, we treat customer data with great care and privacy. We utilize encrypted pathways and restricted database policies to ensure that your address details, purchase history, and account information are protected at all times.
               </p>
               <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-2.5">
                 <span className="text-[9px] font-bold tracking-widest text-accent uppercase block">Security Standards</span>
@@ -125,7 +125,7 @@ export default function PrivacyPolicyPage() {
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed text-justify">
-                  House of CACAPO does not engage in trading, renting, or selling customer details. Data sharing is limited to registered logistics channels (DHL, FedEx, or domestic premium courier groups) to ensure direct delivery execution. We will disclose info only if compelled under Indian legal jurisdiction.
+                  CACAPO does not trade, rent, or sell customer details. Data sharing is limited strictly to verified courier partners to ensure direct delivery execution. We will disclose info only if compelled under Indian legal jurisdiction.
                 </p>
               </div>
 

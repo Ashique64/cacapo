@@ -28,13 +28,13 @@ export default function WishlistPage() {
         {/* Title Block */}
         <div className="max-w-7xl mx-auto px-6 pt-16 pb-12 select-none relative z-10 text-center md:text-left">
           <span className="text-[10px] font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
-            YOUR ARCHIVE
+            SAVED STYLES
           </span>
           <h1 className="text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight text-foreground uppercase font-sans">
             THE <span className="text-accent">WISHLIST</span>
           </h1>
           <p className="text-xs text-muted-text tracking-wide mt-3 font-light max-w-md leading-relaxed mx-auto md:mx-0">
-            Curated designs saved in your private archives. Select designs to view options and sizing details, or remove them at any time.
+            Your favorite saved styles and upcoming drops. Grab them before they sell out, or check your size and fit.
           </p>
         </div>
 

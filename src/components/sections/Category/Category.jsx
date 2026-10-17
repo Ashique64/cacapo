@@ -96,7 +96,7 @@ export default function Collections({ initialCategories }) {
       id="collections"
     >
       {/* Background radial highlight */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-accent/5 blur-[120px] rounded-full pointer-events-none" />
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-125 h-125 bg-accent/5 blur-[120px] rounded-full pointer-events-none" />
 
       <div className="max-w-7xl mx-auto relative z-10">
         {/* Header */}
@@ -106,11 +106,11 @@ export default function Collections({ initialCategories }) {
               THE RANGE
             </span>
             <h2 className="text-4xl md:text-4xl lg:text-6xl font-bold tracking-tight text-foreground uppercase">
-              Curated <span className="text-accent">Couture</span>
+              Curated <span className="text-accent">Collections</span>
             </h2>
           </div>
           <p className="text-muted-text text-sm md:text-sm lg:text-base max-w-sm tracking-wide font-light">
-            An uncompromising selection of garments, footwear, and accessories tailored for the modern, design-focused woman.
+            Trendy imported clothing, footwear, and accessories fit-checked and fast-delivered for your daily aesthetic.
           </p>
         </div>
 
@@ -128,7 +128,7 @@ export default function Collections({ initialCategories }) {
                 key={item.id || item.slug}
                 href={`/shop?category=${item.id || item.slug}`}
                 ref={(el) => (cardsRef.current[idx] = el)}
-                className={`group relative flex flex-col justify-end h-[460px] rounded-none overflow-hidden border border-card-border bg-card-bg backdrop-blur-md cursor-pointer transition-all duration-500 hover:border-accent hover:ring-1 hover:ring-accent/50 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
+                className={`group relative flex flex-col justify-end h-115 rounded-none overflow-hidden border border-card-border bg-card-bg backdrop-blur-md cursor-pointer transition-all duration-500 hover:border-accent hover:ring-1 hover:ring-accent/50 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
                   idx === 2 && categories.length === 3 ? "md:col-span-2 lg:col-span-1" : ""
                 }`}
               >
@@ -153,7 +153,7 @@ export default function Collections({ initialCategories }) {
                 <div className="absolute inset-x-0 top-0 h-px bg-linear-to-r from-transparent via-card-border/50 to-transparent group-hover:via-accent/50 transition-all duration-700" />
 
                 {/* Card Content */}
-                <div className="relative z-10 p-6 flex flex-col justify-end h-[210px] bg-linear-to-t from-white/98 via-white/70 to-transparent transform translate-y-0 lg:translate-y-[90px] lg:group-hover:translate-y-0 transition-transform duration-500 ease-out">
+                <div className="relative z-10 p-6 flex flex-col justify-end h-52.5 bg-linear-to-t from-white/98 via-white/70 to-transparent transform translate-y-0 lg:translate-y-22.5 lg:group-hover:translate-y-0 transition-transform duration-500 ease-out">
                   <span className="text-[9px] tracking-[0.4em] font-semibold text-accent mb-2 block">
                     {item.tag}
                   </span>
@@ -166,12 +166,12 @@ export default function Collections({ initialCategories }) {
                   </h3>
 
                   {/* Mobile & Tablet Short Description */}
-                  <p className="block lg:hidden text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-[60px] overflow-hidden">
+                  <p className="block lg:hidden text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-15 overflow-hidden">
                     {item.shortDesc}
                   </p>
 
                   {/* Desktop Full Description */}
-                  <p className="hidden lg:block text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-[60px] overflow-hidden lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500 lg:delay-75">
+                  <p className="hidden lg:block text-muted-text text-xs tracking-wide leading-relaxed font-light mb-4 h-15 overflow-hidden lg:opacity-0 lg:group-hover:opacity-100 transition-opacity duration-500 lg:delay-75">
                     {item.description || item.shortDesc}
                   </p>
 

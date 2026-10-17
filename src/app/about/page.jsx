@@ -4,16 +4,16 @@ import SmoothScroll from "@/components/providers/SmoothScroll";
 import Link from "next/link";
 
 export const metadata = {
-  title: "About — The Architecture of Couture",
+  title: "About — Our Story",
   description:
-    "Discover the architectural lines, sustainable luxury philosophy, and structural couture that define the minimalist design ethos of CACAPO. Founded to bring global ready-to-wear silhouettes to India.",
+    "Learn how CACAPO curates trendy imported fashion for Gen-Z girls. We source globally, fit-check everything, and deliver fresh drops weekly from our hub in Kerala.",
   alternates: {
     canonical: "https://cacapoclothing.com/about",
   },
   openGraph: {
-    title: "About | House of CACAPO",
+    title: "About | CACAPO",
     description:
-      "Discover the architectural lines, sustainable luxury philosophy, and structural couture that define the minimalist design ethos of CACAPO.",
+      "Learn how CACAPO curates trendy imported fashion for Gen-Z girls. Sourced globally, delivered fast.",
     url: "https://cacapoclothing.com/about",
     type: "website",
   },
@@ -39,14 +39,14 @@ export default function AboutPage() {
 
           <div className="max-w-4xl mx-auto px-6 text-center relative z-20 space-y-6">
             <span className="text-[10px] sm:text-xs font-bold tracking-[0.4em] text-accent uppercase block">
-              THE HOUSE OF CACAPO
+              TRENDY IMPORTED FASHION
             </span>
             <h1 className="text-3xl sm:text-5xl md:text-6xl font-black tracking-tight uppercase leading-tight text-foreground font-sans">
-              THE ARCHITECTURE <br />OF <span className="text-accent">COUTURE</span>
+              THE WORLD <br />OF <span className="text-accent">CACAPO</span>
             </h1>
             <p className="text-muted-text text-xs sm:text-sm md:text-base max-w-xl mx-auto tracking-wide font-light leading-relaxed">
-              Founded on curating international streetwear and architectural designs. 
-              We bring global readymade silhouettes directly to India, hand-selected to contour, empower, and redefine the modern form.
+              Founded on curating trendy imported fashion from across Asia. 
+              We bring the latest global trends directly to Indian girls — fit-checked, affordable, and delivered fast.
             </p>
           </div>
         </section>
@@ -71,22 +71,21 @@ export default function AboutPage() {
           <div className="space-y-8">
             <div className="space-y-3">
               <span className="text-[10px] tracking-[0.3em] font-bold text-accent uppercase block">
-                DESIGN ETHOS
+                BRAND VISION
               </span>
               <h2 className="text-2xl sm:text-3xl md:text-4xl font-extrabold tracking-wide uppercase text-foreground leading-tight">
-                FLUIDITY MEETS <br />STRUCTURAL INTEGRITY
+                FRESH TRENDS <br />FAST TO YOUR DOOR
               </h2>
             </div>
             
             <div className="space-y-6 text-muted-text text-xs sm:text-sm font-light leading-relaxed text-justify">
               <p>
-                At CACAPO, we believe that fashion is an extension of structural art. 
-                Our curated collections of imported ready-to-wear apparel, footwear, and accessories discard transient, loud trends in favor of silent, architectural aesthetics. 
-                Each line, drape, and silhouette is selected to drape organically, creating a visual dialogue between fabric and frame.
+                At CACAPO, we believe great style shouldn't break the bank. 
+                We curate the most viral, trendy imported apparel, footwear, and accessories from global fashion capitals, bringing international aesthetics directly to Indian girls.
               </p>
               <p>
-                We do not just select clothing; we curate wearable sculptures. 
-                By sourcing items crafted primarily with pure natural fibers like organic mulberry silk, double-faced wool, and hand-combed cashmere, we ensure that tactile luxury matches our visual cleanliness.
+                Every single piece is fit-checked before it's listed, packed with care at our Kerala hub, and shipped quickly so you can wear what's trending right now. 
+                Limited weekly drops mean you get exclusive styles that keep your rotation fresh and unique.
               </p>
             </div>
           </div>
@@ -109,18 +108,18 @@ export default function AboutPage() {
               {[
                 {
                   number: "01",
-                  title: "ARCHITECTURAL FIT",
-                  desc: "We source items from international makers who analyze structural movement to ensure cuts move seamlessly with the body. Premium imported fits built into ready-to-wear luxury."
+                  title: "FIT-CHECKED SIZING",
+                  desc: "We rigorously fit-check every piece before listing, ensuring true-to-size fits that flatter and feel great all day."
                 },
                 {
                   number: "02",
-                  title: "MATERIAL HONESTY",
-                  desc: "Sourcing premium natural textiles with no compromise on quality. Pure silks, fine leathers, and cashmere that deliver tactile comfort and durability."
+                  title: "AFFORDABLE TRENDS",
+                  desc: "Sourcing direct from international fashion hubs to bring you the latest viral aesthetics at honest, accessible prices."
                 },
                 {
                   number: "03",
-                  title: "MINIMALIST ESSENTIALS",
-                  desc: "Sourcing curated wardrobe foundations. Highly cohesive palettes, geometric details, and timeless statements that outlast seasons."
+                  title: "LIMITED WEEKLY DROPS",
+                  desc: "Curated in small quantities to keep your wardrobe exclusive. Once a drop sells out, it rarely comes back."
                 }
               ].map((pillar, idx) => (
                 <div 
@@ -154,14 +153,14 @@ export default function AboutPage() {
               DISCOVER THE COLLECTION
             </h2>
             <p className="text-muted-text text-xs sm:text-sm tracking-wide font-light max-w-md mx-auto leading-relaxed">
-              Step into the archive and explore tailored pieces, sculpted footwear, and couture accessories.
+              Step into our store and explore trending pieces, fresh footwear drops, and must-have accessories.
             </p>
             <div className="pt-2">
               <Link 
                 href="/shop" 
                 className="inline-flex items-center justify-center px-8 py-3.5 bg-foreground text-background hover:bg-accent hover:text-white text-[10px] sm:text-xs font-bold tracking-widest uppercase transition-all duration-500 rounded-none cursor-pointer"
               >
-                EXPLORE THE ARCHIVE
+                SHOP LATEST DROPS
               </Link>
             </div>
           </div>
