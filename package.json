@@ -13,6 +13,8 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.108.2",
     "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
+    "botid": "^1.5.11",
     "browser-image-compression": "^2.0.2",
     "core-js": "^3.49.0",
     "exifr": "^7.1.3",
