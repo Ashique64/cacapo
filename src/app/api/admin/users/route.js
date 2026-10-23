@@ -11,33 +11,57 @@ import { createClient } from "@supabase/supabase-js";
 export async function GET(request) {
   try {
     const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+    if (!serviceRoleKey) {
+      console.error("[admin-users-api] SUPABASE_SERVICE_ROLE_KEY is missing from environment variables.");
+      return NextResponse.json(
+        { 
+          error: "SUPABASE_SERVICE_ROLE_KEY is not configured in Vercel Environment Variables. Please add it in Vercel Project Settings > Environment Variables.",
+          code: "MISSING_SERVICE_ROLE_KEY"
+        },
+        { status: 500 }
+      );
+    }
+
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       serviceRoleKey,
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // 1. Fetch all profiles
+    // 1. Fetch all auth users from Supabase Auth Admin
+    let authUsers = [];
+    try {
+      const { data: authData, error: authErr } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      if (!authErr && authData?.users) {
+        authUsers = authData.users;
+      }
+    } catch (e) {
+      console.warn("[admin-users-api] Could not list auth users via admin:", e.message);
+    }
+
+    // 2. Fetch all profiles
     const { data: profiles, error: profilesError } = await supabase
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (profilesError) throw profilesError;
+    if (profilesError) {
+      console.warn("[admin-users-api] Profiles query warning:", profilesError.message);
+    }
 
-    // 2. Fetch all admin users
+    // 3. Fetch all admin users
     const { data: admins, error: adminsError } = await supabase
       .from("admin_users")
       .select("*");
 
-    if (adminsError) throw adminsError;
+    if (adminsError) {
+      console.warn("[admin-users-api] Admin users query warning:", adminsError.message);
+    }
 
-    // 3. Fetch all orders for LTV
-    const { data: orderStats, error: ordersError } = await supabase
+    // 4. Fetch all orders for LTV
+    const { data: orderStats } = await supabase
       .from("orders")
       .select("user_id, total_amount");
-
-    if (ordersError) throw ordersError;
 
     // Aggregate counts & LTV per user
     const statsMap = {};
@@ -48,41 +72,68 @@ export async function GET(request) {
       statsMap[o.user_id].ltv += (o.total_amount || 0);
     });
 
-    // 4. Combine into final users list
-    const combined = (profiles || []).map((p) => {
-      const admin = (admins || []).find((a) => a.id === p.id);
-      const stats = statsMap[p.id] || { count: 0, ltv: 0 };
-      return {
-        id: p.id,
-        full_name: p.full_name || "Guest User",
-        phone: p.phone || "N/A",
-        created_at: p.created_at,
-        role: admin ? admin.role : "customer",
-        email: admin ? admin.email : p.email,
-        orderCount: stats.count,
-        ltv: stats.ltv
-      };
+    // 5. Merge all sources into unified user map
+    const userMap = new Map();
+
+    // Add Auth Users
+    authUsers.forEach(u => {
+      userMap.set(u.id, {
+        id: u.id,
+        full_name: u.user_metadata?.full_name || u.user_metadata?.name || (u.email ? u.email.split("@")[0] : "Client User"),
+        phone: u.user_metadata?.phone || u.phone || "N/A",
+        email: u.email || "N/A",
+        created_at: u.created_at,
+        role: "customer",
+        orderCount: 0,
+        ltv: 0,
+      });
     });
 
-    // Include admins who might not have a profile row
-    const profileIds = new Set((profiles || []).map((p) => p.id));
-    (admins || []).forEach((a) => {
-      if (!profileIds.has(a.id)) {
+    // Merge/Overlay Profiles
+    (profiles || []).forEach(p => {
+      const existing = userMap.get(p.id) || {};
+      userMap.set(p.id, {
+        id: p.id,
+        full_name: p.full_name || existing.full_name || "Client User",
+        phone: p.phone && p.phone !== "N/A" ? p.phone : (existing.phone || "N/A"),
+        email: p.email || existing.email || "N/A",
+        created_at: p.created_at || existing.created_at || new Date().toISOString(),
+        role: existing.role || "customer",
+        orderCount: 0,
+        ltv: 0,
+      });
+    });
+
+    // Merge/Overlay Admins & Order Stats
+    userMap.forEach((user, id) => {
+      const admin = (admins || []).find(a => a.id === id);
+      if (admin) {
+        user.role = admin.role || "admin";
+        if (admin.email && user.email === "N/A") user.email = admin.email;
+      }
+      const stats = statsMap[id] || { count: 0, ltv: 0 };
+      user.orderCount = stats.count;
+      user.ltv = stats.ltv;
+    });
+
+    // Add Admins that might not have been in authUsers or profiles
+    (admins || []).forEach(a => {
+      if (!userMap.has(a.id)) {
         const stats = statsMap[a.id] || { count: 0, ltv: 0 };
-        combined.push({
+        userMap.set(a.id, {
           id: a.id,
-          full_name: "Admin Workspace User",
+          full_name: "Admin User",
           phone: "N/A",
-          created_at: a.created_at,
+          email: a.email || "N/A",
+          created_at: a.created_at || new Date().toISOString(),
           role: a.role,
-          email: a.email,
           orderCount: stats.count,
-          ltv: stats.ltv
+          ltv: stats.ltv,
         });
       }
     });
 
-    // Sort by creation date
+    const combined = Array.from(userMap.values());
     combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
     return NextResponse.json({ users: combined });

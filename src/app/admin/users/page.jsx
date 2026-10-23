@@ -105,23 +105,47 @@ export default function AdminUsersDesk() {
     setError(null);
     try {
       const res = await fetch("/api/admin/users");
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        throw new Error("Failed to load user directory API");
+        throw new Error(data.error || "Failed to load user directory API");
       }
-      const data = await res.json();
       setUsers(data.users || []);
     } catch (err) {
       console.error("Error fetching users:", err);
-      setError("Failed to load user database. Please verify client RLS policies.");
-      
-      // Sandbox data fallback for testing/demo
-      const fallbackUsers = [
-        { id: "u-1", full_name: "Muhammed Ashique", phone: "+91 9876543210", email: "ashique@cacapo.com", role: "super_admin", created_at: new Date(Date.now() - 30 * 86400000).toISOString(), orderCount: 5, ltv: 1250000 },
-        { id: "u-2", full_name: "Jane Doe", phone: "+91 9988776655", email: null, role: "customer", created_at: new Date(Date.now() - 15 * 86400000).toISOString(), orderCount: 2, ltv: 340000 },
-        { id: "u-3", full_name: "John Smith", phone: "+91 9444332211", email: null, role: "customer", created_at: new Date(Date.now() - 5 * 86400000).toISOString() },
-        { id: "u-4", full_name: "Sarah Parker", phone: "+91 9555667788", email: "sarah@cacapo.com", role: "admin", created_at: new Date(Date.now() - 2 * 86400000).toISOString() },
-      ];
-      setUsers(fallbackUsers);
+
+      // Attempt direct client-side Supabase query as fallback using current admin session
+      try {
+        const { data: clientProfiles } = await supabase
+          .from("profiles")
+          .select("*")
+          .order("created_at", { ascending: false });
+
+        const { data: clientAdmins } = await supabase
+          .from("admin_users")
+          .select("*");
+
+        if (clientProfiles && clientProfiles.length > 0) {
+          const combined = clientProfiles.map(p => {
+            const admin = (clientAdmins || []).find(a => a.id === p.id);
+            return {
+              id: p.id,
+              full_name: p.full_name || "Client User",
+              phone: p.phone || "N/A",
+              email: p.email || admin?.email || "N/A",
+              role: admin ? admin.role : "customer",
+              created_at: p.created_at,
+              orderCount: 0,
+              ltv: 0
+            };
+          });
+          setUsers(combined);
+          return;
+        }
+      } catch (clientErr) {
+        console.warn("Client fallback query failed:", clientErr);
+      }
+
+      setError(err.message || "Failed to load user database. Please ensure SUPABASE_SERVICE_ROLE_KEY is configured in Vercel.");
     } finally {
       setLoading(false);
     }
@@ -395,6 +419,17 @@ export default function AdminUsersDesk() {
           </p>
         </div>
       </div>
+
+      {/* Database Connection Notice */}
+      {error && (
+        <div className="p-4 bg-amber-950/20 border border-amber-500/30 text-amber-300 text-xs flex items-start gap-3 rounded-none animate-fadeIn">
+          <AlertCircle className="w-4 h-4 shrink-0 text-amber-400 mt-0.5" />
+          <div className="space-y-1">
+            <p className="font-bold text-amber-200 uppercase tracking-wider text-[10px]">Database Connection Notice</p>
+            <p className="text-zinc-400 text-[11px] leading-relaxed">{error}</p>
+          </div>
+        </div>
+      )}
 
       {/* Analytics Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
