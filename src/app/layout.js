@@ -3,6 +3,15 @@ import "./globals.css";
 import CartSidebar from "@/components/layout/CartSidebar";
 import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { BotIdClient } from "botid/client";
+
+const protectedBotRoutes = [
+  { path: "/api/payments/razorpay/create-order", method: "POST" },
+  { path: "/api/payments/razorpay/verify-payment", method: "POST" },
+  { path: "/api/email/send", method: "POST" },
+  { path: "/api/contact", method: "POST" },
+  { path: "/api/returns/submit", method: "POST" },
+];
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -112,6 +121,9 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${outfit.variable} ${playfair.variable} ${jetbrainsMono.variable} h-full antialiased`}
     >
+      <head>
+        <BotIdClient protect={protectedBotRoutes} />
+      </head>
       <body className="min-h-full flex flex-col">
         <script
           type="application/ld+json"

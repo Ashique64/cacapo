@@ -1,6 +1,7 @@
 import Razorpay from "razorpay";
 import { NextResponse } from "next/server";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
+import { checkBotId } from "botid/server";
 
 export async function POST(request) {
   // Rate limit: 10 order creations per IP per 10 minutes
@@ -11,6 +12,14 @@ export async function POST(request) {
   if (limited) return limited;
 
   try {
+    const verification = await checkBotId().catch(() => null);
+    if (verification?.isBot) {
+      return NextResponse.json(
+        { error: "Access denied. Automated behavior detected." },
+        { status: 403 }
+      );
+    }
+
     const { amount, orderNumber } = await request.json();
 
     if (!amount) {
