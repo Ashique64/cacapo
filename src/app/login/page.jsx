@@ -216,6 +216,20 @@ function LoginContent() {
           }
         }
       } else {
+        // Check if an account already exists with this email address
+        const checkRes = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const checkData = await checkRes.json();
+
+        if (checkData.exists) {
+          setError("An account with this email address already exists. Please sign in instead.");
+          setSubmitting(false);
+          return;
+        }
+
         const siteUrl = window.location.origin.includes("localhost")
           ? "https://cacapo.vercel.app"
           : window.location.origin;
@@ -231,6 +245,13 @@ function LoginContent() {
           emailRedirectTo
         );
         if (signUpErr) throw signUpErr;
+
+        // Supabase returns an empty identities array if user already exists
+        if (data?.user?.identities && data.user.identities.length === 0) {
+          setError("An account with this email address already exists. Please sign in instead.");
+          setSubmitting(false);
+          return;
+        }
 
         if (data && !data.session) {
           setVerificationSent(true);
