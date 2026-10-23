@@ -30,6 +30,14 @@ export default function AdminUsersDesk() {
   const [toast, setToast] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [roleConfirmOpen, setRoleConfirmOpen] = useState(false);
+  const [pendingRoleChange, setPendingRoleChange] = useState(null);
+
+  const roleLabels = {
+    customer: "Customer",
+    admin: "Admin (Staff)",
+    super_admin: "Super Admin",
+  };
 
   // Search & Filters
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,8 +134,26 @@ export default function AdminUsersDesk() {
     }, 4000);
   };
 
-  const handleUpdateRole = async (userId, newRole, userEmail) => {
+  const handleRoleSelectChange = (newRole) => {
+    if (!selectedUser) return;
+    if (newRole === (selectedUser.role || "customer")) return;
+
+    setPendingRoleChange({
+      userId: selectedUser.id,
+      newRole,
+      oldRole: selectedUser.role || "customer",
+      userEmail: selectedUser.email,
+      userName: selectedUser.full_name || selectedUser.email || "this user",
+    });
+    setRoleConfirmOpen(true);
+  };
+
+  const executeRoleChange = async () => {
+    if (!pendingRoleChange) return;
+    const { userId, newRole, userEmail } = pendingRoleChange;
+    setRoleConfirmOpen(false);
     setActionLoading(true);
+
     try {
       const response = await fetch("/api/admin/users", {
         method: "PATCH",
@@ -151,6 +177,7 @@ export default function AdminUsersDesk() {
       showToast(err.message || "Failed to update user role", "error");
     } finally {
       setActionLoading(false);
+      setPendingRoleChange(null);
     }
   };
 
@@ -762,7 +789,7 @@ export default function AdminUsersDesk() {
                           <select
                             disabled={actionLoading}
                             value={selectedUser.role || "customer"}
-                            onChange={(e) => handleUpdateRole(selectedUser.id, e.target.value, selectedUser.email)}
+                            onChange={(e) => handleRoleSelectChange(e.target.value)}
                             className="bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs px-4 py-2 uppercase tracking-wider font-semibold rounded-none focus:outline-none focus:border-accent hover:border-zinc-700 transition-colors cursor-pointer disabled:opacity-50"
                           >
                             <option value="customer">Customer</option>
@@ -857,6 +884,57 @@ export default function AdminUsersDesk() {
                 className="w-1/2 py-2 bg-red-600 text-white text-[9px] font-bold tracking-widest uppercase hover:bg-red-700 transition-all rounded-none cursor-pointer border-none"
               >
                 Delete Account
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Role Change Confirmation Modal */}
+      {roleConfirmOpen && pendingRoleChange && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-md z-9999 flex items-center justify-center p-4 animate-fadeIn">
+          <div className="bg-zinc-950 border border-zinc-900 p-6 max-w-sm w-full space-y-6 rounded-none shadow-2xl">
+            <div className="space-y-3">
+              <h3 className="text-sm font-bold tracking-[0.2em] uppercase text-zinc-100 flex items-center gap-2 font-mono">
+                <Shield className="w-4 h-4 shrink-0 text-accent" /> Confirm Role Permission
+              </h3>
+              <p className="text-[11px] text-zinc-400 leading-relaxed tracking-wider">
+                Are you sure you want to change the administrative role for{" "}
+                <span className="text-white font-bold">{pendingRoleChange.userName}</span> from{" "}
+                <span className="text-zinc-300 uppercase font-semibold">
+                  {roleLabels[pendingRoleChange.oldRole] || pendingRoleChange.oldRole}
+                </span>{" "}
+                to{" "}
+                <span className="text-accent uppercase font-bold">
+                  {roleLabels[pendingRoleChange.newRole] || pendingRoleChange.newRole}
+                </span>
+                ?
+              </p>
+              <div className="p-2.5 bg-zinc-900/60 border border-zinc-800 text-[10px] text-zinc-400 leading-relaxed">
+                {pendingRoleChange.newRole === "customer"
+                  ? "⚠️ Warning: This will revoke all administrative privileges and access to the admin console."
+                  : "🛡️ Notice: This will grant system administrative permissions to this user."}
+              </div>
+            </div>
+            
+            <div className="flex gap-4">
+              <button
+                type="button"
+                onClick={() => {
+                  setRoleConfirmOpen(false);
+                  setPendingRoleChange(null);
+                }}
+                className="w-1/2 py-2 border border-zinc-900 hover:border-zinc-800 text-zinc-400 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-transparent"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={executeRoleChange}
+                disabled={actionLoading}
+                className="w-1/2 py-2 bg-accent text-white text-[9px] font-bold tracking-widest uppercase hover:bg-accent/80 transition-all rounded-none cursor-pointer border-none flex items-center justify-center gap-1.5"
+              >
+                {actionLoading ? <Loader2 className="w-3 h-3 animate-spin" /> : "Confirm Change"}
               </button>
             </div>
           </div>
