@@ -172,6 +172,45 @@ html.lenis, html.lenis body {
   animation: slideInRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Progress Bar Stripe Animation */
+@keyframes progressStripe {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 2rem 0;
+  }
+}
+
+.animate-stripes {
+  background-image: linear-gradient(
+    45deg,
+    rgba(255, 255, 255, 0.22) 25%,
+    transparent 25%,
+    transparent 50%,
+    rgba(255, 255, 255, 0.22) 50%,
+    rgba(255, 255, 255, 0.22) 75%,
+    transparent 75%,
+    transparent
+  );
+  background-size: 1rem 1rem;
+  animation: progressStripe 1.2s linear infinite;
+}
+
+/* Gentle bouncing animation for free shipping icon and pin */
+@keyframes gentleBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-gentle-bounce {
+  animation: gentleBounce 1.2s ease-in-out infinite;
+}
+
 /* ==========================================================================
    ADMIN PORTAL LIGHT THEME OVERRIDES (Admin Side Only)
    Does not affect the public customer store.

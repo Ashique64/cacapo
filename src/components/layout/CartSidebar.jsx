@@ -3,9 +3,11 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { X, Plus, Minus, Trash2, ShoppingBag } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBag, Truck, CheckCircle2 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
+
+const FREE_SHIPPING_THRESHOLD = 300000; // ₹3,000 in paise
 
 export default function CartSidebar() {
   const { user } = useAuthStore();
@@ -37,6 +39,15 @@ export default function CartSidebar() {
       maximumFractionDigits: 2,
     }),
   [subtotal]);
+
+  // Free shipping calculations (₹3,000 threshold)
+  const amountRemaining = Math.max(0, FREE_SHIPPING_THRESHOLD - subtotal);
+  const progressPercentage = Math.min(100, (subtotal / FREE_SHIPPING_THRESHOLD) * 100);
+  const isFreeShippingUnlocked = subtotal >= FREE_SHIPPING_THRESHOLD;
+  const displayAmountRemaining = (amountRemaining / 100).toLocaleString("en-IN", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  });
 
   const cartCount = useMemo(() =>
     items.reduce((sum, item) => sum + item.quantity, 0),
@@ -96,12 +107,76 @@ export default function CartSidebar() {
           </div>
           <button
             onClick={handleClose}
-            className="text-muted-text hover:text-accent transition-colors p-1.5 hover:bg-zinc-100 rounded-full"
+            className="text-muted-text hover:text-accent transition-colors p-1.5 hover:bg-zinc-100 rounded-full cursor-pointer"
             aria-label="Close Cart"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {/* Bouncing Free Shipping Progress Bar */}
+        {items.length > 0 && (
+          <div className="px-6 pt-3.5 pb-4 bg-zinc-50/95 border-b border-card-border space-y-2 select-none">
+            <div className="flex items-center justify-between text-xs">
+              {isFreeShippingUnlocked ? (
+                <span className="flex items-center gap-1.5 font-bold text-emerald-600 text-xs tracking-wide">
+                  <span className="inline-block animate-gentle-bounce">
+                    <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                  </span>
+                  <span>🎉 You unlocked <strong className="underline decoration-emerald-400 underline-offset-2">FREE Shipping</strong>!</span>
+                </span>
+              ) : (
+                <span className="text-[11px] text-muted-text tracking-wide flex items-center gap-1.5">
+                  <span className="inline-block animate-gentle-bounce">
+                    <Truck className="w-4 h-4 text-accent shrink-0" />
+                  </span>
+                  <span>
+                    Add <strong className="font-bold text-foreground font-mono">₹{displayAmountRemaining}</strong> more for <strong className="font-semibold text-accent">FREE Shipping</strong>
+                  </span>
+                </span>
+              )}
+              <span className="text-[10px] font-mono font-bold text-foreground bg-white px-2 py-0.5 rounded-full border border-card-border shadow-xs">
+                {Math.round(progressPercentage)}%
+              </span>
+            </div>
+
+            {/* Bouncing Progress Track & Riding Pin */}
+            <div className="relative pt-2.5 pb-0.5">
+              {/* Background Track with Inner Glow */}
+              <div className="w-full h-2.5 bg-zinc-200/80 rounded-full overflow-hidden relative shadow-inner">
+                {/* Animated Fill Bar with Moving Stripes */}
+                <div
+                  className={`h-full transition-all duration-700 ease-out rounded-full relative animate-stripes ${
+                    isFreeShippingUnlocked 
+                      ? "bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]" 
+                      : "bg-accent shadow-[0_0_10px_rgba(255,77,77,0.4)]"
+                  }`}
+                  style={{ width: `${progressPercentage}%` }}
+                />
+              </div>
+
+              {/* Bouncing Marker Pin riding on top of the progress tip */}
+              <div
+                className="absolute top-0 -translate-x-1/2 transition-all duration-700 ease-out pointer-events-none z-10"
+                style={{ left: `${Math.max(3, Math.min(97, progressPercentage))}%` }}
+              >
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center shadow-md animate-gentle-bounce ${
+                    isFreeShippingUnlocked
+                      ? "bg-emerald-600 text-white ring-2 ring-emerald-200 shadow-emerald-500/30"
+                      : "bg-accent text-white ring-2 ring-red-100 shadow-red-500/30"
+                  }`}
+                >
+                  {isFreeShippingUnlocked ? (
+                    <CheckCircle2 className="w-3.5 h-3.5 stroke-[2.5]" />
+                  ) : (
+                    <Truck className="w-3.5 h-3.5" />
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Scrollable Cart Items List */}
         <div className="grow overflow-y-auto no-scrollbar p-6 space-y-6">
@@ -149,8 +224,9 @@ export default function CartSidebar() {
                       alt={product.name || "Product"}
                       fill
                       sizes="80px"
-                      className="object-cover"
+                      className="object-cover pointer-events-none select-none"
                       loading="lazy"
+                      draggable={false}
                     />
                   </div>
 
@@ -227,16 +303,23 @@ export default function CartSidebar() {
           <div className="p-6 border-t border-card-border bg-card-bg/85 backdrop-blur-md space-y-4">
             <div className="flex justify-between items-baseline">
               <span className="text-[10px] font-bold tracking-[0.25em] text-muted-text uppercase">
-                ESTIMATED TOTAL
+                SUBTOTAL
               </span>
-              <div className="text-lg font-bold font-mono text-foreground flex items-baseline gap-0.5">
+              <div className="text-base font-bold font-mono text-foreground flex items-baseline gap-0.5">
                 <span className="text-xs font-sans font-normal text-muted-text">₹</span>
                 <span>{displaySubtotal}</span>
               </div>
             </div>
 
-            <p className="text-[9px] text-muted-text tracking-wider font-light leading-relaxed">
-              Shipping & taxes calculated at checkout. Curated packaging and express courier dispatch are complimentary.
+            <div className="flex justify-between items-center text-[10px] tracking-wider uppercase">
+              <span className="text-muted-text">Shipping</span>
+              <span className={`font-semibold ${isFreeShippingUnlocked ? "text-emerald-600 font-bold" : "text-foreground font-mono"}`}>
+                {isFreeShippingUnlocked ? "FREE" : "₹50"}
+              </span>
+            </div>
+
+            <p className="text-[9px] text-muted-text tracking-wider font-light leading-relaxed border-t border-card-border/60 pt-2">
+              Taxes calculated at checkout. Express courier dispatch and secure packaging included.
             </p>
 
             <div className="pt-2">
