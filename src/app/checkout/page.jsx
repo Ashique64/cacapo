@@ -558,6 +558,20 @@ export default function CheckoutPage() {
           // Send Order Confirmation Email
           const recipientEmail = finalAddressJson?.email || user?.email;
           if (recipientEmail) {
+            const emailItems = cartItems.map(i => {
+              const unitPrice = i.variant?.sale_price || i.variant?.price || i.product?.sale_price || i.product?.price || i.price || 0;
+              const size = i.variant?.size || i.selectedSize || i.size || "";
+              const color = i.variant?.color || i.selectedColor || i.color || "";
+              return {
+                name: i.product?.name || i.name || "Fashion Item",
+                quantity: i.quantity || 1,
+                price: unitPrice,
+                unit_price: unitPrice,
+                size: size,
+                color: color
+              };
+            });
+
             fetch("/api/email/send", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
@@ -567,14 +581,9 @@ export default function CheckoutPage() {
                 data: {
                   orderNumber: orderNumber,
                   customerName: finalAddressJson?.full_name,
-                  items: cartItems.map(i => ({
-                    name: i.name || i.product?.name || "Fashion Item",
-                    quantity: i.quantity,
-                    price: i.price,
-                    size: i.size,
-                    color: i.color
-                  })),
+                  items: emailItems,
                   totals: { subtotal, discount, shipping: shippingCharge, tax, total: totalAmount },
+                  inPaise: true,
                   paymentMethod: "Cash on Delivery (COD)",
                   shippingAddress: finalAddressJson
                 }
@@ -925,7 +934,7 @@ export default function CheckoutPage() {
                                             <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
                                               isSelected ? "border-accent bg-accent text-white" : "border-zinc-300 group-hover:border-zinc-400"
                                             }`}>
-                                              {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                              {isSelected && <Check className="w-2.5 h-2.5 stroke-3" />}
                                             </div>
                                           </div>
                                         </button>

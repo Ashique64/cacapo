@@ -108,7 +108,7 @@ export async function POST(request) {
     try {
       const { data: fullOrder } = await supabase
         .from("orders")
-        .select("*, order_items(*, product:products(name))")
+        .select("*, order_items(*, product:products(name), variant:product_variants(size, color))")
         .eq("id", order_id)
         .maybeSingle();
 
@@ -124,7 +124,10 @@ export async function POST(request) {
               items: (fullOrder.order_items || []).map(i => ({
                 name: i.product?.name || "Fashion Item",
                 quantity: i.quantity,
-                price: i.price
+                price: i.price,
+                unit_price: i.price,
+                size: i.variant?.size || "",
+                color: i.variant?.color || ""
               })),
               totals: {
                 subtotal: fullOrder.subtotal,
@@ -133,6 +136,7 @@ export async function POST(request) {
                 tax: fullOrder.tax,
                 total: fullOrder.total_amount
               },
+              inPaise: true,
               paymentMethod: "Razorpay (Online)",
               shippingAddress: fullOrder.shipping_address
             }

@@ -10,10 +10,21 @@
 /**
  * Format currency amount in INR format (e.g., ₹1,850.00 or input in paise/rupees)
  */
-export function formatINR(amountInPaiseOrRupees) {
+export function formatINR(amountInPaiseOrRupees, forcePaise = null) {
   if (amountInPaiseOrRupees == null) return "₹0";
   const numericVal = typeof amountInPaiseOrRupees === "number" ? amountInPaiseOrRupees : parseFloat(amountInPaiseOrRupees);
-  const rupees = numericVal > 50000 && Number.isInteger(numericVal) ? numericVal / 100 : numericVal;
+  if (isNaN(numericVal)) return "₹0";
+
+  let rupees = numericVal;
+  if (forcePaise === true) {
+    rupees = numericVal / 100;
+  } else if (forcePaise === false) {
+    rupees = numericVal;
+  } else {
+    // Auto-detect: integer values > 50,000 are treated as paise
+    rupees = numericVal > 50000 && Number.isInteger(numericVal) ? numericVal / 100 : numericVal;
+  }
+
   return new Intl.NumberFormat("en-IN", {
     style: "currency",
     currency: "INR",
@@ -140,33 +151,57 @@ export function renderOrderConfirmationEmail({
   customerName,
   items = [],
   totals = {},
+  inPaise = null,
   paymentMethod = "COD",
   shippingAddress = {},
 }) {
   const name = customerName || shippingAddress?.full_name || "Valued Client";
+
+  // Auto-detect if amounts are in paise (Cacapo default) or rupees
+  const isPaiseOrder = Boolean(
+    inPaise === true ||
+    totals.inPaise === true ||
+    totals.isPaise === true ||
+    (totals.subtotal != null && Number(totals.subtotal) > 50000) ||
+    (totals.total != null && Number(totals.total) > 50000) ||
+    (totals.total_amount != null && Number(totals.total_amount) > 50000) ||
+    items.some(i => (i.price || i.unit_price || 0) > 50000)
+  );
+
+  const formatAmount = (val) => formatINR(val, isPaiseOrder);
+
   const itemsListHtml = items.map((item) => {
     const itemName = item.name || item.product?.name || "Fashion Item";
     const size = item.size || item.variant?.size || "";
     const color = item.color || item.variant?.color || "";
-    const variantStr = [size, color].filter(Boolean).join(" / ");
+    const variantParts = [];
+    if (size) variantParts.push(`Size: ${size}`);
+    if (color) variantParts.push(`Color: ${color}`);
+    const variantStr = variantParts.join(" &bull; ");
     const qty = item.quantity || 1;
-    const total = formatINR((item.price || item.unit_price || 0) * qty);
+    const rawPrice = item.price != null ? item.price : (item.unit_price || 0);
+    const unitPriceFormatted = formatAmount(rawPrice);
+    const lineTotalFormatted = formatAmount(rawPrice * qty);
 
     return `<tr style="border-bottom: 1px solid #18181b;">
-      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 600; word-break: break-word;">
+      <td style="padding: 12px 6px 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 600; word-break: break-word;">
         ${itemName}
-        ${variantStr ? `<br/><span style="font-size: 10px; color: #71717a; font-weight: 400; text-transform: uppercase;">Variant: ${variantStr}</span>` : ""}
+        ${variantStr ? `<br/><span style="font-size: 10px; color: #71717a; font-weight: 400; text-transform: uppercase; letter-spacing: 0.05em; display: inline-block; margin-top: 3px;">${variantStr}</span>` : ""}
       </td>
-      <td style="padding: 12px 0; color: #a1a1aa; font-size: 12px; text-align: center; white-space: nowrap;">x${qty}</td>
-      <td style="padding: 12px 0; color: #e4e4e7; font-size: 13px; font-weight: 700; text-align: right; white-space: nowrap;">${total}</td>
+      <td style="padding: 12px 6px; color: #a1a1aa; font-size: 12px; font-weight: 500; text-align: right; white-space: nowrap;">${unitPriceFormatted}</td>
+      <td style="padding: 12px 6px; color: #a1a1aa; font-size: 12px; text-align: center; white-space: nowrap;">${qty}</td>
+      <td style="padding: 12px 0 12px 6px; color: #ffffff; font-size: 13px; font-weight: 700; text-align: right; white-space: nowrap;">${lineTotalFormatted}</td>
     </tr>`;
   }).join("");
 
-  const subtotalFormatted = formatINR(totals.subtotal || totals.subTotal || 0);
-  const discountFormatted = formatINR(totals.discount || 0);
-  const shippingFormatted = totals.shipping === 0 ? "FREE" : formatINR(totals.shipping || 0);
-  const taxFormatted = formatINR(totals.tax || 0);
-  const totalFormatted = formatINR(totals.total || totals.total_amount || 0);
+  const subtotalFormatted = formatAmount(totals.subtotal || totals.subTotal || 0);
+  const discountVal = totals.discount || 0;
+  const discountFormatted = formatAmount(discountVal);
+  const shippingVal = totals.shipping || 0;
+  const shippingFormatted = (shippingVal === 0 || shippingVal === "0") ? "FREE" : formatAmount(shippingVal);
+  const taxVal = totals.tax || 0;
+  const taxFormatted = formatAmount(taxVal);
+  const totalFormatted = formatAmount(totals.total || totals.total_amount || 0);
 
   const addressLine = [
     shippingAddress?.address_line1 || shippingAddress?.address,
@@ -191,9 +226,10 @@ export function renderOrderConfirmationEmail({
       <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; border-collapse: collapse;">
         <thead>
           <tr style="border-bottom: 1px solid #27272a; text-align: left;">
-            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em;">Item</th>
-            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; text-align: center;">Qty</th>
-            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; text-align: right;">Amount</th>
+            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; width: 44%;">Item</th>
+            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; text-align: right; width: 22%;">Price</th>
+            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; text-align: center; width: 12%;">Qty</th>
+            <th style="padding-bottom: 8px; font-size: 10px; color: #71717a; text-transform: uppercase; letter-spacing: 0.1em; text-align: right; width: 22%;">Total</th>
           </tr>
         </thead>
         <tbody>
@@ -218,12 +254,30 @@ export function renderOrderConfirmationEmail({
       <div style="background-color: #030303; border: 1px solid #18181b; padding: 16px; border-radius: 4px;">
         <span style="font-size: 10px; font-weight: 700; letter-spacing: 0.15em; color: #71717a; text-transform: uppercase; display: block; margin-bottom: 10px;">Order Summary</span>
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" style="width: 100%; font-size: 12px; border-collapse: collapse;">
-          <tr><td style="padding: 3px 0; color: #71717a;">Subtotal</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${subtotalFormatted}</td></tr>
-          ${totals.discount > 0 ? `<tr><td style="padding: 3px 0; color: #FF4D4D;">Discount</td><td style="padding: 3px 0; text-align: right; color: #FF4D4D;">-${discountFormatted}</td></tr>` : ""}
-          <tr><td style="padding: 3px 0; color: #71717a;">Shipping</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${shippingFormatted}</td></tr>
-          <tr><td style="padding: 3px 0; color: #71717a;">GST / Tax</td><td style="padding: 3px 0; text-align: right; color: #e4e4e7;">${taxFormatted}</td></tr>
-          <tr style="border-top: 1px solid #27272a;"><td style="padding: 8px 0 3px 0; color: #FFFFFF; font-weight: 700;">Total Paid</td><td style="padding: 8px 0 3px 0; text-align: right; color: #FFFFFF; font-weight: 700;">${totalFormatted}</td></tr>
-          <tr><td style="padding: 2px 0; color: #71717a; font-size: 10px;">Payment Method</td><td style="padding: 2px 0; text-align: right; color: #a1a1aa; font-size: 10px; text-transform: uppercase;">${paymentMethod}</td></tr>
+          <tr>
+            <td style="padding: 4px 0; color: #71717a;">Subtotal</td>
+            <td style="padding: 4px 0; text-align: right; color: #e4e4e7; font-weight: 500;">${subtotalFormatted}</td>
+          </tr>
+          ${discountVal > 0 ? `<tr>
+            <td style="padding: 4px 0; color: #FF4D4D;">Discount</td>
+            <td style="padding: 4px 0; text-align: right; color: #FF4D4D; font-weight: 500;">-${discountFormatted}</td>
+          </tr>` : ""}
+          <tr>
+            <td style="padding: 4px 0; color: #71717a;">Shipping</td>
+            <td style="padding: 4px 0; text-align: right; color: #e4e4e7; font-weight: 500;">${shippingFormatted}</td>
+          </tr>
+          ${taxVal > 0 ? `<tr>
+            <td style="padding: 4px 0; color: #71717a;">GST <span style="font-size: 10px; color: #71717a;">(Included)</span></td>
+            <td style="padding: 4px 0; text-align: right; color: #a1a1aa; font-weight: 500;">${taxFormatted}</td>
+          </tr>` : ""}
+          <tr style="border-top: 1px solid #27272a;">
+            <td style="padding: 10px 0 4px 0; color: #FFFFFF; font-weight: 700; font-size: 13px;">Total Paid</td>
+            <td style="padding: 10px 0 4px 0; text-align: right; color: #FFFFFF; font-weight: 800; font-size: 14px;">${totalFormatted}</td>
+          </tr>
+          <tr>
+            <td style="padding: 3px 0; color: #71717a; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em;">Payment Method</td>
+            <td style="padding: 3px 0; text-align: right; color: #a1a1aa; font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600;">${paymentMethod}</td>
+          </tr>
         </table>
       </div>
     </div>

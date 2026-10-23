@@ -20,6 +20,11 @@ describe("Email Notification Utility Suite", () => {
       // 185000 paise = 1850 rupees
       expect(formatINR(185000)).toContain("1,850");
     });
+
+    it("handles forced paise formatting correctly even under 50,000", () => {
+      // 19550 paise = 195.5 rupees -> ₹196
+      expect(formatINR(19550, true)).toContain("196");
+    });
   });
 
   describe("renderOrderConfirmationEmail", () => {
@@ -39,6 +44,59 @@ describe("Email Notification Utility Suite", () => {
       expect(html).toContain("Aria Montgomery");
       expect(html).toContain("Silk Trench Coat");
       expect(html).toContain("Razorpay (Online)");
+      expect(html).toContain(">Price<");
+      expect(html).toContain(">Total<");
+    });
+
+    it("correctly renders paise values, individual item price, and GST without inflation", () => {
+      const html = renderOrderConfirmationEmail({
+        orderNumber: "CCP-942685",
+        customerName: "Ashik",
+        inPaise: true,
+        items: [
+          {
+            name: "PLATINUM BLOCK HEEL",
+            size: "38",
+            color: "Silver",
+            price: 97750, // ₹977.50 each in paise
+            quantity: 2,
+          },
+          {
+            name: "SILK SLIP ARCHIVE DRESS",
+            price: 195500, // ₹1,955.00 each in paise
+            quantity: 1,
+          },
+        ],
+        totals: {
+          subtotal: 391000, // ₹3,910 in paise
+          discount: 0,
+          shipping: 0,
+          tax: 19550, // 5% GST = ₹195.50 in paise
+          total: 391000, // ₹3,910 in paise
+        },
+        paymentMethod: "Cash on Delivery (COD)",
+        shippingAddress: {
+          full_name: "Ashik",
+          address_line1: "B4-02 oxoniya",
+          city: "Aluva",
+          state: "Kerala",
+          pincode: "675433",
+        },
+      });
+
+      // Headers check
+      expect(html).toContain("Price");
+      expect(html).toContain("Total");
+
+      // Item names and prices check (individual price should NOT be 0)
+      expect(html).toContain("PLATINUM BLOCK HEEL");
+      expect(html).not.toContain("₹0</td>"); // No item amount should be ₹0
+
+      // Tax should NOT be 19,550
+      expect(html).not.toContain("19,550");
+      expect(html).toContain("GST");
+      expect(html).toContain("(Included)");
+      expect(html).toContain("196"); // ₹195.50 rounded to ₹196
     });
   });
 
