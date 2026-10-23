@@ -25,6 +25,7 @@ function LoginContent() {
   const type = searchParams.get("type");
   const tabParam = searchParams.get("tab");
   const urlError = searchParams.get("error");
+  const urlMessage = searchParams.get("message");
 
   const [authTab, setAuthTab] = useState(
     type === "recovery" ? "recovery" : tabParam === "forgot" ? "forgot" : "signin"
@@ -40,7 +41,7 @@ function LoginContent() {
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(urlError ? decodeURIComponent(urlError) : null);
-  const [successMessage, setSuccessMessage] = useState(null);
+  const [successMessage, setSuccessMessage] = useState(urlMessage ? decodeURIComponent(urlMessage) : null);
   const [verificationSent, setVerificationSent] = useState(false);
 
   const [failedAttempts, setFailedAttempts] = useState(0);
