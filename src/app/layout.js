@@ -120,6 +120,27 @@ export default function RootLayout({ children }) {
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
         />
+        {/* Global drag prevention for images */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if (typeof window !== 'undefined') {
+                window.addEventListener('dragstart', function(e) {
+                  if (e.target && (
+                    e.target.tagName === 'IMG' ||
+                    e.target.tagName === 'PICTURE' ||
+                    e.target.tagName === 'SVG' ||
+                    e.target.closest('img') ||
+                    e.target.closest('[data-nimg]') ||
+                    (e.target.tagName === 'A' && e.target.querySelector('img'))
+                  )) {
+                    e.preventDefault();
+                  }
+                }, { capture: true });
+              }
+            `,
+          }}
+        />
         {children}
         <CartSidebar />
         <Analytics />

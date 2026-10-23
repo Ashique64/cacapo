@@ -128,24 +128,28 @@ export default function Collections({ initialCategories }) {
                 key={item.id || item.slug}
                 href={`/shop?category=${item.id || item.slug}`}
                 ref={(el) => (cardsRef.current[idx] = el)}
-                className={`group relative flex flex-col justify-end h-115 rounded-none overflow-hidden border border-card-border bg-card-bg backdrop-blur-md cursor-pointer transition-all duration-500 hover:border-accent hover:ring-1 hover:ring-accent/50 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] ${
+                draggable={false}
+                onDragStart={(e) => e.preventDefault()}
+                className={`group relative flex flex-col justify-end h-115 rounded-none overflow-hidden border border-card-border bg-card-bg backdrop-blur-md cursor-pointer transition-all duration-500 hover:border-accent hover:ring-1 hover:ring-accent/50 hover:shadow-[0_0_40px_rgba(255,77,77,0.06)] select-none ${
                   idx === 2 && categories.length === 3 ? "md:col-span-2 lg:col-span-1" : ""
                 }`}
               >
                 {/* Card Image with Parallax & Hover Zoom */}
-                <div className="absolute inset-0 z-0 overflow-hidden">
-                  <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/15 to-white/30 z-1" />
+                <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none select-none">
+                  <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/15 to-white/30 z-1 pointer-events-none select-none" />
                   {item.image_url ? (
                     <Image
                       src={item.image_url}
                       alt={item.name}
                       fill
                       sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw"
-                      className="object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-95 lg:opacity-90 lg:group-hover:opacity-100"
+                      className="object-cover transform scale-100 transition-transform duration-1000 ease-out group-hover:scale-105 opacity-95 lg:opacity-90 lg:group-hover:opacity-100 pointer-events-none select-none"
                       loading="lazy"
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
                     />
                   ) : (
-                    <div className="w-full h-full bg-card-bg" />
+                    <div className="w-full h-full bg-card-bg pointer-events-none select-none" />
                   )}
                 </div>
 

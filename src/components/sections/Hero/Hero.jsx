@@ -135,16 +135,18 @@ export default function Hero() {
       className="relative w-full bg-background h-screen"
     >
       {/* Background Image Layer */}
-      <div className="absolute inset-0 w-full h-full overflow-hidden z-10">
+      <div className="absolute inset-0 w-full h-full overflow-hidden z-10 pointer-events-none select-none">
         {/* Mobile Hero Background */}
         <Image
           src="/Images/mobile_hero_bg_white.png"
           alt="CACAPO — Trendy Imported Fashion for Girls"
           fill
           sizes="(max-width: 1023px) 100vw, 0px"
-          className="object-cover opacity-60 scale-110 animate-swing block lg:hidden"
+          className="object-cover opacity-60 scale-110 animate-swing block lg:hidden pointer-events-none select-none"
           priority
           quality={75}
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
         />
 
         {/* Desktop Hero Background */}
@@ -153,14 +155,16 @@ export default function Hero() {
           alt="CACAPO — Trendy Imported Fashion for Girls"
           fill
           sizes="(min-width: 1024px) 100vw, 0px"
-          className="object-cover opacity-60 scale-110 animate-swing hidden lg:block"
+          className="object-cover opacity-60 scale-110 animate-swing hidden lg:block pointer-events-none select-none"
           priority
           quality={75}
+          draggable={false}
+          onDragStart={(e) => e.preventDefault()}
         />
 
         {/* Cinematic Vignette Overlay */}
-        <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-background/10 pointer-events-none z-15" />
-        <div className="absolute inset-0 bg-radial-gradient pointer-events-none z-15" />
+        <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-background/10 pointer-events-none z-15 select-none" />
+        <div className="absolute inset-0 bg-radial-gradient pointer-events-none z-15 select-none" />
       </div>
 
       {/* Scrolling Text Overlays */}

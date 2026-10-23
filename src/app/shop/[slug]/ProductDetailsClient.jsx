@@ -212,7 +212,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
         <span>/</span>
         <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
         <span>/</span>
-        <span className="text-foreground truncate max-w-[200px]">{product.name}</span>
+        <span className="text-foreground truncate max-w-50">{product.name}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -235,7 +235,9 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             <img 
               src={images[activeImgIdx]} 
               alt={product.name}
-              className={`w-full h-full object-cover transition-opacity duration-500 ${isZooming ? "opacity-0" : "opacity-100"}`}
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
+              className={`w-full h-full object-cover transition-opacity duration-500 pointer-events-none select-none ${isZooming ? "opacity-0" : "opacity-100"}`}
             />
 
             {/* Custom hover zoom magnifier box */}
@@ -263,7 +265,9 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   <img 
                     src={img} 
                     alt={product.name}
-                    className="w-full h-full object-cover"
+                    draggable={false}
+                    onDragStart={(e) => e.preventDefault()}
+                    className="w-full h-full object-cover pointer-events-none select-none"
                   />
                 </div>
               ))}
@@ -307,7 +311,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   }`}
                 >
                   <div className="absolute inset-0 bg-black/5" />
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img src={img} alt="" draggable={false} onDragStart={(e) => e.preventDefault()} className="w-full h-full object-cover pointer-events-none select-none" />
                 </button>
               ))}
             </div>
@@ -426,7 +430,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                           setErrorMsg("");
                         }
                       }}
-                      className={`h-11 min-w-[50px] px-4 text-xs tracking-widest uppercase transition-all duration-300 border flex items-center justify-center relative cursor-pointer ${
+                      className={`h-11 min-w-12.5 px-4 text-xs tracking-widest uppercase transition-all duration-300 border flex items-center justify-center relative cursor-pointer ${
                         isSizeOutOfStock
                           ? "border-zinc-100 text-zinc-300 bg-zinc-50/50 cursor-not-allowed line-through"
                           : isSelected
@@ -541,7 +545,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   </button>
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? "max-h-[350px] mt-2 opacity-100" : "max-h-0 opacity-0"
+                      isOpen ? "max-h-87.5 mt-2 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     {section.id === "shipping" ? (

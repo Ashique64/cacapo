@@ -86,11 +86,13 @@ export default function Navbar() {
             : "bg-transparent p-6"
         } flex justify-between items-center`}
       >
-        <Link href="/" className="transition-opacity hover:opacity-80">
+        <Link href="/" className="transition-opacity hover:opacity-80 select-none" draggable={false} onDragStart={(e) => e.preventDefault()}>
           <img 
             src="/Cacapo-Logo.svg" 
             alt="CACAPO Logo" 
-            className="h-5 w-auto object-contain dark:invert-0" 
+            className="h-5 w-auto object-contain dark:invert-0 pointer-events-none select-none" 
+            draggable={false}
+            onDragStart={(e) => e.preventDefault()}
           />
         </Link>
         

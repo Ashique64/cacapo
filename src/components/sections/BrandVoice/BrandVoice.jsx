@@ -146,8 +146,10 @@ export default function BrandEthos() {
               ref={imageRef}
               src="/Images/ethos_white.png"
               alt="Imported fashion detail"
-              className="w-full h-[120%] object-cover absolute top-[-10%] opacity-80"
+              className="w-full h-[120%] object-cover absolute top-[-10%] opacity-80 pointer-events-none select-none"
               style={{ willChange: "transform" }}
+              draggable={false}
+              onDragStart={(e) => e.preventDefault()}
             />
             {/* Ambient label */}
             <div className="absolute bottom-6 left-6 z-20">
