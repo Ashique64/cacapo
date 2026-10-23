@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { 
   User, 
@@ -13,6 +13,8 @@ import {
   Info, 
   Lock, 
   ChevronRight, 
+  ChevronDown,
+  Plus,
   Loader2, 
   ArrowRight,
   ShieldCheck,
@@ -59,6 +61,8 @@ export default function CheckoutPage() {
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState("");
   const [addressesLoading, setAddressesLoading] = useState(false);
+  const [isAddressDropdownOpen, setIsAddressDropdownOpen] = useState(false);
+  const addressDropdownRef = useRef(null);
   
   // Shipping Form State
   const [shippingDetails, setShippingDetails] = useState({
@@ -191,8 +195,22 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, user]);
 
-  const handleSelectSavedAddress = (e) => {
-    const id = e.target.value;
+  // Click-outside listener for custom address dropdown
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (addressDropdownRef.current && !addressDropdownRef.current.contains(e.target)) {
+        setIsAddressDropdownOpen(false);
+      }
+    };
+    if (isAddressDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isAddressDropdownOpen]);
+
+  const handleSelectAddressId = (id) => {
     setSelectedAddressId(id);
     if (id === "new") {
       setShippingDetails({
@@ -210,6 +228,11 @@ export default function CheckoutPage() {
       const found = addresses.find(a => a.id === id);
       if (found) populateFormFromAddress(found);
     }
+  };
+
+  const handleSelectSavedAddress = (e) => {
+    const id = e?.target ? e.target.value : e;
+    handleSelectAddressId(id);
   };
 
   const handleInputChange = (e) => {
@@ -290,6 +313,20 @@ export default function CheckoutPage() {
     setFormErrors(errors);
     return Object.keys(errors).length === 0;
   };
+
+  // Determine if shipping form is ready to proceed
+  const isShippingFormValid = useMemo(() => {
+    if (!policyAccepted) return false;
+    if (selectedAddressId && selectedAddressId !== "new") return true;
+    return Boolean(
+      shippingDetails.fullName.trim() &&
+      shippingDetails.phone.trim() &&
+      shippingDetails.addressLine1.trim() &&
+      shippingDetails.city.trim() &&
+      shippingDetails.state.trim() &&
+      shippingDetails.pincode.trim()
+    );
+  }, [policyAccepted, selectedAddressId, shippingDetails]);
 
   const handleApplyCoupon = async (e) => {
     e.preventDefault();
@@ -422,6 +459,7 @@ export default function CheckoutPage() {
       // 1. Save Address to profile if user selected so and address is new
       let addressId = selectedAddressId && selectedAddressId !== "new" ? selectedAddressId : null;
       if (user && saveAddressToProfile && (!selectedAddressId || selectedAddressId === "new")) {
+        const isFirstAddress = addresses.length === 0;
         const { data: savedAddr, error: addrErr } = await supabase
           .from("addresses")
           .insert({
@@ -434,7 +472,7 @@ export default function CheckoutPage() {
             state: shippingDetails.state,
             country: shippingDetails.country,
             pincode: shippingDetails.pincode,
-            is_default: shippingDetails.isDefault
+            is_default: isFirstAddress ? true : shippingDetails.isDefault
           })
           .select()
           .single();
@@ -787,32 +825,141 @@ export default function CheckoutPage() {
                         </span>
                       </div>
 
-                      {/* Saved Addresses dropdown */}
-                      {user && addresses.length > 0 && (
-                        <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-3">
-                          <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
-                            Saved Addresses
-                          </label>
-                          {addressesLoading ? (
-                            <div className="flex items-center gap-2 text-xs text-muted-text">
-                              <Loader2 className="w-3 h-3 animate-spin text-accent" /> Loading saved addresses...
+                      {/* Custom Saved Addresses dropdown */}
+                      {user && addresses.length > 0 && (() => {
+                        const selectedAddress = addresses.find(a => a.id === selectedAddressId);
+                        return (
+                          <div className="p-5 border border-card-border bg-[#f9f8f6] space-y-3 relative z-30">
+                            <div className="flex justify-between items-center">
+                              <label className="block text-xs font-bold uppercase tracking-widest text-muted-text">
+                                Saved Addresses
+                              </label>
+                              {selectedAddress?.is_default && selectedAddressId !== "new" && (
+                                <span className="text-[9px] font-mono tracking-widest font-semibold px-2 py-0.5 bg-accent/10 text-accent uppercase">
+                                  Default Address
+                                </span>
+                              )}
                             </div>
-                          ) : (
-                            <select
-                              value={selectedAddressId}
-                              onChange={handleSelectSavedAddress}
-                              className="custom-input text-xs tracking-wider bg-white border-card-border text-foreground"
-                            >
-                              {addresses.map((addr) => (
-                                <option key={addr.id} value={addr.id}>
-                                  {addr.full_name} - {addr.address_line1}, {addr.city}
-                                </option>
-                              ))}
-                              <option value="new">+ ADD NEW ADDRESS</option>
-                            </select>
-                          )}
-                        </div>
-                      )}
+
+                            {addressesLoading ? (
+                              <div className="flex items-center gap-2 text-xs text-muted-text py-2">
+                                <Loader2 className="w-3.5 h-3.5 animate-spin text-accent" /> Loading saved addresses...
+                              </div>
+                            ) : (
+                              <div ref={addressDropdownRef} className="relative">
+                                {/* Trigger Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => setIsAddressDropdownOpen(prev => !prev)}
+                                  className={`w-full flex items-center justify-between px-4 py-3 bg-white border text-left text-xs tracking-wide transition-all cursor-pointer ${
+                                    isAddressDropdownOpen
+                                      ? "border-accent ring-1 ring-accent/40 shadow-xs"
+                                      : "border-card-border hover:border-zinc-400"
+                                  }`}
+                                  aria-haspopup="listbox"
+                                  aria-expanded={isAddressDropdownOpen}
+                                >
+                                  <div className="flex items-center gap-2.5 truncate mr-2">
+                                    <MapPin className={`w-4 h-4 shrink-0 ${selectedAddressId === "new" ? "text-accent" : "text-muted-text"}`} />
+                                    <span className="truncate text-foreground font-medium">
+                                      {selectedAddressId === "new" ? (
+                                        <span className="text-accent font-semibold tracking-wider">+ ADD NEW ADDRESS</span>
+                                      ) : selectedAddress ? (
+                                        <>
+                                          <span className="font-semibold text-foreground">{selectedAddress.full_name}</span>
+                                          <span className="text-muted-text mx-1.5">—</span>
+                                          <span className="text-muted-text truncate">
+                                            {selectedAddress.address_line1}, {selectedAddress.city}
+                                          </span>
+                                        </>
+                                      ) : (
+                                        "Select a saved address"
+                                      )}
+                                    </span>
+                                  </div>
+
+                                  <ChevronDown
+                                    className={`w-4 h-4 text-muted-text shrink-0 transition-transform duration-300 ${
+                                      isAddressDropdownOpen ? "rotate-180 text-accent" : ""
+                                    }`}
+                                  />
+                                </button>
+
+                                {/* Dropdown Menu Panel */}
+                                {isAddressDropdownOpen && (
+                                  <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-card-border shadow-xl z-50 max-h-72 overflow-y-auto no-scrollbar divide-y divide-card-border/60">
+                                    {addresses.map((addr) => {
+                                      const isSelected = selectedAddressId === addr.id;
+                                      return (
+                                        <button
+                                          key={addr.id}
+                                          type="button"
+                                          onClick={() => {
+                                            handleSelectAddressId(addr.id);
+                                            setIsAddressDropdownOpen(false);
+                                          }}
+                                          className={`w-full px-4 py-3 flex items-start justify-between text-left transition-colors cursor-pointer group ${
+                                            isSelected ? "bg-accent/5" : "hover:bg-zinc-50"
+                                          }`}
+                                        >
+                                          <div className="space-y-1 pr-3">
+                                            <div className="flex items-center gap-2">
+                                              <span className={`text-xs font-bold tracking-wide uppercase ${isSelected ? "text-accent" : "text-foreground group-hover:text-accent"}`}>
+                                                {addr.full_name}
+                                              </span>
+                                              {addr.is_default && (
+                                                <span className="text-[8px] font-mono tracking-widest px-1.5 py-0.5 bg-zinc-100 text-zinc-600 font-semibold uppercase">
+                                                  Default
+                                                </span>
+                                              )}
+                                            </div>
+                                            <p className="text-[11px] text-muted-text font-light leading-relaxed">
+                                              {addr.address_line1}{addr.address_line2 ? `, ${addr.address_line2}` : ""}, {addr.city}, {addr.state} - {addr.pincode}
+                                            </p>
+                                            <p className="text-[10px] text-muted-text/80 font-mono">
+                                              📞 {addr.phone}
+                                            </p>
+                                          </div>
+
+                                          <div className="pt-0.5 shrink-0">
+                                            <div className={`w-4 h-4 rounded-full border flex items-center justify-center transition-all ${
+                                              isSelected ? "border-accent bg-accent text-white" : "border-zinc-300 group-hover:border-zinc-400"
+                                            }`}>
+                                              {isSelected && <Check className="w-2.5 h-2.5 stroke-[3]" />}
+                                            </div>
+                                          </div>
+                                        </button>
+                                      );
+                                    })}
+
+                                    {/* Add New Address Option */}
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        handleSelectAddressId("new");
+                                        setIsAddressDropdownOpen(false);
+                                      }}
+                                      className={`w-full px-4 py-3 flex items-center justify-between text-left transition-colors cursor-pointer group bg-zinc-50/70 hover:bg-zinc-100 ${
+                                        selectedAddressId === "new" ? "bg-accent/10 border-l-2 border-accent" : ""
+                                      }`}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <Plus className="w-3.5 h-3.5 text-accent" />
+                                        <span className="text-xs font-bold tracking-wider text-accent uppercase">
+                                          Add New Address
+                                        </span>
+                                      </div>
+                                      {selectedAddressId === "new" && (
+                                        <Check className="w-3.5 h-3.5 text-accent" />
+                                      )}
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
 
                       {/* Address Fields */}
                       <div className="space-y-6">
@@ -954,7 +1101,7 @@ export default function CheckoutPage() {
                               />
                               Save address to profile for future checkout
                             </label>
-                            {saveAddressToProfile && (
+                            {saveAddressToProfile && addresses.length > 0 && (
                               <label className="flex items-center gap-3 text-xs tracking-wider cursor-pointer text-muted-text hover:text-foreground transition-colors">
                                 <input
                                   type="checkbox"
@@ -999,7 +1146,7 @@ export default function CheckoutPage() {
 
                       <button
                         type="submit"
-                        disabled={!policyAccepted}
+                        disabled={!isShippingFormValid}
                         className="w-full py-4 bg-foreground text-background border border-foreground text-xs font-bold tracking-widest uppercase hover:bg-transparent hover:text-foreground transition-all duration-300 flex items-center justify-center gap-2 rounded-none mt-8 disabled:bg-zinc-100 disabled:text-zinc-400 disabled:border-zinc-100 disabled:cursor-not-allowed"
                       >
                         CONTINUE TO PAYMENT <ArrowRight className="w-3.5 h-3.5" />
