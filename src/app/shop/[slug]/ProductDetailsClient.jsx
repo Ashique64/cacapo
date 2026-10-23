@@ -495,7 +495,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             
             <div className="flex items-center justify-center gap-4 text-[10px] tracking-widest text-muted-text uppercase pt-2">
               <div className="flex items-center gap-1.5">
-                <Truck className="w-3.5 h-3.5 text-accent" /> Free Shipping Above ₹10,000
+                <Truck className="w-3.5 h-3.5 text-accent" /> Free Shipping Above ₹3,000
               </div>
               <div className="w-1.5 h-1.5 rounded-full bg-card-border" />
               <div className="flex items-center gap-1.5">
@@ -530,7 +530,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
               { 
                 id: "shipping", 
                 title: "Shipping & Returns", 
-                content: "Complimentary delivery on orders above ₹10,000. Under this threshold, a flat ₹50 shipping fee is applied at checkout. Items returned in original, unworn condition with tags attached are eligible for full refund or exchange within 7 days." 
+                content: "Complimentary delivery on orders above ₹3,000. Under this threshold, a flat ₹50 shipping fee is applied at checkout. Items returned in original, unworn condition with tags attached are eligible for full refund or exchange within 7 days." 
               }
             ].map((section) => {
               const isOpen = openSection === section.id;
@@ -551,7 +551,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                     {section.id === "shipping" ? (
                       <div className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans text-justify space-y-4">
                         <p>
-                          Complimentary delivery on orders above ₹10,000. Under this threshold, a flat ₹50 shipping fee is applied at checkout.
+                          Complimentary delivery on orders above ₹3,000. Under this threshold, a flat ₹50 shipping fee is applied at checkout.
                         </p>
                         
                         {/* Tiered return window table */}

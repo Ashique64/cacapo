@@ -14,7 +14,7 @@ export const metadata = {
   openGraph: {
     title: "Shipping & Delivery | CACAPO",
     description:
-      "CACAPO ships across India. Standard delivery 5–7 days. Express 2–3 days. Free shipping on orders above ₹10,000.",
+      "CACAPO ships across India. Standard delivery 5–7 days. Express 2–3 days. Free shipping on orders above ₹3,000.",
     url: "https://cacapoclothing.com/shipping-info",
     type: "website",
   },
@@ -105,7 +105,7 @@ export default function ShippingInfoPage() {
                   </h3>
                 </div>
                 <p className="text-muted-text text-xs font-light leading-relaxed">
-                  Domestic shipping is free on all orders above <strong className="text-foreground font-semibold">₹10,000</strong>. For orders below this threshold, a flat delivery and handling fee of <strong className="text-foreground font-semibold">₹50</strong> is calculated at checkout.
+                  Domestic shipping is free on all orders above <strong className="text-foreground font-semibold">₹3,000</strong>. For orders below this threshold, a flat delivery and handling fee of <strong className="text-foreground font-semibold">₹50</strong> is calculated at checkout.
                 </p>
               </div>
 

@@ -101,7 +101,7 @@ export default function TermsOfServicePage() {
                 <p className="text-muted-text text-xs font-light leading-relaxed">
                   • <strong className="text-foreground font-semibold">Pricing:</strong> Product prices are displayed in Indian Rupees (INR) and are subject to change without prior notice.
                   <br />
-                  • <strong className="text-foreground font-semibold">Shipping Terms:</strong> Flat delivery rates of <strong className="text-foreground font-semibold">₹50</strong> are applied on orders below <strong className="text-foreground font-semibold">₹10,000</strong>. Orders of value ₹10,000 and above qualify for free shipping.
+                  • <strong className="text-foreground font-semibold">Shipping Terms:</strong> Flat delivery rates of <strong className="text-foreground font-semibold">₹50</strong> are applied on orders below <strong className="text-foreground font-semibold">₹3,000</strong>. Orders of value ₹3,000 and above qualify for free shipping.
                   <br />
                   • <strong className="text-foreground font-semibold">UPI Verification:</strong> Orders utilizing manual UPI payments are subjected to verification desk verification via receipt/UTR checking before processing begins.
                 </p>

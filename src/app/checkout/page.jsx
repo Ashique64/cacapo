@@ -229,8 +229,8 @@ export default function CheckoutPage() {
     return sum + (price * item.quantity);
   }, 0);
 
-  // Free shipping over ₹10,000 (1000000 cents), otherwise ₹50 (5000 cents)
-  const shippingCharge = subtotal >= 1000000 ? 0 : 5000;
+  // Free shipping over ₹3,000 (300000 paise), otherwise ₹50 (5000 paise)
+  const shippingCharge = subtotal >= 300000 ? 0 : 5000;
 
   // Coupon calculations
   let discount = 0;
