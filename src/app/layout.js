@@ -1,7 +1,6 @@
 import { Outfit, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import CartSidebar from "@/components/layout/CartSidebar";
-import AuthHashRedirect from "@/components/providers/AuthHashRedirect";
 import { Analytics } from "@vercel/analytics/react";
 
 const outfit = Outfit({
@@ -123,7 +122,6 @@ export default function RootLayout({ children }) {
         />
         {children}
         <CartSidebar />
-        <AuthHashRedirect />
         <Analytics />
       </body>
     </html>

@@ -22,13 +22,12 @@ function LoginContent() {
   const signIn = useAuthStore((state) => state.signIn);
   const signUp = useAuthStore((state) => state.signUp);
 
-  const type = searchParams.get("type");
   const tabParam = searchParams.get("tab");
   const urlError = searchParams.get("error");
   const urlMessage = searchParams.get("message");
 
   const [authTab, setAuthTab] = useState(
-    type === "recovery" ? "recovery" : tabParam === "forgot" ? "forgot" : "signin"
+    tabParam === "signup" ? "signup" : tabParam === "forgot" ? "forgot" : "signin"
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -79,10 +78,10 @@ function LoginContent() {
     return () => clearInterval(timer);
   }, [lockoutTime]);
 
-  // If user is already logged in, redirect away (except when in recovery flow)
+  // If user is already logged in, redirect away
   useEffect(() => {
     const handleRedirect = async () => {
-      if (user && !loading && authTab !== "recovery") {
+      if (user && !loading) {
         try {
           const { data: isAdmin } = await supabase
             .from("admin_users")
@@ -101,7 +100,7 @@ function LoginContent() {
       }
     };
     handleRedirect();
-  }, [user, loading, redirectUrl, router, authTab]);
+  }, [user, loading, redirectUrl, router]);
 
 
   const handleSubmit = async (e) => {
@@ -114,7 +113,7 @@ function LoginContent() {
       return;
     }
 
-    // 1. Forgot password request flow
+    // Forgot password flow
     if (authTab === "forgot") {
       if (!email.trim()) {
         setError("Email Address is required");
@@ -128,28 +127,11 @@ function LoginContent() {
 
       setSubmitting(true);
       try {
-        // Step 1: Check if this email belongs to a registered account.
-        // Supabase's resetPasswordForEmail always returns success even for
-        // unknown emails (anti-enumeration design), so we do a server-side
-        // check first using the admin API.
-        const checkRes = await fetch("/api/auth/check-email", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email: email.trim() }),
-        });
-        const checkData = await checkRes.json();
+        const siteUrl = typeof window !== "undefined" && window.location.origin.includes("localhost")
+          ? window.location.origin
+          : "https://cacapo.vercel.app";
+        const resetRedirect = `${siteUrl}/reset-password`;
 
-        if (!checkData.exists) {
-          setError("No account found with this email address. Please check the email or create a new account.");
-          setSubmitting(false);
-          return;
-        }
-
-        // Step 2: Email exists — send the password reset link
-        const siteUrl = window.location.origin.includes("localhost")
-          ? "https://cacapo.vercel.app"
-          : window.location.origin;
-        const resetRedirect = `${siteUrl}/auth/callback?type=recovery`;
         const { error: resetErr } = await useAuthStore.getState().resetPasswordForEmail(email.trim(), resetRedirect);
         if (resetErr) throw resetErr;
         setVerificationSent(true);
@@ -157,51 +139,11 @@ function LoginContent() {
         setError(err.message || "Failed to send reset link.");
       } finally {
         setSubmitting(false);
-
       }
       return;
     }
 
-    // 2. Recovery update flow (new password)
-    if (authTab === "recovery") {
-      if (!password.trim() || !confirmPassword.trim()) {
-        setError("Password and Confirm Password are required");
-        return;
-      }
-      if (password.length < 6) {
-        setError("Password must be at least 6 characters");
-        return;
-      }
-      if (password !== confirmPassword) {
-        setError("Passwords do not match");
-        return;
-      }
-
-      setSubmitting(true);
-      try {
-        const { error: updateErr } = await useAuthStore.getState().updatePassword(password);
-        if (updateErr) throw updateErr;
-        
-        // Sign out user to clear recovery session and force login
-        await useAuthStore.getState().signOut();
-        
-        setSuccessMessage("Password updated successfully! Redirecting to sign in...");
-        setTimeout(() => {
-          setAuthTab("signin");
-          setSuccessMessage(null);
-          setPassword("");
-          setConfirmPassword("");
-          router.push("/login");
-        }, 2500);
-      } catch (err) {
-        setError(err.message || "Failed to update password.");
-      } finally {
-        setSubmitting(false);
-      }
-      return;
-    }
-
-    // 3. Regular Sign In / Sign Up flows
+    // Sign In / Sign Up flows
     // Basic presence validation
     if (!email.trim() || !password.trim()) {
       setError("Email and Password are required");
@@ -345,23 +287,19 @@ function LoginContent() {
           </span>
           <h1 className="text-xl font-bold uppercase tracking-[0.15em] text-foreground">
             {verificationSent 
-              ? (authTab === "forgot" ? "RESET LINK SENT" : "VERIFY EMAIL") 
+              ? (authTab === "forgot" ? "RESET LINK SENT" : "VERIFY EMAIL")
               : (authTab === "signin" 
                 ? "SIGN IN" 
                 : authTab === "signup" 
                   ? "SIGN UP" 
-                  : authTab === "forgot" 
-                    ? "FORGOT PASSWORD" 
-                    : "UPDATE PASSWORD")}
+                  : "FORGOT PASSWORD")}
           </h1>
           <p className="text-[11px] text-muted-text font-medium uppercase tracking-widest">
             {verificationSent 
               ? (authTab === "forgot" ? "Please check your inbox to proceed." : "Confirm your email address to activate your account.")
-              : (authTab === "forgot" 
-                ? "Retrieve access to your CACAPO account." 
-                : authTab === "recovery"
-                  ? "Define a new secure password for your account."
-                  : "Sign in or create an account to finalize your order details securely.")}
+              : (authTab === "forgot"
+                ? "Enter your email to receive a password reset link."
+                : "Sign in or create an account to finalize your order details securely.")}
           </p>
         </div>
 
@@ -382,8 +320,8 @@ function LoginContent() {
                 {email}
               </p>
               <p className="text-xs text-muted-text leading-relaxed pt-2">
-                {authTab === "forgot" 
-                  ? "Please check your inbox and click the link to reset your password." 
+                {authTab === "forgot"
+                  ? "Please check your inbox (and spam folder) and click the link to reset your password."
                   : "Please check your inbox (and spam folder) and click the link to activate your account."}
               </p>
             </div>
@@ -404,8 +342,8 @@ function LoginContent() {
           </div>
         ) : (
           <>
-            {/* Tab Selector - Hide for recovery and forgot flows */}
-            {authTab !== "forgot" && authTab !== "recovery" && (
+            {/* Tab Selector */}
+            {authTab !== "forgot" && (
               <div className="flex border-b border-card-border text-xs font-bold tracking-widest font-sans">
                 <button
                   type="button"
@@ -492,30 +430,28 @@ function LoginContent() {
                 </>
               )}
 
-              {/* Email field - shown in sign in, sign up, forgot, but not recovery */}
-              {authTab !== "recovery" && (
-                <div className="space-y-1.5">
-                  <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
-                    Email Address
-                  </label>
-                  <input
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="custom-input text-xs tracking-wider py-2.5 px-3 disabled:opacity-50"
-                    placeholder="e.g. customer@cacapo.com"
-                    disabled={submitting || lockoutTime > 0}
-                    suppressHydrationWarning
-                  />
-                </div>
-              )}
+              {/* Email field */}
+              <div className="space-y-1.5">
+                <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
+                  Email Address
+                </label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="custom-input text-xs tracking-wider py-2.5 px-3 disabled:opacity-50"
+                  placeholder="e.g. customer@cacapo.com"
+                  disabled={submitting || lockoutTime > 0}
+                  suppressHydrationWarning
+                />
+              </div>
 
-              {/* Password field - shown in sign in, sign up, recovery, but not forgot */}
+              {/* Password field */}
               {authTab !== "forgot" && (
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
-                    {authTab === "recovery" ? "New Password" : "Password"}
+                    Password
                   </label>
                   <div className="relative">
                     <input
@@ -525,7 +461,7 @@ function LoginContent() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="custom-input text-xs tracking-wider py-2.5 px-3 pr-10 disabled:opacity-50"
                       disabled={submitting || lockoutTime > 0}
-                      placeholder={authTab === "recovery" ? "Min 6 characters" : "Minimum 6 characters"}
+                      placeholder="Minimum 6 characters"
                     />
                     <button
                       type="button"
@@ -553,11 +489,11 @@ function LoginContent() {
                 </div>
               )}
 
-              {/* Confirm Password field - shown in sign up and recovery */}
-              {(authTab === "signup" || authTab === "recovery") && (
+              {/* Confirm Password field - shown in sign up */}
+              {authTab === "signup" && (
                 <div className="space-y-1.5">
                   <label className="block text-[10px] font-bold uppercase tracking-widest text-muted-text">
-                    {authTab === "recovery" ? "Confirm New Password" : "Confirm Password"}
+                    Confirm Password
                   </label>
                   <div className="relative">
                     <input
@@ -595,9 +531,7 @@ function LoginContent() {
                     ? "SIGN IN" 
                     : authTab === "signup" 
                       ? "CREATE ACCOUNT" 
-                      : authTab === "forgot" 
-                        ? "SEND RESET LINK" 
-                        : "UPDATE PASSWORD"
+                      : "SEND RESET LINK"
                 )}
               </button>
 
@@ -607,7 +541,7 @@ function LoginContent() {
                   onClick={() => {
                     setAuthTab("signin");
                     setError(null);
-                    setEmail("");
+                    setPassword("");
                   }}
                   className="w-full py-3 border border-card-border hover:border-accent text-muted-text hover:text-foreground text-[10px] font-bold tracking-widest uppercase transition-all duration-300 rounded-none flex items-center justify-center gap-2 cursor-pointer bg-transparent"
                 >
