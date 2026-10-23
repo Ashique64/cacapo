@@ -127,6 +127,21 @@ function LoginContent() {
 
       setSubmitting(true);
       try {
+        // Step 1: Check if an account exists with this email address
+        const checkRes = await fetch("/api/auth/check-email", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        const checkData = await checkRes.json();
+
+        if (!checkData.exists) {
+          setError("No account found with this email address. Please check the email or create a new account.");
+          setSubmitting(false);
+          return;
+        }
+
+        // Step 2: Account exists — send the password reset link
         const siteUrl = typeof window !== "undefined" && window.location.origin.includes("localhost")
           ? window.location.origin
           : "https://cacapo.vercel.app";
