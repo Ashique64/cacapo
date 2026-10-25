@@ -1034,7 +1034,7 @@ export default function AdminCatalogDesk() {
                       <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
                         Storefront Visibility (User Side) *
                       </label>
-                      <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-3.5 py-2 h-[42px]">
+                      <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-3.5 py-2 h-10.5">
                         <div className="flex items-center gap-2">
                           <span
                             className={`w-2 h-2 rounded-full ${
