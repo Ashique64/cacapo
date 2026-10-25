@@ -102,8 +102,9 @@ html.lenis, html.lenis body {
   scroll-behavior: auto !important;
 }
 
-.lenis.lenis-smooth [data-lenis-prevent] {
+[data-lenis-prevent] {
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .lenis.lenis-stopped {

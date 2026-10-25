@@ -58,19 +58,22 @@ export default function CartSidebar() {
   // Disable body scroll when cart sidebar is open
   useEffect(() => {
     if (mounted && isOpen) {
+      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
       if (typeof window !== "undefined" && window.lenis) {
         window.lenis.stop();
       }
     } else if (mounted) {
-      document.body.style.overflow = "auto";
+      document.documentElement.style.overflow = "";
+      document.body.style.overflow = "";
       if (typeof window !== "undefined" && window.lenis) {
         window.lenis.start();
       }
     }
     return () => {
       if (mounted) {
-        document.body.style.overflow = "auto";
+        document.documentElement.style.overflow = "";
+        document.body.style.overflow = "";
         if (typeof window !== "undefined" && window.lenis) {
           window.lenis.start();
         }
@@ -85,6 +88,7 @@ export default function CartSidebar() {
       {/* Background Overlay */}
       <div
         onClick={handleClose}
+        onTouchMove={(e) => e.preventDefault()}
         className={`fixed inset-0 bg-black/60 backdrop-blur-xs z-50 transition-opacity duration-500 ease-in-out ${
           isOpen ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none"
         }`}
@@ -93,12 +97,12 @@ export default function CartSidebar() {
       {/* Sliding Sidebar Panel */}
       <div
         data-lenis-prevent
-        className={`fixed top-0 right-0 h-screen w-full sm:w-110 bg-card-bg border-l border-card-border z-50 flex flex-col justify-between shadow-2xl transition-transform duration-500 ease-in-out select-none ${
+        className={`fixed inset-y-0 right-0 h-dvh max-h-dvh w-full sm:w-110 bg-card-bg border-l border-card-border z-50 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out select-none overscroll-contain ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
         {/* Header */}
-        <div className="p-6 border-b border-card-border flex justify-between items-center">
+        <div className="p-4 sm:p-6 border-b border-card-border flex justify-between items-center shrink-0">
           <div className="flex items-center gap-2">
             <ShoppingBag className="w-5 h-5 text-accent" />
             <h2 className="text-sm font-bold tracking-[0.2em] text-foreground uppercase">
@@ -116,7 +120,7 @@ export default function CartSidebar() {
 
         {/* Bouncing Free Shipping Progress Bar */}
         {items.length > 0 && (
-          <div className="px-6 pt-3.5 pb-4 bg-zinc-50/95 border-b border-card-border space-y-2 select-none">
+          <div className="px-4 py-3 sm:px-6 sm:pt-3.5 sm:pb-4 bg-zinc-50/95 border-b border-card-border space-y-1.5 sm:space-y-2 select-none shrink-0">
             <div className="flex items-center justify-between text-xs">
               {isFreeShippingUnlocked ? (
                 <span className="flex items-center gap-1.5 font-bold text-emerald-600 text-xs tracking-wide">
@@ -179,7 +183,7 @@ export default function CartSidebar() {
         )}
 
         {/* Scrollable Cart Items List */}
-        <div className="grow overflow-y-auto no-scrollbar p-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
           {items.length === 0 ? (
             <div className="h-full flex flex-col justify-center items-center text-center py-20">
               <div className="p-4 bg-background border border-card-border rounded-none text-zinc-400 mb-6">
@@ -300,7 +304,7 @@ export default function CartSidebar() {
 
         {/* Footer Summary & Checkout Trigger */}
         {items.length > 0 && (
-          <div className="p-6 border-t border-card-border bg-card-bg/85 backdrop-blur-md space-y-4">
+          <div className="p-4 sm:p-6 border-t border-card-border bg-card-bg/95 backdrop-blur-md space-y-3 sm:space-y-4 shrink-0 pb-[calc(1rem+env(safe-area-inset-bottom,0px))] sm:pb-6">
             <div className="flex justify-between items-baseline">
               <span className="text-[10px] font-bold tracking-[0.25em] text-muted-text uppercase">
                 SUBTOTAL
@@ -322,7 +326,7 @@ export default function CartSidebar() {
               Taxes calculated at checkout. Express courier dispatch and secure packaging included.
             </p>
 
-            <div className="pt-2">
+            <div className="pt-1 sm:pt-2">
               <Link
                 href="/checkout"
                 onClick={handleClose}
