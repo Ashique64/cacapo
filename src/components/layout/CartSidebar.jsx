@@ -110,7 +110,7 @@ export default function CartSidebar() {
       {/* Sliding Sidebar Panel */}
       <div
         data-lenis-prevent
-        className={`fixed inset-y-0 top-0 bottom-0 right-0 h-full w-full sm:w-110 bg-card-bg border-l border-card-border z-60 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out overscroll-contain ${
+        className={`fixed inset-y-0 top-0 bottom-0 right-0 h-full w-full sm:w-110 max-w-full bg-card-bg border-l border-card-border z-60 flex flex-col justify-between overflow-x-hidden shadow-2xl transition-transform duration-500 ease-in-out overscroll-contain ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -133,7 +133,7 @@ export default function CartSidebar() {
 
         {/* Bouncing Free Shipping Progress Bar */}
         {items.length > 0 && (
-          <div className="px-4 py-3 sm:px-6 sm:pt-3.5 sm:pb-4 bg-zinc-50/95 border-b border-card-border space-y-1.5 sm:space-y-2 select-none shrink-0">
+          <div className="px-4 py-3 sm:px-6 sm:pt-3.5 sm:pb-4 bg-zinc-50/95 border-b border-card-border space-y-1.5 sm:space-y-2 select-none shrink-0 overflow-hidden">
             <div className="flex items-center justify-between text-xs">
               {isFreeShippingUnlocked ? (
                 <span className="flex items-center gap-1.5 font-bold text-emerald-600 text-xs tracking-wide">
@@ -196,7 +196,7 @@ export default function CartSidebar() {
         )}
 
         {/* Scrollable Cart Items List */}
-        <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain no-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain no-scrollbar p-4 sm:p-6 space-y-4 sm:space-y-6">
           {items.length === 0 ? (
             <div className="h-full flex flex-col justify-center items-center text-center py-20">
               <div className="p-4 bg-background border border-card-border rounded-none text-zinc-400 mb-6">
@@ -233,13 +233,13 @@ export default function CartSidebar() {
               const productSlug = product.slug ? `/shop/${product.slug}` : product.id ? `/shop/${product.id}` : "/shop";
 
               return (
-                <div key={item.id} className="flex gap-4 pb-6 border-b border-card-border items-start">
+                <div key={item.id} className="flex gap-3 sm:gap-4 pb-5 sm:pb-6 border-b border-card-border items-start w-full min-w-0">
                   
                   {/* Thumbnail frame with aspect ratio 15/16 */}
                   <Link
                     href={productSlug}
                     onClick={(e) => handleProductNavigate(e, productSlug)}
-                    className="w-20 overflow-hidden border border-card-border shrink-0 relative bg-background block group cursor-pointer active:opacity-70 transition-opacity"
+                    className="w-18 sm:w-20 overflow-hidden border border-card-border shrink-0 relative bg-background block group cursor-pointer active:opacity-70 transition-opacity"
                     style={{ aspectRatio: "15/16" }}
                   >
                     <Image
@@ -254,9 +254,9 @@ export default function CartSidebar() {
                   </Link>
 
                   {/* Item Specifications & Quantities */}
-                  <div className="flex-1 flex flex-col justify-between min-h-21.25">
+                  <div className="flex-1 min-w-0 flex flex-col justify-between min-h-20 sm:min-h-21.25">
                     <div>
-                      <div className="flex justify-between items-start gap-2">
+                      <div className="flex justify-between items-start gap-2 min-w-0">
                         {/* Entire Product Info Header is touchable/clickable */}
                         <Link
                           href={productSlug}
@@ -295,16 +295,16 @@ export default function CartSidebar() {
                     </div>
 
                     {/* Quantity Selector & Pricing */}
-                    <div className="flex justify-between items-center mt-3 pt-2">
-                      <div className="flex items-center border border-card-border bg-background w-fit">
+                    <div className="flex justify-between items-center mt-3 pt-2 gap-2 min-w-0">
+                      <div className="flex items-center border border-card-border bg-background shrink-0">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1, user?.id)}
                           aria-label="Decrease quantity"
-                          className="w-7 h-7 flex items-center justify-center text-muted-text hover:text-foreground transition-colors cursor-pointer"
+                          className="w-6.5 h-6.5 sm:w-7 sm:h-7 flex items-center justify-center text-muted-text hover:text-foreground transition-colors cursor-pointer"
                         >
                           <Minus className="w-2.5 h-2.5" />
                         </button>
-                        <span className="w-8 text-center text-[10px] font-mono font-bold text-foreground" aria-label={`Quantity: ${item.quantity}`}>
+                        <span className="w-7 sm:w-8 text-center text-[10px] font-mono font-bold text-foreground" aria-label={`Quantity: ${item.quantity}`}>
                           {item.quantity}
                         </span>
                         <button
@@ -313,13 +313,13 @@ export default function CartSidebar() {
                             updateQuantity(item.id, Math.min(maxStock, item.quantity + 1), user?.id);
                           }}
                           aria-label="Increase quantity"
-                          className="w-7 h-7 flex items-center justify-center text-muted-text hover:text-foreground transition-colors cursor-pointer"
+                          className="w-6.5 h-6.5 sm:w-7 sm:h-7 flex items-center justify-center text-muted-text hover:text-foreground transition-colors cursor-pointer"
                         >
                           <Plus className="w-2.5 h-2.5" />
                         </button>
                       </div>
 
-                      <div className="text-xs font-bold font-mono text-foreground flex items-baseline gap-0.5">
+                      <div className="text-xs font-bold font-mono text-foreground flex items-baseline gap-0.5 shrink-0">
                         <span className="text-[10px] font-sans font-normal text-muted-text">₹</span>
                         <span>{displayItemPrice}</span>
                       </div>
