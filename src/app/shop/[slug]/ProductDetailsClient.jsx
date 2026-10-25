@@ -452,11 +452,19 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             )}
             
             {/* Inventory alert */}
-            {currentVariant && currentVariant.stock_quantity > 0 && currentVariant.stock_quantity <= 3 && (
-              <span className="inline-block bg-accent/10 border border-accent/30 text-[9px] tracking-widest font-mono text-accent px-2.5 py-1 uppercase mt-3">
-                ONLY {currentVariant.stock_quantity} PIECE{currentVariant.stock_quantity > 1 ? "S" : ""} LEFT
-              </span>
-            )}
+            {(() => {
+              const stock = currentVariant
+                ? currentVariant.stock_quantity
+                : (product.variants?.length === 0 ? product.stock_quantity : null);
+              if (stock !== null && stock > 0 && stock <= 3) {
+                return (
+                  <span className="inline-block bg-accent/10 border border-accent/30 text-[9px] tracking-widest font-mono text-accent px-2.5 py-1 uppercase mt-3">
+                    ONLY A FEW LEFT
+                  </span>
+                );
+              }
+              return null;
+            })()}
           </div>
 
           <div className="h-px bg-card-border" />
