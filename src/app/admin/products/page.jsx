@@ -117,7 +117,10 @@ export default function AdminCatalogDesk() {
         .order("created_at", { ascending: false });
 
       if (prodError) throw prodError;
-      setProducts(prodData || []);
+      setProducts((prodData || []).map(p => ({
+        ...p,
+        name: (p.name || "").toUpperCase()
+      })));
 
     } catch (err) {
       console.error("Failed to load catalog data:", err);
@@ -138,7 +141,8 @@ export default function AdminCatalogDesk() {
   };
 
   const handleProductNameChange = (e) => {
-    const name = e.target.value;
+    const rawName = e.target.value;
+    const name = rawName.toUpperCase();
     setProductForm(prev => ({
       ...prev,
       name,
@@ -309,7 +313,7 @@ export default function AdminCatalogDesk() {
   const handleOpenEditProduct = (prod) => {
     setEditingProductId(prod.id);
     setProductForm({
-      name: prod.name,
+      name: (prod.name || "").toUpperCase(),
       slug: prod.slug,
       description: prod.description || "",
       short_description: prod.short_description || "",
@@ -364,7 +368,7 @@ export default function AdminCatalogDesk() {
       }
 
       const prodPayload = {
-        name: productForm.name.trim(),
+        name: productForm.name.trim().toUpperCase(),
         slug: productForm.slug.trim(),
         description: productForm.description.trim(),
         short_description: productForm.short_description.trim(),
@@ -936,7 +940,7 @@ export default function AdminCatalogDesk() {
                       required
                       value={productForm.name}
                       onChange={handleProductNameChange}
-                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all"
+                      className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all uppercase"
                       placeholder="e.g. OVERSIZED GRAPHIC TEE"
                     />
                   </div>

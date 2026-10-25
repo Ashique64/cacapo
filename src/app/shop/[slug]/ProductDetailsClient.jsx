@@ -265,7 +265,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
         <span>/</span>
         <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
         <span>/</span>
-        <span className="text-foreground truncate max-w-50">{product.name}</span>
+        <span className="text-foreground truncate max-w-50 uppercase">{product.name}</span>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
@@ -913,7 +913,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   {/* Metadata below image */}
                   <div className="p-4 flex flex-col justify-between grow">
                     <Link href={`/shop/${p.slug}`} className="hover:text-accent transition-colors block">
-                      <h3 className="text-xs font-semibold tracking-wide text-foreground truncate">{p.name}</h3>
+                      <h3 className="text-xs font-semibold tracking-wide text-foreground truncate uppercase">{p.name}</h3>
                     </Link>
                     <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-0.5">
                       <span className="text-[10px] font-sans font-normal">₹</span>

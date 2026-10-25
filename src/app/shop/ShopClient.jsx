@@ -125,7 +125,7 @@ function ProductCard({ product, index = 0 }) {
       {/* Info Row — compact, below image */}
       <div className="px-3 pt-3 pb-4 bg-[#f9f8f6]">
         <Link href={`/shop/${product.slug}`} className="block">
-          <h3 className="text-[11px] sm:text-xs font-medium tracking-wide text-foreground truncate leading-tight">
+          <h3 className="text-[11px] sm:text-xs font-medium tracking-wide text-foreground truncate leading-tight uppercase">
             {product.name}
           </h3>
         </Link>

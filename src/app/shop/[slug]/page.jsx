@@ -31,7 +31,7 @@ export async function generateMetadata({ params }) {
   const ogImage = images[0] || "/og-image.jpg";
   const isAbsoluteUrl = ogImage.startsWith("http");
 
-  const title = product.name;
+  const title = (product.name || "").toUpperCase();
   const description =
     product.short_description ||
     product.description ||
@@ -92,6 +92,7 @@ export default async function ProductDetailsPage({ params }) {
     if (productData) {
       product = {
         ...productData,
+        name: (productData.name || "").toUpperCase(),
         category: productData.category || null,
         images: productData.product_images && productData.product_images.length > 0
           ? productData.product_images
@@ -154,6 +155,7 @@ export default async function ProductDetailsPage({ params }) {
     if (relatedData && relatedData.length > 0) {
       relatedProducts = relatedData.map((p) => ({
         ...p,
+        name: (p.name || "").toUpperCase(),
         images: p.product_images && p.product_images.length > 0
           ? p.product_images
               .sort((a, b) => a.sort_order - b.sort_order)

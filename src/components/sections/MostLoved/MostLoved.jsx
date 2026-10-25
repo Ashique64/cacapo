@@ -130,7 +130,7 @@ function ProductCard({ product }) {
         <div>
           <div className="mb-2">
             <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
-              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-foreground transition-colors truncate lg:whitespace-normal">
+              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-foreground transition-colors truncate lg:whitespace-normal uppercase">
                 {product.name}
               </h3>
             </Link>

@@ -108,7 +108,7 @@ export default function WishlistPage() {
                     <div className="p-4 flex flex-col justify-between grow">
                       <div>
                         <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
-                          <h3 className="text-xs font-semibold tracking-wide text-foreground truncate">
+                          <h3 className="text-xs font-semibold tracking-wide text-foreground truncate uppercase">
                             {product.name}
                           </h3>
                         </Link>

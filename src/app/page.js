@@ -62,6 +62,7 @@ export default async function Home() {
     if (productsRes.data && productsRes.data.length > 0) {
       products = productsRes.data.map((p) => ({
         ...p,
+        name: (p.name || "").toUpperCase(),
         images: p.product_images
           ? p.product_images
               .sort((a, b) => a.sort_order - b.sort_order)
