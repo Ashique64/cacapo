@@ -27,6 +27,29 @@ export default function Navbar() {
     setMounted(true);
   }, []);
 
+  // Disable body scroll when mobile menu is open
+  useEffect(() => {
+    if (mounted && isMobileMenuOpen) {
+      document.body.style.overflow = "hidden";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.stop();
+      }
+    } else if (mounted) {
+      document.body.style.overflow = "";
+      if (typeof window !== "undefined" && window.lenis) {
+        window.lenis.start();
+      }
+    }
+    return () => {
+      if (mounted) {
+        document.body.style.overflow = "";
+        if (typeof window !== "undefined" && window.lenis) {
+          window.lenis.start();
+        }
+      }
+    };
+  }, [isMobileMenuOpen, mounted]);
+
   const navItems = useMemo(() => [
     { name: "HOME", path: "/" },
     { name: "SHOP", path: "/shop" },
@@ -183,7 +206,8 @@ export default function Navbar() {
 
       {/* Mobile Menu Overlay */}
       <div
-        className={`fixed inset-0 bg-mobile-menu-bg backdrop-blur-xl z-50 flex flex-col justify-between p-8 transition-all duration-500 ease-out md:hidden ${
+        data-lenis-prevent
+        className={`fixed inset-0 top-0 bottom-0 left-0 right-0 h-full w-full bg-mobile-menu-bg backdrop-blur-xl z-50 flex flex-col justify-between p-6 sm:p-8 transition-all duration-500 ease-out md:hidden overscroll-contain pb-[calc(2rem+env(safe-area-inset-bottom,0px))] pt-[calc(1.5rem+env(safe-area-inset-top,0px))] ${
           isMobileMenuOpen 
             ? "opacity-100 pointer-events-auto translate-y-0" 
             : "opacity-0 pointer-events-none -translate-y-4"

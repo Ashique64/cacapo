@@ -5,6 +5,7 @@ html {
   -ms-overflow-style: none !important;
   overflow-x: hidden !important;
   width: 100%;
+  min-height: 100%;
 }
 
 :root {
@@ -109,6 +110,12 @@ html.lenis, html.lenis body {
 
 .lenis.lenis-stopped {
   overflow: hidden;
+}
+
+@media (max-width: 768px) {
+  .lenis.lenis-stopped {
+    overflow: visible;
+  }
 }
 
 .lenis.lenis-smooth iframe {

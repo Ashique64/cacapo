@@ -74,13 +74,11 @@ export default function CartSidebar() {
   // Disable body scroll when cart sidebar is open
   useEffect(() => {
     if (mounted && isOpen) {
-      document.documentElement.style.overflow = "hidden";
       document.body.style.overflow = "hidden";
       if (typeof window !== "undefined" && window.lenis) {
         window.lenis.stop();
       }
     } else if (mounted) {
-      document.documentElement.style.overflow = "";
       document.body.style.overflow = "";
       if (typeof window !== "undefined" && window.lenis) {
         window.lenis.start();
@@ -88,7 +86,6 @@ export default function CartSidebar() {
     }
     return () => {
       if (mounted) {
-        document.documentElement.style.overflow = "";
         document.body.style.overflow = "";
         if (typeof window !== "undefined" && window.lenis) {
           window.lenis.start();
@@ -113,7 +110,7 @@ export default function CartSidebar() {
       {/* Sliding Sidebar Panel */}
       <div
         data-lenis-prevent
-        className={`fixed inset-y-0 right-0 h-dvh max-h-dvh w-full sm:w-110 bg-card-bg border-l border-card-border z-60 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out overscroll-contain ${
+        className={`fixed inset-y-0 top-0 bottom-0 right-0 h-full w-full sm:w-110 bg-card-bg border-l border-card-border z-60 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out overscroll-contain ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
