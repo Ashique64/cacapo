@@ -40,7 +40,7 @@ export default async function Home() {
           product_images(image_url, sort_order),
           product_variants(id, size, color, price, stock_quantity)
         `)
-        .in("status", ["active", "draft"])
+        .eq("status", "active")
         .eq("featured", true)
         .order("created_at", { ascending: false })
         .limit(6)

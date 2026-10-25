@@ -24,7 +24,7 @@ function ProductCard({ product, index = 0 }) {
   const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
   const hasVariants = product.variants && product.variants.length > 0;
   const variantHasStock = hasVariants && product.variants.some((v) => v.stock_quantity > 0);
-  const isCardOutOfStock = product.status === "draft" || (hasVariants ? !variantHasStock : product.stock_quantity <= 0);
+  const isCardOutOfStock = hasVariants ? !variantHasStock : product.stock_quantity <= 0;
   const activePrice = product.sale_price ? product.sale_price : product.price;
   const originalPrice = product.sale_price ? product.price : null;
 
@@ -214,7 +214,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
             product_images(image_url, sort_order),
             product_variants(*)
           `)
-          .in("status", ["active", "draft"]);
+          .eq("status", "active");
 
         // Set state or fallback to Empty arrays
         if (catData && catData.length > 0) {

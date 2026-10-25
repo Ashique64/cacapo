@@ -14,7 +14,7 @@ export async function generateMetadata({ params }) {
     .from("products")
     .select("name, description, short_description, price, product_images(image_url, sort_order)")
     .eq("slug", slug)
-    .in("status", ["active", "draft"])
+    .eq("status", "active")
     .maybeSingle();
 
   if (!product) {
@@ -86,7 +86,7 @@ export default async function ProductDetailsPage({ params }) {
         product_variants(id, size, color, price, sale_price, stock_quantity, sku)
       `)
       .eq("slug", slug)
-      .in("status", ["active", "draft"])
+      .eq("status", "active")
       .maybeSingle();
 
     if (productData) {
@@ -122,7 +122,7 @@ export default async function ProductDetailsPage({ params }) {
           product_variants(id, size, color, price, stock_quantity)
         `)
         .eq("category_id", product.category_id)
-        .in("status", ["active", "draft"])
+        .eq("status", "active")
         .neq("id", product.id)
         .limit(4);
       relatedData = data || [];
@@ -142,7 +142,7 @@ export default async function ProductDetailsPage({ params }) {
           product_images(image_url, sort_order),
           product_variants(id, size, color, price, stock_quantity)
         `)
-        .in("status", ["active", "draft"])
+        .eq("status", "active")
         .not("id", "in", filterString)
         .limit(needed);
 
@@ -243,7 +243,7 @@ export async function generateStaticParams() {
     const { data: products } = await supabase
       .from("products")
       .select("slug")
-      .in("status", ["active", "draft"]);
+      .eq("status", "active");
 
     const dbSlugs = products ? products.map(p => ({ slug: p.slug })) : [];
     return dbSlugs;

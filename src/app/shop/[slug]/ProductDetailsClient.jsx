@@ -161,8 +161,8 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   [product.variants, selectedSize]);
 
   const isOutOfStock = useMemo(() =>
-    product.status === "draft" || (currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant),
-  [product.status, product.variants.length, currentVariant, firstInStockVariant]);
+    currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant,
+  [product.variants.length, currentVariant, firstInStockVariant]);
 
   // Memoize pricing computations
   const { activePrice, originalPrice, displayPrice, displayOriginalPrice } = useMemo(() => {

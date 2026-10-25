@@ -33,7 +33,7 @@ export default async function ShopPage() {
           product_images(image_url, sort_order),
           product_variants(*)
         `)
-        .in("status", ["active", "draft"])
+        .eq("status", "active")
         .order("created_at", { ascending: false })
     ]);
 

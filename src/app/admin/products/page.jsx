@@ -42,6 +42,7 @@ export default function AdminCatalogDesk() {
   const [showProductModal, setShowProductModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [togglingProductId, setTogglingProductId] = useState(null);
 
   // Toast State
   const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
@@ -490,6 +491,45 @@ export default function AdminCatalogDesk() {
     });
   };
 
+  // Instant Toggle Product Visibility Status (Show / Hide on user side)
+  const handleToggleProductStatus = async (prod) => {
+    const newStatus = prod.status === "active" ? "draft" : "active";
+    setTogglingProductId(prod.id);
+
+    // Optimistically update local state so UI reacts instantly
+    setProducts(prev =>
+      prev.map(p => (p.id === prod.id ? { ...p, status: newStatus } : p))
+    );
+
+    try {
+      const { error: updateErr } = await supabase
+        .from("products")
+        .update({
+          status: newStatus,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", prod.id);
+
+      if (updateErr) throw updateErr;
+
+      showToast(
+        newStatus === "active"
+          ? `"${prod.name}" is now ENABLED (Visible on user side).`
+          : `"${prod.name}" is now DISABLED (Hidden from user side).`,
+        "success"
+      );
+    } catch (err) {
+      console.error("Failed to toggle product status:", err);
+      // Revert optimistic update on failure
+      setProducts(prev =>
+        prev.map(p => (p.id === prod.id ? { ...p, status: prod.status } : p))
+      );
+      showToast(err.message || "Failed to update product visibility status.", "error");
+    } finally {
+      setTogglingProductId(null);
+    }
+  };
+
   // Open category modal for Add
   const handleOpenAddCategory = () => {
     setEditingCategoryId(null);
@@ -703,7 +743,7 @@ export default function AdminCatalogDesk() {
                     <th className="p-4 text-right">Price</th>
                     <th className="p-4 text-center">Stock</th>
                     <th className="p-4">Category</th>
-                    <th className="p-4 text-center">Status</th>
+                    <th className="p-4 text-center">Storefront Visibility</th>
                     <th className="p-4 text-center w-24">Actions</th>
                   </tr>
                 </thead>
@@ -737,15 +777,34 @@ export default function AdminCatalogDesk() {
                         </td>
                         <td className="p-4 text-zinc-400 font-medium uppercase">{catName}</td>
                         <td className="p-4 text-center">
-                          <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 font-mono ${
-                            prod.status === "active" 
-                              ? "bg-green-500/10 border border-green-500/20 text-green-500"
-                              : prod.status === "draft"
-                                ? "bg-zinc-800 border border-zinc-700 text-zinc-400"
-                                : "bg-red-500/10 border border-red-500/20 text-red-400"
-                          }`}>
-                            {prod.status?.toUpperCase() || "DRAFT"}
-                          </span>
+                          <button
+                            type="button"
+                            disabled={togglingProductId === prod.id}
+                            onClick={() => handleToggleProductStatus(prod)}
+                            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all cursor-pointer font-mono text-[9px] font-extrabold tracking-wider ${
+                              prod.status === "active"
+                                ? "bg-emerald-950/40 border-emerald-500/40 text-emerald-400 hover:bg-emerald-900/50 hover:border-emerald-400"
+                                : "bg-zinc-900/80 border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200 hover:border-zinc-700"
+                            } ${togglingProductId === prod.id ? "opacity-60 cursor-wait" : ""}`}
+                            title={
+                              prod.status === "active"
+                                ? "Currently visible on user side. Click to disable (hide)."
+                                : "Currently hidden from user side. Click to enable (show)."
+                            }
+                          >
+                            <span
+                              className={`relative inline-flex h-3.5 w-6 shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out ${
+                                prod.status === "active" ? "bg-emerald-500" : "bg-zinc-700"
+                              }`}
+                            >
+                              <span
+                                className={`inline-block h-2.5 w-2.5 rounded-full bg-black shadow transform transition-transform duration-200 ease-in-out ${
+                                  prod.status === "active" ? "translate-x-3" : "translate-x-0.5"
+                                }`}
+                              />
+                            </span>
+                            <span>{prod.status === "active" ? "ENABLED (SHOW)" : "DISABLED (HIDE)"}</span>
+                          </button>
                         </td>
                         <td className="p-4 text-center">
                           <div className="flex gap-3 justify-center">
@@ -972,15 +1031,48 @@ export default function AdminCatalogDesk() {
                       </select>
                     </div>
                     <div className="space-y-1.5">
-                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">Stock Status *</label>
-                      <select
-                        value={productForm.status}
-                        onChange={(e) => setProductForm(prev => ({ ...prev, status: e.target.value }))}
-                        className="w-full bg-zinc-900 border border-zinc-800 focus:border-accent text-white px-3.5 py-2.5 outline-none rounded-none transition-all uppercase font-semibold text-[11px]"
-                      >
-                        <option value="active">Available</option>
-                        <option value="draft">Out of Stock</option>
-                      </select>
+                      <label className="block text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                        Storefront Visibility (User Side) *
+                      </label>
+                      <div className="flex items-center justify-between bg-zinc-900 border border-zinc-800 px-3.5 py-2 h-[42px]">
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`w-2 h-2 rounded-full ${
+                              productForm.status === "active" ? "bg-emerald-400 animate-pulse" : "bg-zinc-600"
+                            }`}
+                          />
+                          <span
+                            className={`text-[10px] font-bold uppercase font-mono tracking-wider ${
+                              productForm.status === "active" ? "text-emerald-400" : "text-zinc-400"
+                            }`}
+                          >
+                            {productForm.status === "active" ? "ENABLED (SHOW)" : "DISABLED (HIDE)"}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setProductForm(prev => ({
+                              ...prev,
+                              status: prev.status === "active" ? "draft" : "active"
+                            }))
+                          }
+                          className={`relative inline-flex h-5 w-10 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none ${
+                            productForm.status === "active" ? "bg-emerald-500" : "bg-zinc-700"
+                          }`}
+                          title={
+                            productForm.status === "active"
+                              ? "Visible on user side. Click to disable."
+                              : "Hidden from user side. Click to enable."
+                          }
+                        >
+                          <span
+                            className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform duration-200 ease-in-out ${
+                              productForm.status === "active" ? "translate-x-5" : "translate-x-1"
+                            }`}
+                          />
+                        </button>
+                      </div>
                     </div>
                   </div>
 
