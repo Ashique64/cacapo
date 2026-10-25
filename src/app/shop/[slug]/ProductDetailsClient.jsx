@@ -472,16 +472,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
           {/* Sizing Section */}
           {sizes.length > 0 && (
             <div className="space-y-4">
-              <div className="flex items-center justify-between text-xs tracking-wider">
-                <span className="font-bold uppercase text-muted-text">Select Size</span>
-                <button
-                  type="button"
-                  onClick={() => setOpenSection("sizing")}
-                  className="text-[10px] tracking-widest text-accent uppercase hover:underline cursor-pointer font-medium"
-                >
-                  Size Guide
-                </button>
-              </div>
+              <span className="block text-xs font-bold uppercase tracking-wider text-muted-text">Select Size</span>
               
               <div className="flex flex-wrap gap-2.5">
                 {sizes.map((size) => {
