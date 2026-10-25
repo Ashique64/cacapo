@@ -605,7 +605,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   </button>
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? "max-h-[1400px] mt-2 opacity-100" : "max-h-0 opacity-0"
+                      isOpen ? "max-h-350 mt-2 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     {section.id === "shipping" ? (

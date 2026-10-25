@@ -3,6 +3,7 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { X, Plus, Minus, Trash2, ShoppingBag, Truck, CheckCircle2 } from "lucide-react";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
@@ -53,7 +54,22 @@ export default function CartSidebar() {
     items.reduce((sum, item) => sum + item.quantity, 0),
   [items]);
 
+  const router = useRouter();
+
   const handleClose = useCallback(() => setCartOpen(false), [setCartOpen]);
+
+  const handleProductNavigate = useCallback(
+    (e, url) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) {
+        return;
+      }
+      e.preventDefault();
+      e.stopPropagation();
+      setCartOpen(false);
+      router.push(url);
+    },
+    [router, setCartOpen]
+  );
 
   // Disable body scroll when cart sidebar is open
   useEffect(() => {
@@ -97,7 +113,7 @@ export default function CartSidebar() {
       {/* Sliding Sidebar Panel */}
       <div
         data-lenis-prevent
-        className={`fixed inset-y-0 right-0 h-dvh max-h-dvh w-full sm:w-110 bg-card-bg border-l border-card-border z-50 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out select-none overscroll-contain ${
+        className={`fixed inset-y-0 right-0 h-dvh max-h-dvh w-full sm:w-110 bg-card-bg border-l border-card-border z-60 flex flex-col justify-between overflow-hidden shadow-2xl transition-transform duration-500 ease-in-out overscroll-contain ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -197,8 +213,8 @@ export default function CartSidebar() {
               </p>
               <Link
                 href="/shop"
-                onClick={handleClose}
-                className="inline-block px-6 py-2.5 border border-foreground bg-foreground text-background text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-accent hover:text-white hover:border-accent uppercase"
+                onClick={(e) => handleProductNavigate(e, "/shop")}
+                className="inline-block px-6 py-2.5 border border-foreground bg-foreground text-background text-[10px] font-bold tracking-[0.2em] transition-all hover:bg-accent hover:text-white hover:border-accent uppercase cursor-pointer"
               >
                 Continue Shopping
               </Link>
@@ -225,8 +241,8 @@ export default function CartSidebar() {
                   {/* Thumbnail frame with aspect ratio 15/16 */}
                   <Link
                     href={productSlug}
-                    onClick={handleClose}
-                    className="w-20 overflow-hidden border border-card-border shrink-0 relative bg-background block group cursor-pointer"
+                    onClick={(e) => handleProductNavigate(e, productSlug)}
+                    className="w-20 overflow-hidden border border-card-border shrink-0 relative bg-background block group cursor-pointer active:opacity-70 transition-opacity"
                     style={{ aspectRatio: "15/16" }}
                   >
                     <Image
@@ -234,7 +250,7 @@ export default function CartSidebar() {
                       alt={product.name || "Product"}
                       fill
                       sizes="80px"
-                      className="object-cover pointer-events-none select-none group-hover:scale-105 transition-transform duration-300"
+                      className="object-cover pointer-events-none group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                       draggable={false}
                     />
@@ -243,34 +259,42 @@ export default function CartSidebar() {
                   {/* Item Specifications & Quantities */}
                   <div className="flex-1 flex flex-col justify-between min-h-21.25">
                     <div>
-                      <div className="flex justify-between gap-2">
+                      <div className="flex justify-between items-start gap-2">
+                        {/* Entire Product Info Header is touchable/clickable */}
                         <Link
                           href={productSlug}
-                          onClick={handleClose}
-                          className="text-xs font-semibold tracking-wide text-foreground hover:text-accent transition-colors truncate max-w-50 uppercase block"
+                          onClick={(e) => handleProductNavigate(e, productSlug)}
+                          className="flex-1 min-w-0 block group cursor-pointer active:opacity-70 transition-opacity"
                         >
-                          {product.name || "ITEM"}
+                          <span className="text-xs font-semibold tracking-wide text-foreground group-hover:text-accent transition-colors truncate uppercase block">
+                            {product.name || "ITEM"}
+                          </span>
+
+                          {product.brand && (
+                            <span className="text-[9px] tracking-wider text-accent uppercase font-sans font-semibold mt-0.5 block">
+                              {product.brand}
+                            </span>
+                          )}
+
+                          {variant.size && (
+                            <div className="text-[9px] tracking-widest text-muted-text uppercase mt-1">
+                              SIZE: <span className="text-foreground font-mono font-bold">{variant.size}</span>
+                            </div>
+                          )}
                         </Link>
+
                         <button
-                          onClick={() => removeItem(item.id, user?.id)}
-                          className="text-zinc-400 hover:text-accent transition-colors p-0.5 cursor-pointer"
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeItem(item.id, user?.id);
+                          }}
+                          className="text-zinc-400 hover:text-accent transition-colors p-1 cursor-pointer shrink-0 active:scale-90"
                           aria-label={`Remove ${product.name || "item"} from cart`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>
                       </div>
-
-                      {product.brand && (
-                        <span className="text-[9px] tracking-wider text-accent uppercase font-sans font-semibold mt-0.5 block">
-                          {product.brand}
-                        </span>
-                      )}
-
-                      {variant.size && (
-                        <div className="text-[9px] tracking-widest text-muted-text uppercase mt-1">
-                          SIZE: <span className="text-foreground font-mono font-bold">{variant.size}</span>
-                        </div>
-                      )}
                     </div>
 
                     {/* Quantity Selector & Pricing */}
@@ -339,8 +363,8 @@ export default function CartSidebar() {
             <div className="pt-1 sm:pt-2">
               <Link
                 href="/checkout"
-                onClick={handleClose}
-                className="w-full py-3.5 border border-foreground bg-foreground text-background hover:bg-accent hover:text-white hover:border-accent text-xs font-semibold tracking-[0.25em] transition-all duration-500 uppercase flex items-center justify-center gap-2 cursor-pointer"
+                onClick={(e) => handleProductNavigate(e, "/checkout")}
+                className="w-full py-3.5 border border-foreground bg-foreground text-background hover:bg-accent hover:text-white hover:border-accent text-xs font-semibold tracking-[0.25em] transition-all duration-500 uppercase flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
               >
                 PROCEED TO CHECKOUT
               </Link>
