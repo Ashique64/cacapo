@@ -74,6 +74,59 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     return sortSizes(unsorted);
   }, [product.variants]);
 
+  const categorySlug = (product.category?.slug || "").toLowerCase();
+  const categoryName = (product.category?.name || "").toLowerCase();
+  const productName = (product.name || "").toLowerCase();
+
+  const isFootwear = useMemo(() => {
+    return (
+      categorySlug === "footwear" ||
+      categorySlug.includes("shoe") ||
+      categorySlug.includes("heel") ||
+      categoryName.includes("footwear") ||
+      categoryName.includes("shoe") ||
+      productName.includes("heel") ||
+      productName.includes("shoe") ||
+      productName.includes("boot") ||
+      productName.includes("sandal") ||
+      productName.includes("loafer") ||
+      productName.includes("sneaker")
+    );
+  }, [categorySlug, categoryName, productName]);
+
+  const isAccessories = useMemo(() => {
+    if (isFootwear) return false;
+    return (
+      categorySlug === "accessories" ||
+      categoryName.includes("accent") ||
+      categoryName.includes("accessories") ||
+      productName.includes("choker") ||
+      productName.includes("necklace") ||
+      productName.includes("bag") ||
+      productName.includes("tote") ||
+      productName.includes("clutch") ||
+      productName.includes("bracelet") ||
+      productName.includes("earring") ||
+      productName.includes("ring") ||
+      productName.includes("belt")
+    );
+  }, [isFootwear, categorySlug, categoryName, productName]);
+
+  const isApparel = useMemo(() => {
+    if (isFootwear || isAccessories) return false;
+    const hasApparelSizes = sizes.some((s) =>
+      ["XS", "S", "M", "L", "XL", "2XL", "3XL", "4XL", "5XL", "XXL", "36", "38", "40", "42", "44", "46", "48", "50"].includes(String(s).trim().toUpperCase())
+    );
+    return (
+      categorySlug === "clothing" ||
+      categorySlug.includes("apparel") ||
+      categoryName.includes("apparel") ||
+      categoryName.includes("clothing") ||
+      hasApparelSizes ||
+      sizes.length > 0
+    );
+  }, [isFootwear, isAccessories, categorySlug, categoryName, sizes]);
+
   const firstInStockVariant = useMemo(() =>
     product.variants
       ?.filter((v) => v.stock_quantity > 0)
@@ -411,8 +464,15 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
           {/* Sizing Section */}
           {sizes.length > 0 && (
             <div className="space-y-4">
-              <div className="text-xs tracking-wider">
+              <div className="flex items-center justify-between text-xs tracking-wider">
                 <span className="font-bold uppercase text-muted-text">Select Size</span>
+                <button
+                  type="button"
+                  onClick={() => setOpenSection("sizing")}
+                  className="text-[10px] tracking-widest text-accent uppercase hover:underline cursor-pointer font-medium"
+                >
+                  Size Guide
+                </button>
               </div>
               
               <div className="flex flex-wrap gap-2.5">
@@ -545,7 +605,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                   </button>
                   <div 
                     className={`overflow-hidden transition-all duration-500 ease-in-out ${
-                      isOpen ? "max-h-87.5 mt-2 opacity-100" : "max-h-0 opacity-0"
+                      isOpen ? "max-h-[1400px] mt-2 opacity-100" : "max-h-0 opacity-0"
                     }`}
                   >
                     {section.id === "shipping" ? (
@@ -587,6 +647,219 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                             Return & Replacement Policy
                           </Link>.
                         </p>
+                      </div>
+                    ) : section.id === "sizing" && isFootwear ? (
+                      <div className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans space-y-4">
+                        <div className="flex items-center justify-between pt-1">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            Footwear Size Guide
+                          </h4>
+                          <span className="text-[10px] font-mono text-muted-text uppercase">EU / CM</span>
+                        </div>
+
+                        {/* Footwear Size Table */}
+                        <div className="border border-card-border overflow-hidden my-2">
+                          <table className="w-full text-[10px] tracking-wider uppercase border-collapse">
+                            <thead>
+                              <tr className="border-b border-card-border bg-zinc-50 text-muted-text font-bold">
+                                <th className="p-2.5 text-left">EU</th>
+                                <th className="p-2.5 text-center">UK</th>
+                                <th className="p-2.5 text-center">US</th>
+                                <th className="p-2.5 text-right">FOOT LENGTH</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[
+                                { eu: "38", uk: "5.0", us: "7.5", length: "24.4 cm" },
+                                { eu: "39", uk: "6.0", us: "8.5", length: "25.1 cm" },
+                                { eu: "40", uk: "7.0", us: "9.5", length: "25.8 cm" },
+                                { eu: "41", uk: "8.0", us: "10.5", length: "26.5 cm" },
+                                { eu: "42", uk: "9.0", us: "11.5", length: "27.2 cm" },
+                                { eu: "43", uk: "10.0", us: "12.5", length: "27.9 cm" },
+                                { eu: "44", uk: "11.0", us: "13.5", length: "28.6 cm" },
+                              ].map((row, idx, arr) => (
+                                <tr 
+                                  key={row.eu} 
+                                  className={`${idx !== arr.length - 1 ? "border-b border-card-border" : ""} hover:bg-zinc-50/70 transition-colors`}
+                                >
+                                  <td className="p-2.5 text-left font-sans font-semibold text-foreground">EU {row.eu}</td>
+                                  <td className="p-2.5 text-center font-mono text-muted-text">{row.uk}</td>
+                                  <td className="p-2.5 text-center font-mono text-muted-text">{row.us}</td>
+                                  <td className="p-2.5 text-right font-mono text-muted-text">{row.length}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* How To Measure */}
+                        <div className="space-y-2 border-t border-card-border/60 pt-3">
+                          <span className="text-[10px] font-bold tracking-[0.2em] text-foreground uppercase block">
+                            HOW TO MEASURE
+                          </span>
+                          <div className="space-y-2 text-[11px] text-muted-text font-light leading-relaxed">
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Heel to Toe:</strong>
+                              Place your foot flat on a sheet of paper against a wall, mark the tip of your longest toe, and measure straight to the wall.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Foot Width:</strong>
+                              Measure across the widest part of your foot (ball of the foot) while standing with your full weight.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Instep & Arch:</strong>
+                              For higher arches or broader feet, prioritize instep comfort when choosing strap, slip-on, or pointed-toe silhouettes.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Footnotes */}
+                        <div className="text-[10px] text-muted-text space-y-1 font-light border-l border-accent/40 pl-2.5 pt-0.5 leading-relaxed">
+                          <p>Measurements are in centimeters (cm). Always measure while standing upright for an accurate profile.</p>
+                          <p>Between two sizes? Go with the larger size for closed-toe heels, pointed silhouettes, or wider feet.</p>
+                          <p>Heel heights, platform elevation, and specific fit nuances are noted in the description above.</p>
+                        </div>
+                      </div>
+                    ) : section.id === "sizing" && isAccessories ? (
+                      <div className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans space-y-4">
+                        <div className="flex items-center justify-between pt-1">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            Dimensions & Fit Guide
+                          </h4>
+                          <span className="text-[10px] font-mono text-muted-text uppercase">Centimeters</span>
+                        </div>
+
+                        {/* Accessories Size Table */}
+                        <div className="border border-card-border overflow-hidden my-2">
+                          <table className="w-full text-[10px] tracking-wider uppercase border-collapse">
+                            <thead>
+                              <tr className="border-b border-card-border bg-zinc-50 text-muted-text font-bold">
+                                <th className="p-2.5 text-left">PIECE TYPE</th>
+                                <th className="p-2.5 text-center">FIT PROFILE</th>
+                                <th className="p-2.5 text-right">ADJUSTABILITY</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[
+                                { type: "Chokers & Necklaces", profile: "Collarbone Contour", adjust: "Extender Chain (32–42 cm)" },
+                                { type: "Handbags & Totes", profile: "Structured Silhouette", adjust: "Adjustable / Detachable Strap" },
+                                { type: "Bracelets & Cuffs", profile: "Ergonomic Wrist Fit", adjust: "Flexible Clasp (15–19 cm)" },
+                                { type: "Belts & Cinches", profile: "Natural Waistline", adjust: "5-Hole Pricking (70–95 cm)" },
+                                { type: "Rings & Accents", profile: "Universal Proportions", adjust: "Comfort-Fit Contour Band" },
+                              ].map((row, idx, arr) => (
+                                <tr 
+                                  key={row.type} 
+                                  className={`${idx !== arr.length - 1 ? "border-b border-card-border" : ""} hover:bg-zinc-50/70 transition-colors`}
+                                >
+                                  <td className="p-2.5 text-left font-sans font-semibold text-foreground">{row.type}</td>
+                                  <td className="p-2.5 text-center font-mono text-muted-text">{row.profile}</td>
+                                  <td className="p-2.5 text-right font-mono text-muted-text">{row.adjust}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* How To Measure */}
+                        <div className="space-y-2 border-t border-card-border/60 pt-3">
+                          <span className="text-[10px] font-bold tracking-[0.2em] text-foreground uppercase block">
+                            HOW TO MEASURE
+                          </span>
+                          <div className="space-y-2 text-[11px] text-muted-text font-light leading-relaxed">
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Neckwear:</strong>
+                              Wrap a soft measuring tape snugly around the base of your neck or collarbone, leaving a 1–2 cm finger margin for ease.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Bags & Clutches:</strong>
+                              Dimensions represent Length × Height × Depth (base width), excluding shoulder drops or handle arcs.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Wristwear:</strong>
+                              Measure around the narrowest circumference of your wrist directly above the wrist bone.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Footnotes */}
+                        <div className="text-[10px] text-muted-text space-y-1 font-light border-l border-accent/40 pl-2.5 pt-0.5 leading-relaxed">
+                          <p>All metalware features hypoallergenic, multi-layer gold or palladium plating designed for sensitive skin.</p>
+                          <p>Exact piece dimensions, strap lengths, and drop heights are specified in the Product Description above.</p>
+                          <p>Model proportion photography illustrates true-to-scale wear for every accessory.</p>
+                        </div>
+                      </div>
+                    ) : section.id === "sizing" ? (
+                      <div className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans space-y-4">
+                        <div className="flex items-center justify-between pt-1">
+                          <h4 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            Find your size
+                          </h4>
+                          <span className="text-[10px] font-mono text-muted-text uppercase">Inches</span>
+                        </div>
+
+                        {/* Size Table */}
+                        <div className="border border-card-border overflow-hidden my-2">
+                          <table className="w-full text-[10px] tracking-wider uppercase border-collapse">
+                            <thead>
+                              <tr className="border-b border-card-border bg-zinc-50 text-muted-text font-bold">
+                                <th className="p-2.5 text-left">SIZE</th>
+                                <th className="p-2.5 text-center">BUST</th>
+                                <th className="p-2.5 text-center">WAIST</th>
+                                <th className="p-2.5 text-right">HIP</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {[
+                                { size: "S - 36", bust: "34–36", waist: "28–30", hip: "36–38" },
+                                { size: "M - 38", bust: "36–38", waist: "30–32", hip: "38–40" },
+                                { size: "L - 40", bust: "38–40", waist: "32–34", hip: "40–42" },
+                                { size: "XL - 42", bust: "40–42", waist: "34–36", hip: "42–44" },
+                                { size: "2XL - 44", bust: "42–44", waist: "36–38", hip: "44–46" },
+                                { size: "3XL - 46", bust: "44–46", waist: "38–40", hip: "46–48" },
+                                { size: "4XL - 48", bust: "46–48", waist: "40–42", hip: "48–50" },
+                                { size: "5XL - 50", bust: "48–50", waist: "42–44", hip: "50–52" },
+                              ].map((row, idx, arr) => (
+                                <tr 
+                                  key={row.size} 
+                                  className={`${idx !== arr.length - 1 ? "border-b border-card-border" : ""} hover:bg-zinc-50/70 transition-colors`}
+                                >
+                                  <td className="p-2.5 text-left font-sans font-semibold text-foreground">{row.size}</td>
+                                  <td className="p-2.5 text-center font-mono text-muted-text">{row.bust}</td>
+                                  <td className="p-2.5 text-center font-mono text-muted-text">{row.waist}</td>
+                                  <td className="p-2.5 text-right font-mono text-muted-text">{row.hip}</td>
+                                </tr>
+                              ))}
+                            </tbody>
+                          </table>
+                        </div>
+
+                        {/* How To Measure */}
+                        <div className="space-y-2 border-t border-card-border/60 pt-3">
+                          <span className="text-[10px] font-bold tracking-[0.2em] text-foreground uppercase block">
+                            HOW TO MEASURE
+                          </span>
+                          <div className="space-y-2 text-[11px] text-muted-text font-light leading-relaxed">
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Bust:</strong>
+                              Around the fullest point of the bust, keeping the tape level all the way round.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Waist:</strong>
+                              Around the narrowest part of the waist, where the body bends.
+                            </p>
+                            <p>
+                              <strong className="text-foreground font-semibold uppercase text-[10px] tracking-wider mr-1.5">Hip:</strong>
+                              Around the widest part of the hips, with feet together.
+                            </p>
+                          </div>
+                        </div>
+
+                        {/* Footnotes */}
+                        <div className="text-[10px] text-muted-text space-y-1 font-light border-l border-accent/40 pl-2.5 pt-0.5 leading-relaxed">
+                          <p>These are body measurements in inches. Measure over light clothing with the tape snug, not tight.</p>
+                          <p>Each size carries the bust it is cut for. Between two sizes? Go with the larger for an easier fit.</p>
+                          <p>A piece that fits differently says so in its description.</p>
+                        </div>
                       </div>
                     ) : (
                       <p className="text-xs text-muted-text tracking-wide leading-relaxed font-light font-sans text-justify">

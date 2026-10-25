@@ -217,33 +217,43 @@ export default function CartSidebar() {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2,
               });
+              const productSlug = product.slug ? `/shop/${product.slug}` : product.id ? `/shop/${product.id}` : "/shop";
 
               return (
                 <div key={item.id} className="flex gap-4 pb-6 border-b border-card-border items-start">
                   
                   {/* Thumbnail frame with aspect ratio 15/16 */}
-                  <div className="w-20 overflow-hidden border border-card-border shrink-0 relative bg-background" style={{ aspectRatio: "15/16" }}>
+                  <Link
+                    href={productSlug}
+                    onClick={handleClose}
+                    className="w-20 overflow-hidden border border-card-border shrink-0 relative bg-background block group cursor-pointer"
+                    style={{ aspectRatio: "15/16" }}
+                  >
                     <Image
                       src={images[0]}
                       alt={product.name || "Product"}
                       fill
                       sizes="80px"
-                      className="object-cover pointer-events-none select-none"
+                      className="object-cover pointer-events-none select-none group-hover:scale-105 transition-transform duration-300"
                       loading="lazy"
                       draggable={false}
                     />
-                  </div>
+                  </Link>
 
                   {/* Item Specifications & Quantities */}
                   <div className="flex-1 flex flex-col justify-between min-h-21.25">
                     <div>
                       <div className="flex justify-between gap-2">
-                        <h4 className="text-xs font-semibold tracking-wide text-foreground truncate max-w-50 uppercase">
+                        <Link
+                          href={productSlug}
+                          onClick={handleClose}
+                          className="text-xs font-semibold tracking-wide text-foreground hover:text-accent transition-colors truncate max-w-50 uppercase block"
+                        >
                           {product.name || "ITEM"}
-                        </h4>
+                        </Link>
                         <button
                           onClick={() => removeItem(item.id, user?.id)}
-                          className="text-zinc-400 hover:text-accent transition-colors p-0.5"
+                          className="text-zinc-400 hover:text-accent transition-colors p-0.5 cursor-pointer"
                           aria-label={`Remove ${product.name || "item"} from cart`}
                         >
                           <Trash2 className="w-3.5 h-3.5" />

@@ -81,6 +81,7 @@ export default async function ProductDetailsPage({ params }) {
       .from("products")
       .select(`
         id, name, slug, price, description, short_description, brand, status, category_id,
+        category:categories(id, name, slug),
         product_images(image_url, sort_order),
         product_variants(id, size, color, price, sale_price, stock_quantity, sku)
       `)
@@ -91,6 +92,7 @@ export default async function ProductDetailsPage({ params }) {
     if (productData) {
       product = {
         ...productData,
+        category: productData.category || null,
         images: productData.product_images && productData.product_images.length > 0
           ? productData.product_images
               .sort((a, b) => a.sort_order - b.sort_order)
