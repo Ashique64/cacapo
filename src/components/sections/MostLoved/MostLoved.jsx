@@ -69,13 +69,16 @@ function ProductCard({ product }) {
     <div
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      className="shrink-0 w-full lg:w-[32vw] h-[44vh] sm:h-[50vh] md:h-[35vh] lg:h-[75vh] flex flex-col justify-between p-4 md:p-4 lg:p-6 bg-card-bg border border-card-border rounded-none backdrop-blur-xs relative overflow-hidden group hover:border-accent hover:ring-1 hover:ring-accent/50 transition-all duration-500 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] select-none"
+      className="shrink-0 w-full flex flex-col justify-between p-3.5 sm:p-4 lg:p-4.5 bg-card-bg border border-card-border rounded-none backdrop-blur-xs relative overflow-hidden group hover:border-accent hover:ring-1 hover:ring-accent/50 transition-all duration-500 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)] select-none"
     >
       {/* Ambient Background Light */}
       <div className="absolute top-0 right-0 w-32 h-32 bg-accent/5 blur-[50px] rounded-full pointer-events-none" />
 
-      {/* Product Image Panel */}
-      <div className="w-full h-[62%] lg:h-1/2 rounded-none overflow-hidden relative border border-card-border select-none">
+      {/* Product Image Panel — balanced portrait aspect ratio with comfortable height */}
+      <div 
+        className="w-full max-h-[46vh] sm:max-h-[48vh] lg:max-h-[48vh] mx-auto rounded-none overflow-hidden relative border border-card-border select-none bg-[#f4f3f0]"
+        style={{ aspectRatio: "4 / 5" }}
+      >
         <div className="absolute inset-0 bg-linear-to-b from-transparent to-background/30 z-2 pointer-events-none select-none" />
 
         <Link
@@ -96,8 +99,8 @@ function ProductCard({ product }) {
                   src={img}
                   alt={`${product.name} — view ${i + 1}`}
                   fill
-                  sizes="(max-width: 1024px) 80vw, 32vw"
-                  className="object-cover transform scale-100 group-hover:scale-102 transition-transform duration-1000 pointer-events-none select-none"
+                  sizes="(max-width: 640px) 75vw, (max-width: 1024px) 45vw, 25vw"
+                  className="object-cover transform scale-100 group-hover:scale-102 transition-transform duration-700 pointer-events-none select-none"
                   loading={i === 0 ? "eager" : "lazy"}
                   priority={i === 0}
                   draggable={false}
@@ -126,16 +129,16 @@ function ProductCard({ product }) {
       </div>
 
       {/* Card Info Section */}
-      <div className="flex flex-col grow justify-between mt-3 md:mt-3 lg:mt-6">
+      <div className="flex flex-col grow justify-between mt-3 lg:mt-3.5">
         <div>
-          <div className="mb-2">
+          <div className="mb-1.5">
             <Link href={`/shop/${product.slug}`} className="hover:text-accent transition-colors block">
-              <h3 className="text-sm sm:text-base md:text-base lg:text-xl font-bold tracking-wide text-foreground transition-colors truncate lg:whitespace-normal uppercase">
+              <h3 className="text-sm sm:text-base font-bold tracking-wide text-foreground transition-colors truncate uppercase">
                 {product.name}
               </h3>
             </Link>
             {/* New Arrival Indicator */}
-            <div className="hidden lg:flex items-center gap-1.5 mt-1.5">
+            <div className="flex items-center gap-1.5 mt-1">
               <span className="w-1.5 h-1.5 rounded-full bg-accent animate-pulse" />
               <span className="text-[9px] tracking-[0.2em] text-muted-text uppercase font-light font-sans">
                 New Arrival
@@ -144,8 +147,8 @@ function ProductCard({ product }) {
           </div>
 
           {/* Price */}
-          <div className="text-xl sm:text-2xl md:text-xl lg:text-2xl font-semibold tracking-tight text-accent font-mono mt-2 md:mt-1 lg:mt-3 flex items-baseline gap-1.5 flex-wrap">
-            <span className="text-sm sm:text-lg font-sans font-normal">₹</span>
+          <div className="text-base sm:text-lg font-semibold tracking-tight text-accent font-mono mt-1.5 flex items-baseline gap-1.5 flex-wrap">
+            <span className="text-xs font-sans font-normal">₹</span>
             <span>{displayPrice}</span>
             {displayOriginalPrice && (
               <span className="text-xs sm:text-sm font-semibold font-mono text-muted-text line-through">
@@ -156,10 +159,10 @@ function ProductCard({ product }) {
         </div>
 
         {/* Purchase Button */}
-        <div className="mt-3 lg:mt-6">
+        <div className="mt-3 lg:mt-3.5">
           <Link
             href={`/shop/${product.slug}`}
-            className="w-full py-3 text-[10px] sm:text-xs font-semibold tracking-[0.25em] rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer bg-foreground text-background border border-foreground group-hover:bg-accent group-hover:border-accent group-hover:text-white hover:bg-transparent hover:text-foreground hover:border-foreground"
+            className="w-full py-2 lg:py-2.5 text-[10px] sm:text-xs font-semibold tracking-[0.25em] rounded-none transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer bg-foreground text-background border border-foreground group-hover:bg-accent group-hover:border-accent group-hover:text-white hover:bg-transparent hover:text-foreground hover:border-foreground uppercase"
           >
             {isCardOutOfStock ? "VIEW DETAILS (SOLD OUT)" : "VIEW DETAILS"}
           </Link>
@@ -316,7 +319,7 @@ export default function ProductShowcase({ initialProducts }) {
               className="flex gap-6 overflow-x-auto no-scrollbar scroll-smooth snap-x snap-mandatory px-6 pb-6 pt-0 w-full"
             >
               {products.map((product, idx) => (
-                <div key={product.id || idx} className="snap-center shrink-0 w-[80vw] sm:w-[50vw] md:w-[45vw]">
+                <div key={product.id || idx} className="snap-center shrink-0 w-[82vw] sm:w-[55vw] md:w-[48vw]">
                   <MemoizedProductCard product={product} />
                 </div>
               ))}
@@ -348,7 +351,7 @@ export default function ProductShowcase({ initialProducts }) {
             style={{ willChange: "transform" }}
           >
             {/* Intro Slide */}
-            <div className="lg:shrink-0 lg:w-[45vw] lg:flex lg:flex-col lg:justify-center lg:pr-12">
+            <div className="lg:shrink-0 lg:w-[38vw] xl:w-[34vw] lg:flex lg:flex-col lg:justify-center lg:pr-12">
               <span className="text-xs font-semibold tracking-[0.4em] text-accent uppercase block mb-3">
                 NEW ARRIVALS
               </span>
@@ -366,13 +369,13 @@ export default function ProductShowcase({ initialProducts }) {
 
             {/* Product Cards */}
             {products.map((product, idx) => (
-              <div key={product.id || idx} className="lg:shrink-0 lg:w-[32vw]">
+              <div key={product.id || idx} className="lg:shrink-0 lg:w-[32vw] xl:w-[28vw] 2xl:w-[26vw]">
                 <MemoizedProductCard product={product} />
               </div>
             ))}
 
             {/* End Outro Slide */}
-            <div className="lg:shrink-0 lg:w-[50vw] lg:flex lg:flex-col lg:justify-center lg:pl-12">
+            <div className="lg:shrink-0 lg:w-[45vw] xl:w-[38vw] lg:flex lg:flex-col lg:justify-center lg:pl-12">
               <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-foreground tracking-tight leading-none uppercase">
                 END OF <br />
                 <span className="text-muted-text font-light font-serif italic">Edition</span>
