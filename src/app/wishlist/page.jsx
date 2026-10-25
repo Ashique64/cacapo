@@ -64,10 +64,16 @@ export default function WishlistPage() {
           <div className="max-w-7xl mx-auto px-6 pb-24 select-none relative z-10">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-6">
               {wishlistItems.map((product) => {
-                const displayPrice = (product.price / 100).toLocaleString("en-IN", {
+                const activePrice = product.sale_price ? product.sale_price : product.price;
+                const originalPrice = product.sale_price ? product.price : null;
+                const displayPrice = (activePrice / 100).toLocaleString("en-IN", {
                   minimumFractionDigits: 0,
                   maximumFractionDigits: 2
                 });
+                const displayOriginalPrice = originalPrice ? (originalPrice / 100).toLocaleString("en-IN", {
+                  minimumFractionDigits: 0,
+                  maximumFractionDigits: 2
+                }) : null;
                 const images = product.images && product.images.length > 0 ? product.images : ["/Images/clothing.jpg"];
 
                 return (
@@ -112,9 +118,14 @@ export default function WishlistPage() {
                             {product.name}
                           </h3>
                         </Link>
-                        <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-0.5">
+                        <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-1.5 flex-wrap">
                           <span className="text-[10px] font-sans font-normal">₹</span>
                           <span>{displayPrice}</span>
+                          {displayOriginalPrice && (
+                            <span className="text-[9px] font-semibold font-mono text-muted-text line-through">
+                              ₹{displayOriginalPrice}
+                            </span>
+                          )}
                         </div>
                       </div>
 

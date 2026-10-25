@@ -12,7 +12,7 @@ export async function generateMetadata({ params }) {
 
   const { data: product } = await supabase
     .from("products")
-    .select("name, description, short_description, price, product_images(image_url, sort_order)")
+    .select("name, description, short_description, price, sale_price, product_images(image_url, sort_order)")
     .eq("slug", slug)
     .eq("status", "active")
     .maybeSingle();
@@ -36,7 +36,8 @@ export async function generateMetadata({ params }) {
     product.short_description ||
     product.description ||
     `Shop ${product.name} at CACAPO. Trendy imported fashion available now.`;
-  const priceStr = product.price ? `Starting from ₹${product.price.toLocaleString("en-IN")}` : "";
+  const displayPriceValue = product.sale_price || product.price;
+  const priceStr = displayPriceValue ? `Starting from ₹${(displayPriceValue / 100).toLocaleString("en-IN")}` : "";
   const fullDescription = priceStr ? `${description} ${priceStr}.` : description;
 
   return {
@@ -80,7 +81,7 @@ export default async function ProductDetailsPage({ params }) {
     const { data: productData, error } = await supabase
       .from("products")
       .select(`
-        id, name, slug, price, description, short_description, brand, status, category_id,
+        id, name, slug, price, sale_price, description, short_description, brand, status, category_id,
         category:categories(id, name, slug),
         product_images(image_url, sort_order),
         product_variants(id, size, color, price, sale_price, stock_quantity, sku)
@@ -118,9 +119,9 @@ export default async function ProductDetailsPage({ params }) {
       const { data } = await supabase
         .from("products")
         .select(`
-          id, name, slug, price,
+          id, name, slug, price, sale_price,
           product_images(image_url, sort_order),
-          product_variants(id, size, color, price, stock_quantity)
+          product_variants(id, size, color, price, sale_price, stock_quantity)
         `)
         .eq("category_id", product.category_id)
         .eq("status", "active")
@@ -139,9 +140,9 @@ export default async function ProductDetailsPage({ params }) {
       const { data: fallbackData } = await supabase
         .from("products")
         .select(`
-          id, name, slug, price,
+          id, name, slug, price, sale_price,
           product_images(image_url, sort_order),
-          product_variants(id, size, color, price, stock_quantity)
+          product_variants(id, size, color, price, sale_price, stock_quantity)
         `)
         .eq("status", "active")
         .not("id", "in", filterString)

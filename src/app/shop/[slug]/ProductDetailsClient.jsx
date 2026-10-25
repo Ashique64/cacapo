@@ -168,8 +168,9 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   const { activePrice, originalPrice, displayPrice, displayOriginalPrice } = useMemo(() => {
     const regularPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
     const salePrice = (currentVariant && currentVariant.sale_price) ? currentVariant.sale_price : product.sale_price;
-    const active = salePrice ? salePrice : regularPrice;
-    const original = salePrice ? regularPrice : null;
+    const isOnSale = salePrice && Number(salePrice) < Number(regularPrice);
+    const active = isOnSale ? salePrice : (salePrice || regularPrice);
+    const original = isOnSale ? regularPrice : null;
     return {
       activePrice: active,
       originalPrice: original,
@@ -890,10 +891,16 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
             {relatedProducts.map((p) => {
               const relImages = p.images && p.images.length > 0 ? p.images : ["/Images/clothing.jpg"];
-              const relDisplayPrice = (p.price / 100).toLocaleString("en-IN", {
+              const relActivePrice = p.sale_price ? p.sale_price : p.price;
+              const relOriginalPrice = p.sale_price ? p.price : null;
+              const relDisplayPrice = (relActivePrice / 100).toLocaleString("en-IN", {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 2
               });
+              const relDisplayOriginalPrice = relOriginalPrice ? (relOriginalPrice / 100).toLocaleString("en-IN", {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 2
+              }) : null;
               
               return (
                 <div key={p.id} className="group flex flex-col bg-card-bg border border-card-border rounded-none relative overflow-hidden transition-all duration-500 hover:border-accent/40 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
@@ -914,9 +921,14 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                     <Link href={`/shop/${p.slug}`} className="hover:text-accent transition-colors block">
                       <h3 className="text-xs font-semibold tracking-wide text-foreground truncate uppercase">{p.name}</h3>
                     </Link>
-                    <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-0.5">
+                    <div className="mt-2 text-xs font-bold font-mono text-accent flex items-baseline gap-1.5 flex-wrap">
                       <span className="text-[10px] font-sans font-normal">₹</span>
                       <span>{relDisplayPrice}</span>
+                      {relDisplayOriginalPrice && (
+                        <span className="text-[9px] font-semibold font-mono text-muted-text line-through">
+                          ₹{relDisplayOriginalPrice}
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

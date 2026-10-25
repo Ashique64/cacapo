@@ -36,9 +36,9 @@ export default async function Home() {
       supabase
         .from("products")
         .select(`
-          id, name, slug, price,
+          id, name, slug, price, sale_price,
           product_images(image_url, sort_order),
-          product_variants(id, size, color, price, stock_quantity)
+          product_variants(id, size, color, price, sale_price, stock_quantity)
         `)
         .eq("status", "active")
         .eq("featured", true)
