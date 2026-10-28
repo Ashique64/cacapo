@@ -489,7 +489,11 @@ export default function AdminCatalogDesk() {
           showToast("Product successfully deleted.", "success");
           await fetchData();
         } catch (err) {
-          showToast("Failed to delete product: " + err.message, "error");
+          if (err.message && (err.message.includes("order_items") || err.message.includes("violates not-null constraint"))) {
+            showToast("Cannot delete: This product is linked to existing customer orders. Please toggle it to 'DISABLED' to hide it from the store instead.", "error");
+          } else {
+            showToast("Failed to delete product: " + err.message, "error");
+          }
         }
       }
     });
