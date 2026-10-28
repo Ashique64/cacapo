@@ -164,6 +164,12 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     currentVariant ? currentVariant.stock_quantity <= 0 : product.variants.length > 0 && !firstInStockVariant,
   [product.variants.length, currentVariant, firstInStockVariant]);
 
+  const isLowStock = useMemo(() => {
+    if (isOutOfStock) return false;
+    const stock = currentVariant ? currentVariant.stock_quantity : product.stock_quantity;
+    return stock > 0 && stock <= 3;
+  }, [isOutOfStock, currentVariant, product.stock_quantity]);
+
   // Memoize pricing computations
   const { activePrice, originalPrice, displayPrice, displayOriginalPrice } = useMemo(() => {
     const regularPrice = (currentVariant && currentVariant.price) ? currentVariant.price : product.price;
@@ -258,7 +264,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   }, [product, selectedSize, currentVariant, quantity, addItem, setCartOpen, user?.id]);
 
   return (
-    <div className="max-w-7xl mx-auto px-6 py-8 md:py-16 select-none relative z-10">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-16 select-none relative z-10">
       
       {/* Breadcrumbs */}
       <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-muted-text uppercase mb-8 md:mb-12">
@@ -272,7 +278,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">
         
         {/* LEFT COLUMN: Gallery & Magnifier (Lg: 7 cols) */}
-        <div className="lg:col-span-7 flex flex-col md:flex-row-reverse gap-4 sticky top-28">
+        <div className="lg:col-span-7 flex flex-col md:flex-row-reverse gap-4 lg:sticky lg:top-28">
           
           {/* Desktop Showcase Image & Magnifier */}
           <div 
@@ -280,7 +286,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             onMouseMove={handleMouseMove}
             onMouseEnter={() => setIsZooming(true)}
             onMouseLeave={handleMouseLeave}
-            style={{ aspectRatio: "15/16" }}
+            style={{ aspectRatio: "3/4" }}
             className="hidden md:block w-full bg-card-bg border border-card-border overflow-hidden relative cursor-crosshair shrink-0 md:shrink md:flex-1"
           >
             {/* Ambient Background Glow */}
@@ -301,95 +307,181 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
             />
           </div>
 
-          {/* Mobile Showcase Carousel (Supports smooth swiping and arrow clicks) */}
-          <div 
-            style={{ aspectRatio: "15/16" }}
-            className="w-full bg-card-bg border border-card-border overflow-hidden relative shrink-0 md:hidden"
-          >
-            {/* Ambient Background Glow */}
-            <div className="absolute top-0 left-0 w-full h-full bg-linear-to-b from-transparent via-black/5 to-black/40 pointer-events-none z-10" />
-
+          {/* Mobile Showcase Carousel (3:4 portrait ratio for full product visibility + high-end UI) */}
+          <div className="w-full flex flex-col md:hidden">
             <div 
-              ref={mobileScrollRef}
-              onScroll={handleMobileScroll}
-              className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+              style={{ aspectRatio: "3 / 4" }}
+              className="w-full bg-[#f9f8f6] border border-card-border overflow-hidden relative shrink-0 rounded-none shadow-xs"
             >
-              {images.map((img, idx) => (
-                <div key={idx} className="w-full h-full shrink-0 snap-center">
-                  <img 
-                    src={img} 
-                    alt={product.name}
-                    draggable={false}
-                    onDragStart={(e) => e.preventDefault()}
-                    className="w-full h-full object-cover pointer-events-none select-none"
-                  />
+              <div 
+                ref={mobileScrollRef}
+                onScroll={handleMobileScroll}
+                className="flex w-full h-full overflow-x-auto snap-x snap-mandatory scroll-smooth no-scrollbar"
+              >
+                {images.map((img, idx) => (
+                  <div key={idx} className="w-full h-full shrink-0 snap-center relative">
+                    <img 
+                      src={img} 
+                      alt={`${product.name} — view ${idx + 1}`}
+                      draggable={false}
+                      onDragStart={(e) => e.preventDefault()}
+                      className="w-full h-full object-cover object-top pointer-events-none select-none"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Status Badges: Sold Out / Only a Few Left (Top Left) */}
+              <div className="absolute top-3 left-3 z-20 flex flex-col gap-1 pointer-events-none">
+                {isOutOfStock ? (
+                  <span className="bg-black/85 backdrop-blur-md border border-red-500/40 text-red-400 text-[9px] font-extrabold tracking-widest px-2.5 py-1 uppercase font-mono shadow-sm">
+                    SOLD OUT
+                  </span>
+                ) : isLowStock ? (
+                  <span className="bg-accent text-white text-[9px] font-extrabold tracking-widest px-2.5 py-1 uppercase font-mono shadow-sm">
+                    ONLY A FEW LEFT
+                  </span>
+                ) : null}
+              </div>
+
+              {/* Top Right Floating Actions: Share & Wishlist */}
+              <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
+                {/* Share Button */}
+                <button 
+                  onClick={handleShare}
+                  className="p-2.5 bg-white/90 backdrop-blur-md border border-zinc-200/90 hover:bg-white text-zinc-800 hover:text-accent rounded-full transition-all duration-300 shadow-sm active:scale-90 cursor-pointer relative"
+                  aria-label="Share Product"
+                >
+                  {copiedState ? <Check className="w-3.5 h-3.5 text-accent" /> : <Share2 className="w-3.5 h-3.5" />}
+                  {copiedState && (
+                    <span className="absolute -bottom-8 right-0 bg-foreground text-background text-[9px] font-mono tracking-widest px-2 py-0.5 uppercase rounded-sm border border-foreground whitespace-nowrap shadow-md z-30">
+                      COPIED ✓
+                    </span>
+                  )}
+                </button>
+
+                {/* Wishlist Button */}
+                <button 
+                  onClick={() => toggleWishlist(product)}
+                  className="p-2.5 bg-white/90 backdrop-blur-md border border-zinc-200/90 hover:bg-white text-zinc-800 hover:text-accent rounded-full transition-all duration-300 shadow-sm active:scale-90 cursor-pointer"
+                  aria-label={isWishlisted ? "Remove from Wishlist" : "Add to Wishlist"}
+                >
+                  <Heart className={`w-3.5 h-3.5 ${isWishlisted ? "fill-accent text-accent" : "text-zinc-800 hover:text-accent"}`} />
+                </button>
+              </div>
+
+              {/* Carousel navigation arrows */}
+              {images.length > 1 && (
+                <>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArrowClick("prev");
+                    }}
+                    aria-label="Previous image"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/85 backdrop-blur-md border border-zinc-200/90 hover:bg-white text-zinc-800 hover:text-accent rounded-full flex items-center justify-center transition-all z-20 shadow-md active:scale-90 cursor-pointer"
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleArrowClick("next");
+                    }}
+                    aria-label="Next image"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-9 h-9 bg-white/85 backdrop-blur-md border border-zinc-200/90 hover:bg-white text-zinc-800 hover:text-accent rounded-full flex items-center justify-center transition-all z-20 shadow-md active:scale-90 cursor-pointer"
+                  >
+                    <ChevronRight className="w-4 h-4" />
+                  </button>
+                </>
+              )}
+
+              {/* Slide Counter Pill (Bottom Right) */}
+              {images.length > 1 && (
+                <div className="absolute bottom-3 right-3 z-20 px-2.5 py-1 bg-black/65 backdrop-blur-md rounded-full text-white text-[10px] font-mono tracking-widest uppercase flex items-center gap-1 border border-white/10 shadow-sm pointer-events-none">
+                  <span>{String(activeImgIdx + 1).padStart(2, "0")}</span>
+                  <span className="text-white/40">/</span>
+                  <span>{String(images.length).padStart(2, "0")}</span>
                 </div>
-              ))}
+              )}
             </div>
 
-            {/* Carousel navigation arrows (Visible on touch/tablet) */}
+            {/* Pill Progress Indicator Strip */}
             {images.length > 1 && (
-              <>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleArrowClick("prev");
-                  }}
-                  className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 border border-zinc-200/80 hover:border-accent hover:text-accent rounded-full text-zinc-800 transition-all z-20 active:scale-95"
-                >
-                  <ChevronLeft className="w-4 h-4" />
-                </button>
-                <button 
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleArrowClick("next");
-                  }}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-white/80 border border-zinc-200/80 hover:border-accent hover:text-accent rounded-full text-zinc-800 transition-all z-20 active:scale-95"
-                >
-                  <ChevronRight className="w-4 h-4" />
-                </button>
-              </>
+              <div className="flex items-center justify-center gap-1.5 mt-3">
+                {images.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (mobileScrollRef.current) {
+                        mobileScrollRef.current.scrollTo({
+                          left: idx * mobileScrollRef.current.clientWidth,
+                          behavior: "smooth"
+                        });
+                      }
+                      setActiveImgIdx(idx);
+                    }}
+                    aria-label={`View photo ${idx + 1}`}
+                    className={`h-1.5 transition-all duration-300 rounded-full cursor-pointer ${
+                      activeImgIdx === idx
+                        ? "w-7 bg-accent"
+                        : "w-2 bg-zinc-300 hover:bg-zinc-400"
+                    }`}
+                  />
+                ))}
+              </div>
+            )}
+
+            {/* Mini Thumbnails Strip on Mobile */}
+            {images.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto no-scrollbar pt-3 pb-2 mb-1 justify-center sm:justify-start">
+                {images.map((img, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => {
+                      if (mobileScrollRef.current) {
+                        mobileScrollRef.current.scrollTo({
+                          left: idx * mobileScrollRef.current.clientWidth,
+                          behavior: "smooth"
+                        });
+                      }
+                      setActiveImgIdx(idx);
+                    }}
+                    style={{ aspectRatio: "3 / 4" }}
+                    aria-label={`Thumbnail ${idx + 1}`}
+                    className={`w-14 shrink-0 rounded-none border-2 overflow-hidden transition-all duration-300 relative bg-[#f4f3f0] cursor-pointer ${
+                      activeImgIdx === idx
+                        ? "border-accent ring-1 ring-accent/30 shadow-xs"
+                        : "border-card-border opacity-65 hover:opacity-100"
+                    }`}
+                  >
+                    <img
+                      src={img}
+                      alt=""
+                      draggable={false}
+                      className="w-full h-full object-cover object-top pointer-events-none select-none"
+                    />
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 
           {/* Left Thumbnails (Hidden on mobile, vertically stacked on md+) */}
           {images.length > 1 && (
-            <div className="hidden md:flex flex-row md:flex-col gap-3 shrink-0 w-full md:w-fit md:px-1 md:h-full md:max-h-full overflow-y-auto no-scrollbar">
+            <div className="hidden md:flex flex-row md:flex-col gap-3 shrink-0 w-full md:w-20 md:px-0 md:h-full md:max-h-full overflow-y-auto no-scrollbar">
               {images.map((img, idx) => (
                 <button
                   key={idx}
                   onClick={() => setActiveImgIdx(idx)}
-                  style={{ aspectRatio: "15/16" }}
-                  className={`w-20 border-2 overflow-hidden transition-all duration-300 relative ${
-                    activeImgIdx === idx ? "border-accent" : "border-card-border hover:border-zinc-300"
+                  style={{ aspectRatio: "3 / 4" }}
+                  aria-label={`Show image ${idx + 1}`}
+                  className={`w-20 border-2 overflow-hidden transition-all duration-300 relative bg-[#f4f3f0] cursor-pointer ${
+                    activeImgIdx === idx ? "border-accent ring-1 ring-accent/30 shadow-xs" : "border-card-border hover:border-zinc-400 opacity-80 hover:opacity-100"
                   }`}
                 >
-                  <div className="absolute inset-0 bg-black/5" />
-                  <img src={img} alt="" draggable={false} onDragStart={(e) => e.preventDefault()} className="w-full h-full object-cover pointer-events-none select-none" />
+                  <img src={img} alt="" draggable={false} onDragStart={(e) => e.preventDefault()} className="w-full h-full object-cover object-top pointer-events-none select-none" />
                 </button>
-              ))}
-            </div>
-          )}
-
-          {/* Thumbnails indicator bar on mobile */}
-          {images.length > 1 && (
-            <div className="flex md:hidden gap-1.5 justify-center mt-2">
-              {images.map((_, idx) => (
-                <button
-                  key={idx}
-                  onClick={() => {
-                    if (mobileScrollRef.current) {
-                      mobileScrollRef.current.scrollTo({
-                        left: idx * mobileScrollRef.current.clientWidth,
-                        behavior: "smooth"
-                      });
-                    }
-                    setActiveImgIdx(idx);
-                  }}
-                  className={`h-1 transition-all rounded-full ${
-                    activeImgIdx === idx ? "w-6 bg-accent" : "w-2 bg-zinc-200"
-                  }`}
-                />
               ))}
             </div>
           )}
@@ -406,8 +498,8 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
                 {product.brand || "CACAPO"}
               </span>
               
-              {/* Share & Wishlist action controls */}
-              <div className="flex gap-2">
+              {/* Share & Wishlist action controls (desktop only, mobile has floating actions on the image) */}
+              <div className="hidden md:flex gap-2">
                 <button 
                   onClick={handleShare}
                   className="p-2 bg-white/80 border border-zinc-200/80 hover:border-accent/40 rounded-full text-zinc-800 transition-all cursor-pointer relative"
@@ -905,7 +997,7 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
               return (
                 <div key={p.id} className="group flex flex-col bg-card-bg border border-card-border rounded-none relative overflow-hidden transition-all duration-500 hover:border-accent/40 hover:shadow-[0_10px_30px_rgba(0,0,0,0.04)]">
                   {/* Aspect ratio frame */}
-                  <div className="w-full overflow-hidden relative" style={{ aspectRatio: "15/16" }}>
+                  <div className="w-full overflow-hidden relative" style={{ aspectRatio: "3/4" }}>
                     <Link href={`/shop/${p.slug}`} className="block w-full h-full">
                       <div className="absolute inset-0 bg-linear-to-b from-transparent to-black/35 z-2 pointer-events-none" />
                       <img 
