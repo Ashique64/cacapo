@@ -8,7 +8,7 @@ import { supabase } from "@/lib/supabase";
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { ShoppingBag, Heart, SlidersHorizontal, Search, ArrowUpDown, X, Loader2 } from "lucide-react";
+import { ShoppingBag, Heart, SlidersHorizontal, Search, ArrowUpDown, X, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
 import Navbar from "@/components/layout/Header/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 
@@ -187,9 +187,20 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   const searchParams = useSearchParams();
   const categoryParam = searchParams ? searchParams.get("category") : null;
 
-  // Pagination
-  const ITEMS_PER_PAGE = 12; // desktop: 3cols × 4rows | mobile: 2cols × 6rows
+  // Pagination: Mobile: 2 items/row × 5 rows = 10 items | Desktop: 3 items/row × 4 rows = 12 items
+  const [isMobile, setIsMobile] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 1024);
+    };
+    checkMobile();
+    window.addEventListener("resize", checkMobile);
+    return () => window.removeEventListener("resize", checkMobile);
+  }, []);
+
+  const itemsPerPage = isMobile ? 10 : 12;
 
   useEffect(() => {
     // If server already provided products and categories, avoid redundant client fetch
@@ -305,6 +316,10 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
     setPriceRange(maxPriceLimit);
     setSortBy("newest");
     setCurrentPage(1);
+    const catalogAnchor = document.getElementById("catalog-top");
+    if (catalogAnchor) {
+      catalogAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
   }, [maxPriceLimit]);
 
   // Reset to page 1 whenever filters/sort change
@@ -313,20 +328,44 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   }, [search, selectedCategory, priceRange, sortBy]);
 
   // Memoized pagination slice
-  const totalPages = useMemo(() => Math.ceil(filteredProducts.length / ITEMS_PER_PAGE), [filteredProducts]);
-  const paginatedProducts = useMemo(() =>
-    filteredProducts.slice(
-      (currentPage - 1) * ITEMS_PER_PAGE,
-      currentPage * ITEMS_PER_PAGE
-    ),
-  [filteredProducts, currentPage]);
+  const totalPages = useMemo(
+    () => Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage)),
+    [filteredProducts.length, itemsPerPage]
+  );
+
+  // Clamp current page if total pages decreases (e.g., resizing or filtering)
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedProducts = useMemo(
+    () =>
+      filteredProducts.slice(
+        (currentPage - 1) * itemsPerPage,
+        currentPage * itemsPerPage
+      ),
+    [filteredProducts, currentPage, itemsPerPage]
+  );
+
+  const handlePageChange = useCallback((page) => {
+    if (page < 1 || page > totalPages) return;
+    setCurrentPage(page);
+    const catalogAnchor = document.getElementById("catalog-top");
+    if (catalogAnchor) {
+      catalogAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [totalPages]);
 
   return (
     <SmoothScroll>
       <Navbar />
       <div className="bg-background text-foreground min-h-screen pt-24 px-6 md:px-12 select-none">
         {/* Title Header */}
-        <div className="max-w-7xl mx-auto border-b border-card-border pb-8 mb-8">
+        <div id="catalog-top" className="max-w-7xl mx-auto border-b border-card-border pb-8 mb-8 scroll-mt-28">
           <span className="text-[10px] font-semibold tracking-[0.4em] text-accent uppercase block mb-2">
             THE CATALOGUE
           </span>
@@ -482,71 +521,94 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
               </div>
 
               {/* Pagination Controls */}
-              {totalPages > 1 && (
-                <div className="flex items-center justify-center gap-1 mt-10 select-none">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-5 mt-14 pt-8 border-t border-zinc-300/80 select-none">
+                {/* Result counter */}
+                <div className="text-xs sm:text-sm tracking-wider text-zinc-600 font-mono uppercase">
+                  Showing{" "}
+                  <span className="text-foreground font-bold font-mono">
+                    {filteredProducts.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1}–
+                    {Math.min(currentPage * itemsPerPage, filteredProducts.length)}
+                  </span>{" "}
+                  of{" "}
+                  <span className="text-foreground font-bold font-mono">{filteredProducts.length}</span>{" "}
+                  Pieces
+                </div>
+
+                {/* Page Controls */}
+                <div className="flex items-center gap-2">
                   {/* Prev */}
                   <button
-                    onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                    disabled={currentPage === 1}
-                    className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
-                      currentPage === 1
-                        ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
-                        : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage <= 1}
+                    aria-label="Previous Page"
+                    className={`h-10 px-3.5 flex items-center justify-center gap-1.5 border text-xs font-semibold tracking-wider font-mono transition-all duration-300 ${
+                      currentPage <= 1
+                        ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                        : "border-zinc-300 bg-white text-zinc-900 hover:border-accent hover:text-accent hover:bg-zinc-50 cursor-pointer shadow-xs active:scale-95"
                     }`}
                   >
-                    ←
+                    <ChevronLeft className="w-4 h-4 stroke-[2.2]" />
+                    <span className="hidden sm:inline text-[11px] uppercase">PREV</span>
                   </button>
 
                   {/* Page Numbers */}
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
-                    // Show first, last, current ±1, and ellipsis
-                    const show =
-                      page === 1 ||
-                      page === totalPages ||
-                      Math.abs(page - currentPage) <= 1;
-                    const showEllipsisBefore =
-                      page === currentPage - 2 && currentPage > 3;
-                    const showEllipsisAfter =
-                      page === currentPage + 2 && currentPage < totalPages - 2;
+                  <div className="flex items-center gap-1.5">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => {
+                      const show =
+                        page === 1 ||
+                        page === totalPages ||
+                        Math.abs(page - currentPage) <= 1;
+                      const showEllipsisBefore =
+                        page === currentPage - 2 && currentPage > 3;
+                      const showEllipsisAfter =
+                        page === currentPage + 2 && currentPage < totalPages - 2;
 
-                    if (showEllipsisBefore || showEllipsisAfter) {
+                      if (showEllipsisBefore || showEllipsisAfter) {
+                        return (
+                          <span
+                            key={`ellipsis-${page}`}
+                            className="w-10 h-10 flex items-center justify-center text-zinc-500 text-xs font-bold font-mono select-none"
+                          >
+                            ···
+                          </span>
+                        );
+                      }
+                      if (!show) return null;
+
                       return (
-                        <span key={`ellipsis-${page}`} className="w-8 h-8 flex items-center justify-center text-zinc-400 text-[10px] font-mono">
-                          ···
-                        </span>
+                        <button
+                          key={page}
+                          onClick={() => handlePageChange(page)}
+                          aria-label={`Page ${page}`}
+                          aria-current={currentPage === page ? "page" : undefined}
+                          className={`min-w-10 h-10 px-2 flex items-center justify-center border text-xs tracking-wider font-bold font-mono transition-all duration-300 cursor-pointer ${
+                            currentPage === page
+                              ? "border-accent bg-accent text-white shadow-xs"
+                              : "border-zinc-300 bg-white text-zinc-800 hover:border-accent hover:text-accent hover:bg-zinc-50 active:scale-95 shadow-xs"
+                          }`}
+                        >
+                          {String(page).padStart(2, "0")}
+                        </button>
                       );
-                    }
-                    if (!show) return null;
-
-                    return (
-                      <button
-                        key={page}
-                        onClick={() => setCurrentPage(page)}
-                        className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 cursor-pointer ${
-                          currentPage === page
-                            ? "border-accent bg-accent/10 text-accent font-semibold"
-                            : "border-card-border text-muted-text hover:border-zinc-400 hover:text-foreground"
-                        }`}
-                      >
-                        {String(page).padStart(2, "0")}
-                      </button>
-                    );
-                  })}
+                    })}
+                  </div>
 
                   {/* Next */}
                   <button
-                    onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                    disabled={currentPage === totalPages}
-                    className={`w-8 h-8 flex items-center justify-center border text-[10px] tracking-widest font-mono transition-all duration-300 ${
-                      currentPage === totalPages
-                        ? "border-zinc-200 text-zinc-300 cursor-not-allowed"
-                        : "border-card-border text-muted-text hover:border-foreground hover:text-foreground cursor-pointer"
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage >= totalPages}
+                    aria-label="Next Page"
+                    className={`h-10 px-3.5 flex items-center justify-center gap-1.5 border text-xs font-semibold tracking-wider font-mono transition-all duration-300 ${
+                      currentPage >= totalPages
+                        ? "border-zinc-200 bg-zinc-100 text-zinc-400 cursor-not-allowed"
+                        : "border-zinc-300 bg-white text-zinc-900 hover:border-accent hover:text-accent hover:bg-zinc-50 cursor-pointer shadow-xs active:scale-95"
                     }`}
                   >
-                    →
+                    <span className="hidden sm:inline text-[11px] uppercase">NEXT</span>
+                    <ChevronRight className="w-4 h-4 stroke-[2.2]" />
                   </button>
                 </div>
-              )}
+              </div>
               </>
             ) : (
               <div className="flex flex-col items-center justify-center py-32 text-muted-text border border-card-border p-8">
