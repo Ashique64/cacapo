@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { 
   ShoppingBag, 
   Heart, 
@@ -54,11 +55,42 @@ function sortSizes(sizesArray) {
 }
 
 export default function ProductDetailsClient({ product, relatedProducts }) {
+  const router = useRouter();
   const { user } = useAuthStore();
   const addItem = useCartStore((state) => state.addItem);
   const setCartOpen = useCartStore((state) => state.setCartOpen);
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const wishlistItems = useWishlistStore((state) => state.items);
+
+  const handleGoBack = useCallback((e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (typeof window !== "undefined") {
+      const hasHistory = window.history.length > 1;
+      const referrer = document.referrer || "";
+      const isFromShop = referrer.includes("/shop");
+
+      if (hasHistory && (isFromShop || !referrer || referrer.includes(window.location.host))) {
+        router.back();
+        return;
+      }
+
+      // Fallback via sessionStorage if direct load or no history
+      try {
+        const savedQuery = sessionStorage.getItem("cacapo_shop_query");
+        const savedPage = sessionStorage.getItem("cacapo_shop_page");
+        if (savedQuery) {
+          router.push(`/shop?${savedQuery}`);
+          return;
+        }
+        if (savedPage && savedPage !== "1") {
+          router.push(`/shop?page=${savedPage}`);
+          return;
+        }
+      } catch (_) {}
+    }
+
+    router.push("/shop");
+  }, [router]);
 
   // Gallery State
   const [activeImgIdx, setActiveImgIdx] = useState(0);
@@ -266,13 +298,31 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 md:py-16 select-none relative z-10">
       
-      {/* Breadcrumbs */}
-      <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-muted-text uppercase mb-8 md:mb-12">
-        <Link href="/" className="hover:text-foreground transition-colors">Home</Link>
-        <span>/</span>
-        <Link href="/shop" className="hover:text-foreground transition-colors">Shop</Link>
-        <span>/</span>
-        <span className="text-foreground truncate max-w-50 uppercase">{product.name}</span>
+      {/* Breadcrumbs & Back Action */}
+      <div className="flex items-center justify-between gap-4 mb-6 md:mb-10">
+        <div className="flex items-center gap-2 text-[10px] tracking-[0.2em] text-muted-text uppercase overflow-hidden">
+          <Link href="/" className="hover:text-foreground transition-colors shrink-0">Home</Link>
+          <span className="shrink-0">/</span>
+          <button
+            type="button"
+            onClick={handleGoBack}
+            className="hover:text-foreground transition-colors uppercase cursor-pointer shrink-0"
+          >
+            Shop
+          </button>
+          <span className="shrink-0">/</span>
+          <span className="text-foreground truncate max-w-35 sm:max-w-xs uppercase">{product.name}</span>
+        </div>
+
+        <button
+          type="button"
+          onClick={handleGoBack}
+          className="inline-flex items-center gap-1 text-[10px] font-mono tracking-widest uppercase text-muted-text hover:text-foreground hover:border-zinc-400 transition-all duration-200 cursor-pointer shrink-0 py-1 px-2.5 border border-card-border bg-card-bg/60 rounded-none shadow-2xs active:scale-95 group"
+          aria-label="Back to Shop"
+        >
+          <ChevronLeft className="w-3.5 h-3.5 transition-transform group-hover:-translate-x-0.5" />
+          <span>BACK</span>
+        </button>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-16 items-start">

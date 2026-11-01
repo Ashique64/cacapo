@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useState, Suspense, useMemo, useCallback, memo } from "react";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense, useMemo, useCallback, memo, useRef } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { supabase } from "@/lib/supabase";
@@ -12,7 +12,7 @@ import { ShoppingBag, Heart, SlidersHorizontal, Search, ArrowUpDown, X, Loader2,
 import Navbar from "@/components/layout/Header/Navbar";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 
-function ProductCard({ product, index = 0 }) {
+function ProductCard({ product, index = 0, currentPage = 1 }) {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const { user } = useAuthStore();
@@ -62,6 +62,16 @@ function ProductCard({ product, index = 0 }) {
     toggleWishlist(product);
   }, [toggleWishlist, product]);
 
+  const handleProductClick = useCallback(() => {
+    try {
+      sessionStorage.setItem("cacapo_shop_page", String(currentPage));
+      const q = window.location.search.replace(/^\?/, "");
+      if (q) {
+        sessionStorage.setItem("cacapo_shop_query", q);
+      }
+    } catch (_) {}
+  }, [currentPage]);
+
   return (
     <div
       onMouseEnter={() => setIsHovered(true)}
@@ -70,7 +80,7 @@ function ProductCard({ product, index = 0 }) {
     >
       {/* Product Image — tall, image-dominant */}
       <div className="w-full aspect-3/4 overflow-hidden relative bg-[#f4f3f0]">
-        <Link href={`/shop/${product.slug}`} className="block w-full h-full">
+        <Link href={`/shop/${product.slug}`} onClick={handleProductClick} className="block w-full h-full">
           <div
             className="flex h-full w-full transition-transform duration-700 ease-in-out"
             style={{ transform: `translateX(-${currentImageIndex * 100}%)` }}
@@ -124,7 +134,7 @@ function ProductCard({ product, index = 0 }) {
 
       {/* Info Row — compact, below image */}
       <div className="px-3 pt-3 pb-4 bg-[#f9f8f6]">
-        <Link href={`/shop/${product.slug}`} className="block">
+        <Link href={`/shop/${product.slug}`} onClick={handleProductClick} className="block">
           <h3 className="text-[11px] sm:text-xs font-medium tracking-wide text-foreground truncate leading-tight uppercase">
             {product.name}
           </h3>
@@ -142,6 +152,7 @@ function ProductCard({ product, index = 0 }) {
         {/* VIEW DETAILS — mobile only, below price */}
         <Link
           href={`/shop/${product.slug}`}
+          onClick={handleProductClick}
           className="mt-3 w-full py-2 text-[9px] font-semibold tracking-[0.18em] transition-all duration-300 flex items-center justify-center gap-1 cursor-pointer md:hidden bg-foreground text-background border border-foreground group-hover:bg-accent group-hover:border-accent group-hover:text-white text-center"
         >
           {isCardOutOfStock ? "VIEW DETAILS" : "VIEW DETAILS"}
@@ -183,13 +194,36 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   const [showMobileFilters, setShowMobileFilters] = useState(false);
   const [showMobileSort, setShowMobileSort] = useState(false);
 
-  // Read ?category= query param from URL
+  // Router & URL Params
+  const router = useRouter();
+  const pathname = usePathname();
   const searchParams = useSearchParams();
   const categoryParam = searchParams ? searchParams.get("category") : null;
+  const pageParam = searchParams ? parseInt(searchParams.get("page"), 10) : 1;
+  const initialPage = !isNaN(pageParam) && pageParam > 0 ? pageParam : 1;
 
   // Pagination: Mobile: 2 items/row × 5 rows = 10 items | Desktop: 3 items/row × 4 rows = 12 items
   const [isMobile, setIsMobile] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(initialPage);
+
+  // Sync page state when URL searchParams changes (e.g. browser back/forward)
+  useEffect(() => {
+    const p = searchParams ? parseInt(searchParams.get("page"), 10) : 1;
+    const targetPage = !isNaN(p) && p > 0 ? p : 1;
+    setCurrentPage((prev) => (prev !== targetPage ? targetPage : prev));
+  }, [searchParams]);
+
+  // Direct popstate listener for instant browser back/forward responsiveness
+  useEffect(() => {
+    const handlePopState = () => {
+      const params = new URLSearchParams(window.location.search);
+      const p = parseInt(params.get("page") || "1", 10);
+      const validPage = !isNaN(p) && p > 0 ? p : 1;
+      setCurrentPage((prev) => (prev !== validPage ? validPage : prev));
+    };
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   useEffect(() => {
     const checkMobile = () => {
@@ -310,35 +344,95 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
       }),
   [products, search, selectedCategory, priceRange, sortBy]);
 
-  const resetFilters = useCallback(() => {
-    setSearch("");
-    setSelectedCategory("all");
-    setPriceRange(maxPriceLimit);
-    setSortBy("newest");
-    setCurrentPage(1);
-    const catalogAnchor = document.getElementById("catalog-top");
-    if (catalogAnchor) {
-      catalogAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
-  }, [maxPriceLimit]);
-
-  // Reset to page 1 whenever filters/sort change
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, selectedCategory, priceRange, sortBy]);
-
   // Memoized pagination slice
   const totalPages = useMemo(
     () => Math.max(1, Math.ceil(filteredProducts.length / itemsPerPage)),
     [filteredProducts.length, itemsPerPage]
   );
 
-  // Clamp current page if total pages decreases (e.g., resizing or filtering)
-  useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
+  const handlePageChange = useCallback((page, shouldScroll = true) => {
+    if (page < 1) return;
+    setCurrentPage(page);
+
+    // Synchronize URL search params
+    const params = new URLSearchParams(window.location.search);
+    if (page <= 1) {
+      params.delete("page");
+    } else {
+      params.set("page", String(page));
     }
-  }, [currentPage, totalPages]);
+    const queryString = params.toString();
+    const newUrl = queryString ? `${pathname}?${queryString}` : pathname;
+
+    // Use router.push to add history record so browser back/forward works
+    router.push(newUrl, { scroll: false });
+
+    // Store in sessionStorage as safety fallback for detail view back actions
+    try {
+      sessionStorage.setItem("cacapo_shop_page", String(page));
+      if (queryString) {
+        sessionStorage.setItem("cacapo_shop_query", queryString);
+      } else {
+        sessionStorage.removeItem("cacapo_shop_query");
+      }
+    } catch (_) {}
+
+    if (shouldScroll) {
+      const catalogAnchor = document.getElementById("catalog-top");
+      if (catalogAnchor) {
+        catalogAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+    }
+  }, [pathname, router]);
+
+  const resetFilters = useCallback(() => {
+    setSearch("");
+    setSelectedCategory("all");
+    setPriceRange(maxPriceLimit);
+    setSortBy("newest");
+    handlePageChange(1, true);
+  }, [maxPriceLimit, handlePageChange]);
+
+  // Reset to page 1 whenever user explicitly changes filters/sort (NOT on mount)
+  const isInitialMount = useRef(true);
+  const initialCategoryHandled = useRef(false);
+  const prevFiltersRef = useRef({ search, selectedCategory, priceRange, sortBy });
+
+  useEffect(() => {
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return;
+    }
+
+    const prev = prevFiltersRef.current;
+    const filterChanged =
+      prev.search !== search ||
+      prev.selectedCategory !== selectedCategory ||
+      prev.priceRange !== priceRange ||
+      prev.sortBy !== sortBy;
+
+    if (filterChanged) {
+      // If this change was simply applying initial categoryParam from URL, don't reset page
+      if (categoryParam && !initialCategoryHandled.current && selectedCategory !== "all") {
+        initialCategoryHandled.current = true;
+        prevFiltersRef.current = { search, selectedCategory, priceRange, sortBy };
+        return;
+      }
+
+      prevFiltersRef.current = { search, selectedCategory, priceRange, sortBy };
+      handlePageChange(1, false);
+    }
+  }, [search, selectedCategory, priceRange, sortBy, categoryParam, handlePageChange]);
+
+  // Clamp current page if total pages decreases (e.g., resizing or filtering), but only after products are loaded
+  useEffect(() => {
+    if (loading || products.length === 0) return;
+    if (totalPages > 0 && currentPage > totalPages) {
+      handlePageChange(totalPages, false);
+    }
+  }, [currentPage, totalPages, loading, products.length, handlePageChange]);
 
   const paginatedProducts = useMemo(
     () =>
@@ -348,17 +442,6 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
       ),
     [filteredProducts, currentPage, itemsPerPage]
   );
-
-  const handlePageChange = useCallback((page) => {
-    if (page < 1 || page > totalPages) return;
-    setCurrentPage(page);
-    const catalogAnchor = document.getElementById("catalog-top");
-    if (catalogAnchor) {
-      catalogAnchor.scrollIntoView({ behavior: "smooth", block: "start" });
-    } else {
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  }, [totalPages]);
 
   return (
     <SmoothScroll>
@@ -516,7 +599,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
               <>
               <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 lg:gap-6">
                 {paginatedProducts.map((product, idx) => (
-                  <MemoizedProductCard key={product.id} product={product} index={idx} />
+                  <MemoizedProductCard key={product.id} product={product} index={idx} currentPage={currentPage} />
                 ))}
               </div>
 
