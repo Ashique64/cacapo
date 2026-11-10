@@ -283,7 +283,7 @@ export function renderOrderConfirmationEmail({
     </div>
 
     <div style="text-align: center; margin-top: 28px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Order Status</a>
+      <a href="https://cacapoclothing.com/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Order Status</a>
     </div>
   `;
 
@@ -344,7 +344,7 @@ export function renderShippingUpdateEmail({
     ${trackingUrl ? `<div style="text-align: center; margin-top: 28px;">
       <a href="${trackingUrl}" target="_blank" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">Track Shipment Live</a>
     </div>` : `<div style="text-align: center; margin-top: 28px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Account Dashboard</a>
+      <a href="https://cacapoclothing.com/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">View Account Dashboard</a>
     </div>`}
   `;
 
@@ -432,7 +432,7 @@ export function renderReturnStatusEmail({
     </div>
 
     <div style="text-align: center; margin-top: 28px;">
-      <a href="https://cacapo.vercel.app/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">Manage Returns in Account</a>
+      <a href="https://cacapoclothing.com/account" style="display: inline-block; background-color: #FFFFFF; color: #000000; font-size: 11px; font-weight: 800; letter-spacing: 0.2em; text-decoration: none; text-transform: uppercase; padding: 14px 28px; border-radius: 2px;">Manage Returns in Account</a>
     </div>
   `;
 

@@ -143,7 +143,7 @@ export async function createShipment(orderData) {
       billing_pincode: orderData.shipping_address.pincode,
       billing_state: orderData.shipping_address.state,
       billing_country: "India",
-      billing_email: orderData.shipping_address.email || "support@cacapo.com",
+      billing_email: orderData.shipping_address.email || "support@cacapoclothing.com",
       billing_phone: orderData.shipping_address.phone,
       shipping_is_billing: true,
       order_items: orderData.order_items.map(item => ({
@@ -286,7 +286,7 @@ export async function requestReturnPickup(orderData, returnRequest) {
       pickup_state: orderData.shipping_address.state,
       pickup_country: "India",
       pickup_phone: orderData.shipping_address.phone,
-      pickup_email: orderData.shipping_address.email || "support@cacapo.com",
+      pickup_email: orderData.shipping_address.email || "support@cacapoclothing.com",
       shipping_customer_name: process.env.RETURN_SHIPPING_NAME || "CACAPO Return Desk",
       shipping_address: process.env.RETURN_SHIPPING_ADDRESS || "Building No: 15/451B,452B, Ottu company building, Pandikkad road, Melattur",
       shipping_city: process.env.RETURN_SHIPPING_CITY || "Melattur",

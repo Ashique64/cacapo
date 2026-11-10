@@ -168,7 +168,7 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   if (gstNumber) {
     doc.text(`GSTIN: ${gstNumber}`, 14, 29);
   }
-  doc.text("Email: support@cacapo.com | Website: www.cacapo.com", 14, gstNumber ? 34 : 29);
+  doc.text("Email: support@cacapoclothing.com | Website: cacapoclothing.com", 14, gstNumber ? 34 : 29);
 
   // Document Title & Invoice Copy Label
   doc.setFont("helvetica", "bold");
@@ -389,7 +389,7 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   doc.setFontSize(7.5);
   doc.setTextColor(80, 80, 80);
   doc.text("• Standard 7-day return/exchange policy applies for unworn items in original packaging with tags intact.", 17, footerY + 10);
-  doc.text("• To initiate a return or view full policy, visit www.cacapo.com/account or contact support@cacapo.com.", 17, footerY + 15);
+  doc.text("• To initiate a return or view full policy, visit cacapoclothing.com/account or contact support@cacapoclothing.com.", 17, footerY + 15);
 
   footerY += 26;
 
@@ -562,7 +562,7 @@ export async function generatePackagingSlip(order) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(80, 80, 80);
-  doc.text("For returns, exchanges, or support, visit www.cacapo.com/account or email support@cacapo.com.", 18, finalY + 24);
+  doc.text("For returns, exchanges, or support, visit cacapoclothing.com/account or email support@cacapoclothing.com.", 18, finalY + 24);
 
   doc.save(`CACAPO_PackagingSlip_${order.order_number}.pdf`);
 }
