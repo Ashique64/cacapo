@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
+import imageCompression from "browser-image-compression";
 import AdminPagination from "@/components/ui/AdminPagination";
 import {
   Search,
@@ -159,6 +160,62 @@ export default function AdminCatalogDesk() {
     }));
   };
 
+  const uploadOptimizedImage = async (file, bucket, prefix) => {
+    let uploadFile = file;
+
+    if (
+      file.type.startsWith("image/") &&
+      file.type !== "image/svg+xml" &&
+      file.type !== "image/gif"
+    ) {
+      try {
+        const compressed = await imageCompression(file, {
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1200,
+          useWebWorker: true,
+          fileType: "image/webp",
+        });
+        if (compressed && compressed.size < file.size) {
+          uploadFile = compressed;
+        }
+      } catch (compErr) {
+        console.warn("Image compression failed, uploading original file:", compErr);
+      }
+    }
+
+    const fileExt =
+      uploadFile.type === "image/webp"
+        ? "webp"
+        : file.name.split(".").pop() || "jpg";
+    const fileName = `${prefix}-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from(bucket)
+      .upload(fileName, uploadFile, {
+        cacheControl: "31536000",
+        contentType: uploadFile.type || undefined,
+        upsert: false,
+      });
+
+    if (uploadError) {
+      if (
+        uploadError.message?.includes("bucket not found") ||
+        uploadError.error === "Bucket not found"
+      ) {
+        throw new Error(
+          `Supabase Storage bucket '${bucket}' not found. Please create a public bucket named '${bucket}' in your Supabase dashboard.`
+        );
+      }
+      throw uploadError;
+    }
+
+    const {
+      data: { publicUrl },
+    } = supabase.storage.from(bucket).getPublicUrl(fileName);
+
+    return publicUrl;
+  };
+
   const handleImageUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -170,27 +227,7 @@ export default function AdminCatalogDesk() {
 
     setUploading(true);
     try {
-      const fileExt = file.name.split('.').pop();
-      const fileName = `category-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
-
-      const { data, error: uploadError } = await supabase.storage
-        .from("categories")
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: false
-        });
-
-      if (uploadError) {
-        if (uploadError.message?.includes("bucket not found") || uploadError.error === "Bucket not found") {
-          throw new Error("Supabase Storage bucket 'categories' not found. Please create a public bucket named 'categories' in your Supabase dashboard.");
-        }
-        throw uploadError;
-      }
-
-      const { data: { publicUrl } } = supabase.storage
-        .from("categories")
-        .getPublicUrl(filePath);
+      const publicUrl = await uploadOptimizedImage(file, "categories", "category");
 
       setCategoryForm((prev) => ({
         ...prev,
@@ -233,28 +270,7 @@ export default function AdminCatalogDesk() {
           continue;
         }
 
-        const fileExt = file.name.split('.').pop();
-        const fileName = `product-${Math.random().toString(36).substring(2)}-${Date.now()}.${fileExt}`;
-        const filePath = `${fileName}`;
-
-        const { data, error: uploadError } = await supabase.storage
-          .from("products")
-          .upload(filePath, file, {
-            cacheControl: '3600',
-            upsert: false
-          });
-
-        if (uploadError) {
-          if (uploadError.message?.includes("bucket not found") || uploadError.error === "Bucket not found") {
-            throw new Error("Supabase Storage bucket 'products' not found. Please create a public bucket named 'products' in your Supabase dashboard.");
-          }
-          throw uploadError;
-        }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from("products")
-          .getPublicUrl(filePath);
-
+        const publicUrl = await uploadOptimizedImage(file, "products", "product");
         uploadedUrls.push(publicUrl);
       }
       setProductImages(uploadedUrls);

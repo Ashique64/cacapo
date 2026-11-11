@@ -13,11 +13,15 @@ const nextConfig = {
         pathname: "/storage/v1/object/public/**",
       },
     ],
-    // Prefer WebP, with AVIF as the best-quality fallback
-    formats: ["image/webp", "image/avif"],
-    // Reasonable device widths for responsive images
-    deviceSizes: [375, 640, 768, 1024, 1280, 1920],
-    imageSizes: [80, 160, 320, 480],
+    // Cache optimized images for 31 days (vs 4h default) to reduce Vercel transformations & cache writes
+    minimumCacheTTL: 2678400,
+    // Serve WebP only (halves transformations compared to WebP + AVIF)
+    formats: ["image/webp"],
+    // Lock allowed quality to 75
+    qualities: [75],
+    // Trimmed breakpoints to reduce per-image transformation variants
+    deviceSizes: [640, 1024, 1536],
+    imageSizes: [160, 384],
   },
 };
 
