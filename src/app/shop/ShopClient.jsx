@@ -164,6 +164,85 @@ function ProductCard({ product, index = 0, currentPage = 1 }) {
 
 const MemoizedProductCard = memo(ProductCard);
 
+const APPAREL_SIZE_ORDER = [
+  "XXS",
+  "XS",
+  "S",
+  "M",
+  "L",
+  "XL",
+  "XXL",
+  "2XL",
+  "XXXL",
+  "3XL",
+  "4XL",
+  "OS",
+  "ONE SIZE",
+  "FREE SIZE",
+];
+
+function compareSizes(a, b) {
+  const numA = /^\d+(\.\d+)?$/.test(a) ? Number(a) : null;
+  const numB = /^\d+(\.\d+)?$/.test(b) ? Number(b) : null;
+
+  if (numA !== null && numB !== null) return numA - numB;
+  if (numA !== null) return -1;
+  if (numB !== null) return 1;
+
+  const idxA = APPAREL_SIZE_ORDER.indexOf(a.toUpperCase());
+  const idxB = APPAREL_SIZE_ORDER.indexOf(b.toUpperCase());
+
+  if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+  if (idxA !== -1) return -1;
+  if (idxB !== -1) return 1;
+
+  return a.localeCompare(b);
+}
+
+function SizeFilterContent({ sections, selectedCategory, selectedSizes, onToggleSize }) {
+  const visibleSections =
+    selectedCategory === "all"
+      ? sections
+      : sections.filter((section) => section.categoryId === selectedCategory);
+
+  if (visibleSections.length === 0) return null;
+
+  return (
+    <div className="space-y-4">
+      {visibleSections.map((section) => (
+        <div key={section.categoryId}>
+          {selectedCategory === "all" && (
+            <span className="text-[10px] tracking-[0.2em] text-muted-text uppercase font-semibold block mb-2">
+              {section.categoryName}
+            </span>
+          )}
+          <div className="flex flex-wrap gap-2">
+            {section.sizes.map((size) => {
+              const sizeKey = `${section.categoryId}::${size}`;
+              const isSelected = selectedSizes.includes(sizeKey);
+              return (
+                <button
+                  key={sizeKey}
+                  type="button"
+                  onClick={() => onToggleSize(sizeKey)}
+                  aria-pressed={isSelected}
+                  className={`px-3 py-1.5 border text-[10px] tracking-[0.15em] uppercase font-mono font-medium transition-all duration-200 cursor-pointer ${
+                    isSelected
+                      ? "border-accent bg-accent/10 text-accent font-semibold"
+                      : "border-card-border text-muted-text hover:border-zinc-400 hover:text-foreground"
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function ShopContent({ initialProducts = [], initialCategories = [] }) {
   const formattedInitialCategories = useMemo(() => {
     if (initialCategories && initialCategories.length > 0) {
@@ -186,6 +265,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   // Filters State
   const [search, setSearch] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [selectedSizes, setSelectedSizes] = useState([]);
   const [priceRange, setPriceRange] = useState(initialMaxPrice);
   const [maxPriceLimit, setMaxPriceLimit] = useState(initialMaxPrice);
   const [sortBy, setSortBy] = useState("newest");
@@ -320,6 +400,54 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
     }
   }, [categories, categoryParam]);
 
+  // Compute available in-stock sizes grouped by category section
+  const sizeSections = useMemo(() => {
+    const categorySizeMap = new Map();
+
+    products.forEach((product) => {
+      if (!product.category_id || !product.variants) return;
+      product.variants.forEach((variant) => {
+        if (!variant.size || variant.stock_quantity <= 0) return;
+        const normalizedSize = variant.size.trim();
+        if (!normalizedSize) return;
+
+        if (!categorySizeMap.has(product.category_id)) {
+          categorySizeMap.set(product.category_id, new Set());
+        }
+        categorySizeMap.get(product.category_id).add(normalizedSize);
+      });
+    });
+
+    return categories
+      .filter((cat) => cat.id !== "all")
+      .map((cat) => ({
+        categoryId: cat.id,
+        categoryName: cat.name,
+        sizes: Array.from(categorySizeMap.get(cat.id) || []).sort(compareSizes),
+      }))
+      .filter((section) => section.sizes.length > 0);
+  }, [products, categories]);
+
+  const hasVisibleSizeFilters = useMemo(() => {
+    if (selectedCategory === "all") return sizeSections.length > 0;
+    return sizeSections.some((section) => section.categoryId === selectedCategory);
+  }, [sizeSections, selectedCategory]);
+
+  const handleCategoryChange = useCallback((categoryId) => {
+    if (categoryId !== selectedCategory) {
+      setSelectedCategory(categoryId);
+      setSelectedSizes([]);
+    }
+  }, [selectedCategory]);
+
+  const handleToggleSize = useCallback((sizeKey) => {
+    setSelectedSizes((prev) =>
+      prev.includes(sizeKey)
+        ? prev.filter((item) => item !== sizeKey)
+        : [...prev, sizeKey]
+    );
+  }, []);
+
   // Memoized filter & sort — only recomputes when deps actually change
   const filteredProducts = useMemo(() =>
     products
@@ -328,7 +456,15 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
         const matchesCategory =
           selectedCategory === "all" || product.category_id === selectedCategory;
         const matchesPrice = product.price <= priceRange;
-        return matchesSearch && matchesCategory && matchesPrice;
+        const matchesSize =
+          selectedSizes.length === 0 ||
+          (product.variants &&
+            product.variants.some((v) => {
+              if (v.stock_quantity <= 0 || !v.size) return false;
+              const key = `${product.category_id}::${v.size.trim()}`;
+              return selectedSizes.includes(key);
+            }));
+        return matchesSearch && matchesCategory && matchesPrice && matchesSize;
       })
       .sort((a, b) => {
         if (sortBy === "price-asc") {
@@ -342,7 +478,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
         }
         return new Date(b.created_at) - new Date(a.created_at);
       }),
-  [products, search, selectedCategory, priceRange, sortBy]);
+  [products, search, selectedCategory, selectedSizes, priceRange, sortBy]);
 
   // Memoized pagination slice
   const totalPages = useMemo(
@@ -390,6 +526,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   const resetFilters = useCallback(() => {
     setSearch("");
     setSelectedCategory("all");
+    setSelectedSizes([]);
     setPriceRange(maxPriceLimit);
     setSortBy("newest");
     handlePageChange(1, true);
@@ -398,7 +535,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
   // Reset to page 1 whenever user explicitly changes filters/sort (NOT on mount)
   const isInitialMount = useRef(true);
   const initialCategoryHandled = useRef(false);
-  const prevFiltersRef = useRef({ search, selectedCategory, priceRange, sortBy });
+  const prevFiltersRef = useRef({ search, selectedCategory, selectedSizes, priceRange, sortBy });
 
   useEffect(() => {
     if (isInitialMount.current) {
@@ -410,6 +547,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
     const filterChanged =
       prev.search !== search ||
       prev.selectedCategory !== selectedCategory ||
+      prev.selectedSizes !== selectedSizes ||
       prev.priceRange !== priceRange ||
       prev.sortBy !== sortBy;
 
@@ -417,14 +555,14 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
       // If this change was simply applying initial categoryParam from URL, don't reset page
       if (categoryParam && !initialCategoryHandled.current && selectedCategory !== "all") {
         initialCategoryHandled.current = true;
-        prevFiltersRef.current = { search, selectedCategory, priceRange, sortBy };
+        prevFiltersRef.current = { search, selectedCategory, selectedSizes, priceRange, sortBy };
         return;
       }
 
-      prevFiltersRef.current = { search, selectedCategory, priceRange, sortBy };
+      prevFiltersRef.current = { search, selectedCategory, selectedSizes, priceRange, sortBy };
       handlePageChange(1, false);
     }
-  }, [search, selectedCategory, priceRange, sortBy, categoryParam, handlePageChange]);
+  }, [search, selectedCategory, selectedSizes, priceRange, sortBy, categoryParam, handlePageChange]);
 
   // Clamp current page if total pages decreases (e.g., resizing or filtering), but only after products are loaded
   useEffect(() => {
@@ -483,7 +621,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
                   {categories.map((cat) => (
                     <button
                       key={cat.id}
-                      onClick={() => setSelectedCategory(cat.id)}
+                      onClick={() => handleCategoryChange(cat.id)}
                       className={`text-left text-xs tracking-widest uppercase transition-colors duration-300 hover:text-accent cursor-pointer ${
                         selectedCategory === cat.id ? "text-accent font-semibold" : "text-muted-text"
                       }`}
@@ -493,6 +631,30 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
                   ))}
                 </div>
               </div>
+
+              {/* Size Filter */}
+              {hasVisibleSizeFilters && (
+                <div>
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-xs font-bold tracking-widest text-muted-text uppercase">Size</h3>
+                    {selectedSizes.length > 0 && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedSizes([])}
+                        className="text-[10px] tracking-widest text-accent hover:underline uppercase cursor-pointer"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <SizeFilterContent
+                    sections={sizeSections}
+                    selectedCategory={selectedCategory}
+                    selectedSizes={selectedSizes}
+                    onToggleSize={handleToggleSize}
+                  />
+                </div>
+              )}
 
               {/* Price Filter */}
               <div>
@@ -531,14 +693,14 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
             <button
               onClick={() => setShowMobileFilters(true)}
               className={`flex-1 flex items-center justify-center gap-2 py-2 border text-[10px] tracking-[0.15em] uppercase font-semibold transition-all duration-300 cursor-pointer ${
-                selectedCategory !== "all" || priceRange < maxPriceLimit || search
+                selectedCategory !== "all" || selectedSizes.length > 0 || priceRange < maxPriceLimit || search
                   ? "border-accent text-accent bg-accent/5"
                   : "border-card-border text-muted-text hover:border-zinc-400 hover:text-foreground"
               }`}
             >
               <SlidersHorizontal className="w-3 h-3" />
               Filters
-              {(selectedCategory !== "all" || priceRange < maxPriceLimit || search) && (
+              {(selectedCategory !== "all" || selectedSizes.length > 0 || priceRange < maxPriceLimit || search) && (
                 <span className="w-1.5 h-1.5 rounded-full bg-accent" />
               )}
             </button>
@@ -763,7 +925,7 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
                     {categories.map((cat) => (
                       <button
                         key={cat.id}
-                        onClick={() => setSelectedCategory(cat.id)}
+                        onClick={() => handleCategoryChange(cat.id)}
                         className={`px-3 py-1.5 border text-[10px] tracking-[0.15em] uppercase font-medium transition-all duration-200 cursor-pointer ${
                           selectedCategory === cat.id
                             ? "border-accent bg-accent/10 text-accent"
@@ -775,6 +937,30 @@ function ShopContent({ initialProducts = [], initialCategories = [] }) {
                     ))}
                   </div>
                 </div>
+
+                {/* Size Filter */}
+                {hasVisibleSizeFilters && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="text-[10px] font-bold tracking-[0.3em] text-muted-text uppercase">Size</h3>
+                      {selectedSizes.length > 0 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedSizes([])}
+                          className="text-[10px] tracking-widest text-accent hover:underline uppercase cursor-pointer"
+                        >
+                          Clear
+                        </button>
+                      )}
+                    </div>
+                    <SizeFilterContent
+                      sections={sizeSections}
+                      selectedCategory={selectedCategory}
+                      selectedSizes={selectedSizes}
+                      onToggleSize={handleToggleSize}
+                    />
+                  </div>
+                )}
 
                 {/* Price Filter */}
                 <div>
