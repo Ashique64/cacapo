@@ -62,6 +62,14 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
   const toggleWishlist = useWishlistStore((state) => state.toggleWishlist);
   const wishlistItems = useWishlistStore((state) => state.items);
 
+  // Always open product details at the top of the page
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+    if (window.lenis) {
+      window.lenis.scrollTo(0, { immediate: true });
+    }
+  }, [product?.id]);
+
   const handleGoBack = useCallback((e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (typeof window !== "undefined") {

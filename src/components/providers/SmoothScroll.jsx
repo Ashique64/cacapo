@@ -23,9 +23,10 @@ export default function SmoothScroll({ children }) {
     // ✅ Drive Lenis from GSAP's ticker — this is the correct integration pattern.
     // Using gsap.ticker instead of requestAnimationFrame directly ensures Lenis
     // and ScrollTrigger are always in sync on the same frame.
-    gsap.ticker.add((time) => {
+    const onTick = (time) => {
       lenis.raf(time * 1000); // gsap time is in seconds, Lenis expects ms
-    });
+    };
+    gsap.ticker.add(onTick);
 
     // ✅ Disable GSAP's built-in lag smoothing so Lenis handles it
     gsap.ticker.lagSmoothing(0);
@@ -38,7 +39,7 @@ export default function SmoothScroll({ children }) {
 
     return () => {
       lenis.off("scroll", ScrollTrigger.update);
-      gsap.ticker.remove(lenis.raf);
+      gsap.ticker.remove(onTick);
       lenis.destroy();
       window.lenis = null;
     };
