@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import gsap from "gsap";
 import LoadingScreen from "@/components/ui/LoadingScreen";
 
@@ -178,11 +179,23 @@ export default function Hero() {
             Trendy Imported Fashion for Girls
           </p>
           <div className="mt-8 flex justify-center pointer-events-auto">
+            {/* Mobile: redirect directly to /shop */}
+            <Link
+              href="/shop"
+              className="lg:hidden relative overflow-hidden px-8 py-3 bg-transparent border border-foreground text-foreground rounded-none font-semibold text-[10px] sm:text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95"
+            >
+              <span className="absolute inset-0 bg-foreground transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
+              <span className="relative z-10 transition-colors duration-500 group-hover:text-background">
+                SHOP NOW
+              </span>
+            </Link>
+
+            {/* Desktop: keep existing scroll to #collections */}
             <button
               onClick={() => {
                 document.getElementById("collections")?.scrollIntoView({ behavior: "smooth" });
               }}
-              className="relative overflow-hidden px-8 py-3 bg-transparent border border-foreground text-foreground rounded-none font-semibold text-[10px] sm:text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95"
+              className="hidden lg:inline-flex relative overflow-hidden px-8 py-3 bg-transparent border border-foreground text-foreground rounded-none font-semibold text-[10px] sm:text-xs tracking-widest uppercase transition-all duration-500 cursor-pointer group active:scale-95"
             >
               <span className="absolute inset-0 bg-foreground transform translate-y-full group-hover:translate-y-0 transition-transform duration-500 ease-out" />
               <span className="relative z-10 transition-colors duration-500 group-hover:text-background">
