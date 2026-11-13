@@ -266,10 +266,17 @@ export function renderOrderConfirmationEmail({
             <td style="padding: 4px 0; color: #71717a;">Shipping</td>
             <td style="padding: 4px 0; text-align: right; color: #e4e4e7; font-weight: 500;">${shippingFormatted}</td>
           </tr>
+          <!-- [YEAR 1: COMPOSITION GST] Retail prices are inclusive; separate GST line is hidden -->
+          <tr>
+            <td style="padding: 4px 0; color: #71717a;">Taxes</td>
+            <td style="padding: 4px 0; text-align: right; color: #71717a; font-size: 11px;">Inclusive</td>
+          </tr>
+          <!-- [YEAR 2: NORMAL GST SCHEME (Uncomment when switching to Normal GST)]
           ${taxVal > 0 ? `<tr>
-            <td style="padding: 4px 0; color: #71717a;">GST <span style="font-size: 10px; color: #71717a;">(1% Composition Scheme - Included)</span></td>
+            <td style="padding: 4px 0; color: #71717a;">Estimated GST</td>
             <td style="padding: 4px 0; text-align: right; color: #a1a1aa; font-weight: 500;">${taxFormatted}</td>
           </tr>` : ""}
+          -->
           <tr style="border-top: 1px solid #27272a;">
             <td style="padding: 10px 0 4px 0; color: #FFFFFF; font-weight: 700; font-size: 13px;">Total Paid</td>
             <td style="padding: 10px 0 4px 0; text-align: right; color: #FFFFFF; font-weight: 800; font-size: 14px;">${totalFormatted}</td>

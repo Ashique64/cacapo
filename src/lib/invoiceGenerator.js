@@ -179,14 +179,6 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   }
   doc.text("Email: support@cacapoclothing.com | Website: cacapoclothing.com", 14, gstNumber ? 35 : 31);
 
-  // Mandatory statutory declaration for Composition Scheme
-  if (USE_COMPOSITION_GST) {
-    doc.setFont("helvetica", "bolditalic");
-    doc.setFontSize(7.5);
-    doc.setTextColor(180, 50, 50);
-    doc.text("Composition taxable person, not eligible to collect tax on supplies", 14, 46);
-  }
-
   // Document Title & Invoice Copy Label
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
@@ -263,7 +255,9 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   const cleanState = (state || "").trim().toLowerCase();
   const isSameState = !cleanState || cleanState.includes("kerala") || cleanState === "kl";
 
-  const tableColumn = ["S.No.", "Product Description", "HSN/SAC", "Variant", "Qty", "Gross Rate", "Taxable Val", "GST Rate", "GST Amt", "Total (INR)"];
+  const tableColumn = USE_COMPOSITION_GST
+    ? ["S.No.", "Product Description", "HSN/SAC", "Variant", "Qty", "Unit Price", "Total (INR)"]
+    : ["S.No.", "Product Description", "HSN/SAC", "Variant", "Qty", "Gross Rate", "Taxable Val", "GST Rate", "GST Amt", "Total (INR)"];
   
   const tableRows = (order.order_items || []).map((item, index) => {
     const grossPrice = item.price || 0; // in paise
@@ -302,6 +296,18 @@ export async function generateTaxInvoice(order, gstNumber = "") {
       ? `Size: ${item.variant.size}${item.variant?.color ? ' • ' + item.variant.color : ''}`
       : (item.product?.color ? `Color: ${item.product.color}` : "N/A");
 
+    if (USE_COMPOSITION_GST) {
+      return [
+        index + 1,
+        item.product?.name || "Product Item",
+        hsnCode,
+        variantStr,
+        qty,
+        (grossPrice / 100).toFixed(2),
+        itemGrossTotal.toFixed(2)
+      ];
+    }
+
     return [
       index + 1,
       item.product?.name || "Product Item",
@@ -327,7 +333,15 @@ export async function generateTaxInvoice(order, gstNumber = "") {
     theme: "grid",
     headStyles: { fillColor: [24, 24, 27], textColor: [255, 255, 255], fontStyle: "bold", fontSize: 8 },
     styles: { fontSize: 7.5, cellPadding: 2.5, halign: "left" },
-    columnStyles: {
+    columnStyles: USE_COMPOSITION_GST ? {
+      0: { cellWidth: 12, halign: "center" },
+      1: { cellWidth: 70 },
+      2: { cellWidth: 20, halign: "center" },
+      3: { cellWidth: 26 },
+      4: { cellWidth: 12, halign: "center" },
+      5: { cellWidth: 21, halign: "right" },
+      6: { cellWidth: 21, halign: "right" }
+    } : {
       0: { cellWidth: 10, halign: "center" },
       1: { cellWidth: 46 },
       2: { cellWidth: 16, halign: "center" },
@@ -372,27 +386,32 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   doc.setTextColor(50, 50, 50);
 
   let summaryY = finalY + 18;
-  doc.text(`Taxable Value (Excl. GST): Rs. ${totalTaxableValue.toFixed(2)}`, 125, summaryY);
-  
-  if (order.discount > 0) {
-    summaryY += 5;
-    doc.text(`Coupon Discount: -Rs. ${(order.discount / 100).toFixed(2)}`, 125, summaryY);
-  }
+  const subtotalRupees = (order.subtotal || (order.total_amount - (order.shipping_charge || 0))) / 100;
 
-  summaryY += 5;
   if (USE_COMPOSITION_GST) {
-    const totalGst = totalCGST + totalSGST + totalIGST;
-    doc.text(`Estimated GST (1% Composition - Incl.): Rs. ${totalGst.toFixed(2)}`, 125, summaryY);
-    summaryY += 4.5;
-    if (isSameState) {
-      doc.text(`  • CGST (0.5%): Rs. ${totalCGST.toFixed(2)}`, 125, summaryY);
-      summaryY += 4.5;
-      doc.text(`  • SGST (0.5%): Rs. ${totalSGST.toFixed(2)}`, 125, summaryY);
-    } else {
-      doc.text(`  • IGST (1.0%): Rs. ${totalIGST.toFixed(2)}`, 125, summaryY);
+    doc.text(`Subtotal: Rs. ${subtotalRupees.toFixed(2)}`, 125, summaryY);
+    if (order.discount > 0) {
+      summaryY += 5;
+      doc.text(`Coupon Discount: -Rs. ${(order.discount / 100).toFixed(2)}`, 125, summaryY);
     }
+    summaryY += 5;
+    doc.text(`Shipping Charge: Rs. ${(order.shipping_charge / 100).toFixed(2)}`, 125, summaryY);
+    summaryY += 5;
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7.5);
+    doc.setTextColor(110, 110, 110);
+    doc.text("(All prices are inclusive of taxes)", 125, summaryY);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8);
+    doc.setTextColor(50, 50, 50);
   } else {
     // [YEAR 2: NORMAL GST SCHEME (CGST / SGST / IGST)]
+    doc.text(`Taxable Value (Excl. GST): Rs. ${totalTaxableValue.toFixed(2)}`, 125, summaryY);
+    if (order.discount > 0) {
+      summaryY += 5;
+      doc.text(`Coupon Discount: -Rs. ${(order.discount / 100).toFixed(2)}`, 125, summaryY);
+    }
+    summaryY += 5;
     if (isSameState) {
       doc.text(`CGST (Central Tax): Rs. ${totalCGST.toFixed(2)}`, 125, summaryY);
       summaryY += 5;
@@ -400,10 +419,9 @@ export async function generateTaxInvoice(order, gstNumber = "") {
     } else {
       doc.text(`IGST (Interstate Tax): Rs. ${totalIGST.toFixed(2)}`, 125, summaryY);
     }
+    summaryY += 5;
+    doc.text(`Shipping Charge: Rs. ${(order.shipping_charge / 100).toFixed(2)}`, 125, summaryY);
   }
-
-  summaryY += 5;
-  doc.text(`Shipping Charge: Rs. ${(order.shipping_charge / 100).toFixed(2)}`, 125, summaryY);
 
   summaryY += 6;
   doc.setFont("helvetica", "bold");
