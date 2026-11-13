@@ -144,8 +144,16 @@ export function convertAmountToWords(amountInRupees) {
   return words;
 }
 
+// =========================================================================
+// GST SCHEME CONFIGURATION:
+// Year 1: Composition Scheme (1% Flat GST - Bill of Supply)
+// Year 2: Normal GST Scheme (5% below ₹2,499 / 18% above ₹2,499 - Tax Invoice)
+// Set USE_COMPOSITION_GST = false to restore Normal GST Tax Invoices in Year 2.
+// =========================================================================
+export const USE_COMPOSITION_GST = true;
+
 /**
- * Main function to generate and download Tax Invoice PDF for an order.
+ * Main function to generate and download Tax Invoice / Bill of Supply PDF for an order.
  * @param {Object} order - Order object from database
  * @param {string} gstNumber - Store GSTIN setting
  */
@@ -171,11 +179,19 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   }
   doc.text("Email: support@cacapoclothing.com | Website: cacapoclothing.com", 14, gstNumber ? 35 : 31);
 
+  // Mandatory statutory declaration for Composition Scheme
+  if (USE_COMPOSITION_GST) {
+    doc.setFont("helvetica", "bolditalic");
+    doc.setFontSize(7.5);
+    doc.setTextColor(180, 50, 50);
+    doc.text("Composition taxable person, not eligible to collect tax on supplies", 14, 46);
+  }
+
   // Document Title & Invoice Copy Label
   doc.setFont("helvetica", "bold");
   doc.setFontSize(16);
   doc.setTextColor(0, 0, 0);
-  doc.text("TAX INVOICE", 135, 18);
+  doc.text(USE_COMPOSITION_GST ? "BILL OF SUPPLY" : "TAX INVOICE", 135, 18);
 
   doc.setFontSize(8.5);
   doc.setFont("helvetica", "bold");
@@ -251,7 +267,15 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   
   const tableRows = (order.order_items || []).map((item, index) => {
     const grossPrice = item.price || 0; // in paise
-    const rate = grossPrice > 249900 ? 18 : 5; // GST rate
+    
+    // GST Rate logic:
+    // Year 1: Composition Scheme flat 1%
+    // Year 2: Normal GST Scheme (5% below ₹2,499 / 18% above ₹2,499)
+    let rate = 1;
+    if (!USE_COMPOSITION_GST) {
+      // [YEAR 2: NORMAL GST SCHEME (5% / 18%)]
+      rate = grossPrice > 249900 ? 18 : 5;
+    }
     const discountedPrice = grossPrice * discountRatio;
     
     // Flat rate GST breakdown
@@ -356,12 +380,26 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   }
 
   summaryY += 5;
-  if (isSameState) {
-    doc.text(`CGST (Central Tax): Rs. ${totalCGST.toFixed(2)}`, 125, summaryY);
-    summaryY += 5;
-    doc.text(`SGST (State Tax): Rs. ${totalSGST.toFixed(2)}`, 125, summaryY);
+  if (USE_COMPOSITION_GST) {
+    const totalGst = totalCGST + totalSGST + totalIGST;
+    doc.text(`Estimated GST (1% Composition - Incl.): Rs. ${totalGst.toFixed(2)}`, 125, summaryY);
+    summaryY += 4.5;
+    if (isSameState) {
+      doc.text(`  • CGST (0.5%): Rs. ${totalCGST.toFixed(2)}`, 125, summaryY);
+      summaryY += 4.5;
+      doc.text(`  • SGST (0.5%): Rs. ${totalSGST.toFixed(2)}`, 125, summaryY);
+    } else {
+      doc.text(`  • IGST (1.0%): Rs. ${totalIGST.toFixed(2)}`, 125, summaryY);
+    }
   } else {
-    doc.text(`IGST (Interstate Tax): Rs. ${totalIGST.toFixed(2)}`, 125, summaryY);
+    // [YEAR 2: NORMAL GST SCHEME (CGST / SGST / IGST)]
+    if (isSameState) {
+      doc.text(`CGST (Central Tax): Rs. ${totalCGST.toFixed(2)}`, 125, summaryY);
+      summaryY += 5;
+      doc.text(`SGST (State Tax): Rs. ${totalSGST.toFixed(2)}`, 125, summaryY);
+    } else {
+      doc.text(`IGST (Interstate Tax): Rs. ${totalIGST.toFixed(2)}`, 125, summaryY);
+    }
   }
 
   summaryY += 5;
@@ -398,10 +436,12 @@ export async function generateTaxInvoice(order, gstNumber = "") {
   doc.setFontSize(7.5);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(100, 100, 100);
-  doc.text("Declaration: This is a system-generated tax invoice and does not require a physical signature.", 14, footerY + 8);
+  const docTypeLabel = USE_COMPOSITION_GST ? "bill of supply" : "tax invoice";
+  doc.text(`Declaration: This is a system-generated ${docTypeLabel} and does not require a physical signature.`, 14, footerY + 8);
 
   // Save the generated PDF
-  doc.save(`CACAPO_TaxInvoice_${order.order_number}.pdf`);
+  const filenamePrefix = USE_COMPOSITION_GST ? "CACAPO_BillOfSupply" : "CACAPO_TaxInvoice";
+  doc.save(`${filenamePrefix}_${order.order_number}.pdf`);
 }
 
 /**

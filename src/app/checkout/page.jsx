@@ -268,11 +268,25 @@ export default function CheckoutPage() {
     }
   }
 
-  // Calculate pre-discount GST for each item based on unit price threshold (₹2,499 = 249,900 paise)
+  // =========================================================================
+  // GST SCHEME SELECTION:
+  // Year 1: Composition Scheme (1% Flat GST on all items)
+  // Year 2: Normal GST Scheme (5% below ₹2,499 / 18% above ₹2,499)
+  // To switch back to Normal GST in Year 2, simply change this flag to false.
+  // =========================================================================
+  const USE_COMPOSITION_GST = true;
+
   let totalPreDiscountTax = 0;
   cartItems.forEach(item => {
     const unitPrice = item.variant?.sale_price || item.variant?.price || item.product?.sale_price || item.product?.price || 0;
-    const rate = unitPrice > 249900 ? 18 : 5;
+    
+    // Default: 1% Composition Scheme
+    let rate = 1;
+    if (!USE_COMPOSITION_GST) {
+      // [YEAR 2: NORMAL GST SCHEME (5% / 18%)]
+      rate = unitPrice > 249900 ? 18 : 5;
+    }
+
     const unitTax = Math.round(unitPrice * (rate / 100));
     totalPreDiscountTax += unitTax * item.quantity;
   });

@@ -273,7 +273,7 @@ export default function AdminSettingsDesk() {
                     placeholder="Enter GSTIN (e.g. 32ABCDE1234F1Z1)"
                   />
                   <p className="text-[10px] text-zinc-500 leading-normal font-medium tracking-wide">
-                    Leave blank if your business is not registered for GST. If set, this number will be displayed on client invoices and receipts.
+                    Leave blank if your business is not registered for GST. Currently configured for <span className="text-zinc-300 font-semibold">Composition Scheme (1% Flat GST)</span>. If set, this number will be displayed on client invoices and receipts.
                   </p>
                 </div>
               </div>

@@ -267,7 +267,7 @@ export function renderOrderConfirmationEmail({
             <td style="padding: 4px 0; text-align: right; color: #e4e4e7; font-weight: 500;">${shippingFormatted}</td>
           </tr>
           ${taxVal > 0 ? `<tr>
-            <td style="padding: 4px 0; color: #71717a;">GST <span style="font-size: 10px; color: #71717a;">(Included)</span></td>
+            <td style="padding: 4px 0; color: #71717a;">GST <span style="font-size: 10px; color: #71717a;">(1% Composition Scheme - Included)</span></td>
             <td style="padding: 4px 0; text-align: right; color: #a1a1aa; font-weight: 500;">${taxFormatted}</td>
           </tr>` : ""}
           <tr style="border-top: 1px solid #27272a;">

@@ -187,19 +187,34 @@ export default function SalesReportDesk() {
       orderRevenue += (order.discount || 0);
     }
     if (deductGst) {
+      // =========================================================================
+      // GST SCHEME: Year 1 Composition Scheme (1% Flat) vs Year 2 Normal GST
+      // =========================================================================
+      const USE_COMPOSITION_GST = true;
+
       // Calculate flat GST portion dynamically for order items (handles older orders perfectly too)
       let totalTax = 0;
-      if (order.order_items && order.order_items.length > 0) {
+      if (order.tax && order.tax > 0) {
+        totalTax = order.tax;
+      } else if (order.order_items && order.order_items.length > 0) {
         order.order_items.forEach(item => {
           const unitPrice = item.price || 0;
-          const rate = unitPrice > 249900 ? 18 : 5;
+          let rate = 1; // 1% Composition Scheme
+          if (!USE_COMPOSITION_GST) {
+            // [YEAR 2: NORMAL GST SCHEME (5% / 18%)]
+            rate = unitPrice > 249900 ? 18 : 5;
+          }
           const unitTax = Math.round(unitPrice * (rate / 100));
           totalTax += unitTax * item.quantity;
         });
       } else {
         // Fallback using subtotal or total_amount
         const baseAmount = order.subtotal || order.total_amount || 0;
-        const rate = baseAmount > 249900 ? 18 : 5;
+        let rate = 1;
+        if (!USE_COMPOSITION_GST) {
+          // [YEAR 2: NORMAL GST SCHEME (5% / 18%)]
+          rate = baseAmount > 249900 ? 18 : 5;
+        }
         totalTax = Math.round(baseAmount * (rate / 100));
       }
 
