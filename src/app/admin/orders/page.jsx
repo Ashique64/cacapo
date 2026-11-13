@@ -94,8 +94,8 @@ export default function AdminOrdersDesk() {
             id,
             quantity,
             price,
-            product:products (id, name, slug, price, product_images(image_url)),
-            variant:product_variants (id, size, color)
+            product:products (id, name, slug, price, sku, product_images(image_url)),
+            variant:product_variants (id, size, color, sku)
           ),
           payments (
             id,
@@ -416,7 +416,11 @@ export default function AdminOrdersDesk() {
     const matchesSearch = 
       order.order_number?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.shipping_address?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.shipping_address?.phone?.includes(searchTerm);
+      order.shipping_address?.phone?.includes(searchTerm) ||
+      order.order_items?.some(item => {
+        const itemSku = (item.variant?.sku || item.product?.sku || item.sku || "").toLowerCase();
+        return itemSku && itemSku.includes(searchTerm.toLowerCase());
+      });
 
     const matchesStatus = 
       statusFilter === "all" ||
@@ -463,7 +467,7 @@ export default function AdminOrdersDesk() {
         <div className="relative flex-1 max-w-md">
           <input
             type="text"
-            placeholder="Search by Order ID, Client Name, or Contact..."
+            placeholder="Search by Order ID, Client, Contact, or SKU..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full bg-zinc-950 border border-zinc-800 focus:border-accent text-white px-4 py-2.5 pl-10 text-xs tracking-wider outline-none transition-all rounded-none"
@@ -591,6 +595,16 @@ export default function AdminOrdersDesk() {
                             const pName = item.product?.name || "Fashion Item";
                             const pImg = item.product?.product_images?.[0]?.image_url || "/Images/clothing.jpg";
                             
+                            // Determine SKU with warehouse fallback matching packing slip
+                            let itemSku = item.variant?.sku || item.product?.sku || item.sku || "";
+                            if (!itemSku && item.product?.name) {
+                              const nameCode = item.product.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 4);
+                              const sizeStr = item.variant?.size ? `-${item.variant.size}` : "";
+                              itemSku = `CCP-${nameCode}${sizeStr}`;
+                            } else if (!itemSku) {
+                              itemSku = "N/A";
+                            }
+                            
                             return (
                               <div key={item.id || idx} className="flex gap-4 py-3 first:pt-0 last:pb-0 items-center text-xs tracking-wider">
                                 <div className="w-12 h-14 bg-zinc-900 border border-zinc-800 overflow-hidden relative shrink-0">
@@ -602,10 +616,20 @@ export default function AdminOrdersDesk() {
                                 </div>
                                 <div className="flex-1 min-w-0">
                                   <p className="font-bold text-white uppercase truncate text-[11px]">{pName}</p>
-                                  <p className="text-[10px] text-zinc-500 font-bold uppercase mt-0.5">
-                                    {item.variant?.size && `Size: ${item.variant.size}`}
-                                    {item.variant?.color && ` • Color: ${item.variant.color}`}
-                                  </p>
+                                  
+                                  {/* SKU & Variant Details */}
+                                  <div className="flex flex-wrap items-center gap-2 mt-1 text-[10px]">
+                                    <span className="inline-flex items-center px-1.5 py-0.5 bg-zinc-900 border border-zinc-800 rounded font-mono text-[9px] text-zinc-300 font-bold tracking-wider">
+                                      SKU: {itemSku}
+                                    </span>
+                                    {(item.variant?.size || item.variant?.color) && (
+                                      <span className="text-zinc-500 font-bold uppercase">
+                                        {item.variant?.size && `Size: ${item.variant.size}`}
+                                        {item.variant?.color && ` • Color: ${item.variant.color}`}
+                                      </span>
+                                    )}
+                                  </div>
+
                                   <p className="text-zinc-400 text-[10px] mt-1">
                                     {item.quantity} x {formatPrice(item.price)}
                                   </p>
