@@ -157,18 +157,19 @@ export async function generateTaxInvoice(order, gstNumber = "") {
 
   // Store Branding Header
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(22);
+  doc.setFontSize(20);
   doc.setTextColor(24, 24, 27); // Dark zinc
-  doc.text("CACAPO", 14, 18);
+  doc.text("CACAPO LLP", 14, 18);
 
-  doc.setFontSize(8.5);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(90, 90, 90);
-  doc.text("CACAPO Store, Perinthalmanna, Kerala - 679322", 14, 24);
+  doc.text("92/A, Ground Floor, Mundath Building, Melattur", 14, 23);
+  doc.text("Opp. Weigh Bridge, Malappuram, Kerala - 679326", 14, 27);
   if (gstNumber) {
-    doc.text(`GSTIN: ${gstNumber}`, 14, 29);
+    doc.text(`GSTIN: ${gstNumber}`, 14, 31);
   }
-  doc.text("Email: support@cacapoclothing.com | Website: cacapoclothing.com", 14, gstNumber ? 34 : 29);
+  doc.text("Email: support@cacapoclothing.com | Website: cacapoclothing.com", 14, gstNumber ? 35 : 31);
 
   // Document Title & Invoice Copy Label
   doc.setFont("helvetica", "bold");

@@ -95,7 +95,8 @@ export default function RootLayout({ children }) {
     "url": "https://cacapoclothing.com",
     "logo": "https://cacapoclothing.com/icon.png",
     "sameAs": [
-      "https://instagram.com/cacapoclothing"
+      "https://www.instagram.com/cacapo.forher",
+      "https://www.facebook.com/profile.php?id=61596453424499"
     ],
     "contactPoint": {
       "@type": "ContactPoint",

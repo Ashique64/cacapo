@@ -89,13 +89,25 @@ export default function Footer() {
         <div className="border-t border-footer-border pt-10 md:pt-16 flex flex-col items-center justify-center relative overflow-hidden w-full">
           <div className="flex gap-8 mb-8 text-muted-text">
             {/* Instagram */}
-            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="Instagram">
+            <a 
+              href="https://www.instagram.com/cacapo.forher?psln=MXZjbm91YXowZzFzcQ==" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-foreground transition-colors cursor-pointer" 
+              aria-label="Instagram"
+            >
               <FaInstagram className="w-5 h-5" />
-            </span>
+            </a>
             {/* Facebook */}
-            <span className="hover:text-foreground transition-colors cursor-pointer" aria-label="Facebook">
+            <a 
+              href="https://www.facebook.com/profile.php?id=61596453424499" 
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="hover:text-foreground transition-colors cursor-pointer" 
+              aria-label="Facebook"
+            >
               <FaFacebook className="w-5 h-5" />
-            </span>
+            </a>
             {/* WhatsApp */}
             <a 
               href="https://wa.me/916238676820" 

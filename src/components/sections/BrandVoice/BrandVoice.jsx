@@ -118,7 +118,7 @@ export default function BrandEthos() {
               </span>
             </div>
             <div>
-              <span className="text-2xl font-bold font-mono text-foreground block">16-30</span>
+              <span className="text-2xl font-bold font-mono text-foreground block">18-30</span>
               <span className="text-[10px] text-muted-text tracking-widest uppercase mt-1 block">
                 Gen-Z Youth Focus
               </span>

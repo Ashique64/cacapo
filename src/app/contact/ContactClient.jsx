@@ -5,6 +5,7 @@ import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
 import { Mail, Phone, MapPin, Send, Loader2, CheckCircle } from "lucide-react";
+import { FaInstagram } from "react-icons/fa6";
 
 export default function ContactPage() {
   const [form, setForm] = useState({
@@ -89,33 +90,59 @@ export default function ContactPage() {
                 {
                   icon: <Mail className="w-4 h-4 text-accent" />,
                   title: "EDITORIAL & GENERAL INQUIRIES",
-                  detail: "support@cacapoclothing.com"
+                  detail: "support@cacapoclothing.com",
+                  href: "mailto:support@cacapoclothing.com"
                 },
                 {
                   icon: <Phone className="w-4 h-4 text-accent" />,
                   title: "CLIENT HOTLINE SUPPORT",
-                  detail: "+91 62386 76820"
+                  detail: "+91 62386 76820",
+                  href: "tel:+916238676820"
+                },
+                {
+                  icon: <FaInstagram className="w-4 h-4 text-accent" />,
+                  title: "OFFICIAL INSTAGRAM",
+                  detail: "@cacapo.forher",
+                  href: "https://www.instagram.com/cacapo.forher?psln=MXZjbm91YXowZzFzcQ==",
+                  isExternal: true
                 },
                 {
                   icon: <MapPin className="w-4 h-4 text-accent" />,
                   title: "CACAPO OFFICE",
-                  detail: "Building No: 15/451B,452B, Ottu company building, Pandikkad road, Melattur, Kerala 679326"
+                  detail: "92/A, Ground Floor, Mundath Building, Melattur, Opp. Weigh Bridge, Malappuram, Kerala - 679326",
+                  href: "https://maps.google.com/?q=Mundath+Building,+Melattur,+Malappuram,+Kerala+679326",
+                  isExternal: true
                 }
-              ].map((item, idx) => (
-                <div key={idx} className="flex gap-4 items-start">
-                  <div className="p-3 bg-card-bg border border-card-border rounded-none shrink-0 mt-0.5">
-                    {item.icon}
+              ].map((item, idx) => {
+                const Content = (
+                  <div className={`flex gap-4 items-start ${item.href ? "group cursor-pointer" : ""}`}>
+                    <div className="p-3 bg-card-bg border border-card-border rounded-none shrink-0 mt-0.5 group-hover:border-accent transition-colors">
+                      {item.icon}
+                    </div>
+                    <div className="space-y-1">
+                      <span className="block text-[8px] font-bold uppercase tracking-widest text-muted-text">
+                        {item.title}
+                      </span>
+                      <span className="block text-xs sm:text-sm text-foreground font-medium font-mono group-hover:text-accent transition-colors">
+                        {item.detail}
+                      </span>
+                    </div>
                   </div>
-                  <div className="space-y-1">
-                    <span className="block text-[8px] font-bold uppercase tracking-widest text-muted-text">
-                      {item.title}
-                    </span>
-                    <span className="block text-xs sm:text-sm text-foreground font-medium font-mono">
-                      {item.detail}
-                    </span>
-                  </div>
-                </div>
-              ))}
+                );
+
+                return item.href ? (
+                  <a
+                    key={idx}
+                    href={item.href}
+                    {...(item.isExternal ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                    className="block"
+                  >
+                    {Content}
+                  </a>
+                ) : (
+                  <div key={idx}>{Content}</div>
+                );
+              })}
             </div>
           </div>
 
