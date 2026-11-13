@@ -4,8 +4,8 @@ import { sendNotificationEmail } from "@/lib/email";
 
 export async function POST(request) {
   try {
-    // 1. Verify Webhook Token/Secret
-    const incomingSecret = request.headers.get("x-shiprocket-secret") || request.headers.get("authorization");
+    // 1. Verify Webhook Token/Secret (supports x-api-key, x-shiprocket-secret, authorization)
+    const incomingSecret = request.headers.get("x-api-key") || request.headers.get("x-shiprocket-secret") || request.headers.get("authorization");
     const configuredSecret = process.env.SHIPROCKET_WEBHOOK_SECRET;
 
     if (configuredSecret && incomingSecret !== configuredSecret) {

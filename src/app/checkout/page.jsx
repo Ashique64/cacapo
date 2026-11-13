@@ -86,7 +86,7 @@ export default function CheckoutPage() {
   const [couponLoading, setCouponLoading] = useState(false);
 
   // Payment State
-  const [paymentMethod, setPaymentMethod] = useState("razorpay"); // razorpay or cod
+  const [paymentMethod, setPaymentMethod] = useState("cod"); // Online payment temporarily disabled (Available Soon); defaulted to COD
   const [utrCode, setUtrCode] = useState("");
   const [utrError, setUtrError] = useState("");
   const [copiedUpi, setCopiedUpi] = useState(false);
@@ -1174,26 +1174,24 @@ export default function CheckoutPage() {
 
                       {/* Payment Mode Selector */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Online Payment - Temporarily disabled, kept intact for re-enabling */}
                         <button
                           type="button"
-                          onClick={() => {
-                            setPaymentMethod("razorpay");
-                            setUtrError("");
-                          }}
-                          className={`flex items-center gap-4 p-5 border text-left rounded-none transition-all duration-300 bg-transparent ${
-                            paymentMethod === "razorpay"
-                              ? "border-accent bg-accent/5"
-                              : "border-card-border hover:border-muted-text"
-                          }`}
+                          disabled={true}
+                          aria-disabled="true"
+                          className="flex items-center gap-4 p-5 border text-left rounded-none transition-all duration-300 bg-zinc-50/70 border-card-border/60 opacity-60 cursor-not-allowed select-none relative"
                         >
-                          <div className={`w-4 h-4 rounded-full border flex items-center justify-center ${
-                            paymentMethod === "razorpay" ? "border-accent" : "border-card-border"
-                          }`}>
-                            {paymentMethod === "razorpay" && <div className="w-2 h-2 rounded-full bg-accent"></div>}
+                          <div className="w-4 h-4 rounded-full border border-card-border flex items-center justify-center shrink-0">
+                            {/* Disabled state radio */}
                           </div>
-                          <div>
-                            <p className="text-xs font-bold uppercase tracking-widest text-foreground">Online Payment</p>
-                            <p className="text-[11px] text-muted-text mt-1 tracking-wider">Cards, UPI, Netbanking, Wallets via Razorpay</p>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2 flex-wrap">
+                              <p className="text-xs font-bold uppercase tracking-widest text-muted-text">Online Payment</p>
+                              <span className="text-[9px] font-bold uppercase tracking-wider bg-zinc-200/80 text-zinc-600 px-2 py-0.5 rounded-full shrink-0">
+                                Available Soon
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-muted-text/80 mt-1 tracking-wider">Cards, UPI, Netbanking, Wallets via Razorpay</p>
                           </div>
                         </button>
 
