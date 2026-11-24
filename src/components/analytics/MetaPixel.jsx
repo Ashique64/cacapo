@@ -3,11 +3,24 @@
 import Script from "next/script";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useEffect, Suspense } from "react";
-import { FB_PIXEL_ID, pageview } from "@/lib/metaPixel";
+import { FB_PIXEL_ID, pageview, setAdvancedMatching } from "@/lib/metaPixel";
+import { useAuthStore } from "@/store/useAuthStore";
 
 function MetaPixelTracker() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
+  const user = useAuthStore((state) => state.user);
+
+  useEffect(() => {
+    // If user is authenticated, pass customer identity to Meta Advanced Matching
+    if (user) {
+      setAdvancedMatching({
+        email: user.email,
+        phone: user.phone || user.user_metadata?.phone,
+        fullName: user.user_metadata?.full_name || user.user_metadata?.name,
+      });
+    }
+  }, [user]);
 
   useEffect(() => {
     // Avoid double-firing on initial hydration since base script tracks initial PageView

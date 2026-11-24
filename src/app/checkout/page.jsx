@@ -23,7 +23,7 @@ import {
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
-import { trackInitiateCheckout, trackPurchase } from "@/lib/metaPixel";
+import { trackInitiateCheckout, trackPurchase, setAdvancedMatching } from "@/lib/metaPixel";
 import { getUTMAttribution } from "@/lib/utmCapture";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/layout/Header/Navbar";
@@ -439,6 +439,19 @@ export default function CheckoutPage() {
   const handleShippingSubmit = (e) => {
     e.preventDefault();
     if (validateShippingForm()) {
+      const activeAddr = selectedAddressId && selectedAddressId !== "new"
+        ? addresses.find(a => a.id === selectedAddressId)
+        : shippingDetails;
+      if (activeAddr) {
+        setAdvancedMatching({
+          email: activeAddr.email || user?.email,
+          phone: activeAddr.phone,
+          fullName: activeAddr.fullName || activeAddr.full_name,
+          city: activeAddr.city,
+          state: activeAddr.state,
+          pincode: activeAddr.pincode,
+        });
+      }
       setStep(1);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
@@ -466,6 +479,9 @@ export default function CheckoutPage() {
       pincode: addressData.pincode || addressData.pincode,
       attribution: Object.keys(utmAttribution).length > 0 ? utmAttribution : null
     };
+
+    // Update Meta Advanced Matching with customer info
+    setAdvancedMatching(finalAddressJson);
 
     let generatedOrderId = null;
 
