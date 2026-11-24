@@ -5,6 +5,7 @@ import { Analytics } from "@vercel/analytics/react";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { BotIdClient } from "botid/client";
 import MetaPixel from "@/components/analytics/MetaPixel";
+import UTMCapture from "@/components/analytics/UTMCapture";
 
 const protectedBotRoutes = [
   { path: "/api/payments/razorpay/create-order", method: "POST" },
@@ -162,6 +163,7 @@ export default function RootLayout({ children }) {
           }}
         />
         <MetaPixel />
+        <UTMCapture />
         {children}
         <CartSidebar />
         <Analytics />

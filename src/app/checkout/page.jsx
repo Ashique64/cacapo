@@ -24,6 +24,7 @@ import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
 import { trackInitiateCheckout, trackPurchase } from "@/lib/metaPixel";
+import { getUTMAttribution } from "@/lib/utmCapture";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
@@ -452,6 +453,8 @@ export default function CheckoutPage() {
       ? addresses.find(a => a.id === selectedAddressId)
       : shippingDetails;
 
+    const utmAttribution = getUTMAttribution();
+
     const finalAddressJson = {
       full_name: addressData.fullName || addressData.full_name,
       phone: addressData.phone,
@@ -460,7 +463,8 @@ export default function CheckoutPage() {
       city: addressData.city,
       state: addressData.state,
       country: addressData.country || "India",
-      pincode: addressData.pincode || addressData.pincode
+      pincode: addressData.pincode || addressData.pincode,
+      attribution: Object.keys(utmAttribution).length > 0 ? utmAttribution : null
     };
 
     let generatedOrderId = null;

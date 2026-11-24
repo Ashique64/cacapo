@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getOrderStatusBadgeClass, getPaymentStatusBadgeClass } from "@/lib/badgeUtils";
+import { getAttributionLabel } from "@/lib/utmCapture";
 import { createShipment, generateLabel } from "@/lib/delivery";
 import { 
   generateTaxInvoice, 
@@ -555,6 +556,8 @@ export default function AdminOrdersDesk() {
             // Get payment gateway status / UTR code
             const paymentDetails = order.payments?.[0];
             const utrCode = paymentDetails?.transaction_id;
+            const attribution = order.shipping_address?.attribution;
+            const attributionLabel = getAttributionLabel(attribution);
 
             return (
               <div 
@@ -584,6 +587,13 @@ export default function AdminOrdersDesk() {
                       <span className={`text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono ${getOrderStatusBadgeClass(order.order_status)}`}>
                         {order.order_status?.toUpperCase()?.replace("_", " ")}
                       </span>
+
+                      {/* Campaign / Ad Source Badge */}
+                      {attributionLabel && (
+                        <span className="text-[8px] font-extrabold tracking-widest px-2 py-0.5 rounded-none font-mono bg-blue-950/70 border border-blue-700/80 text-blue-300">
+                          {attributionLabel}
+                        </span>
+                      )}
                     </div>
                     
                     <p className="text-[10px] text-zinc-500">
@@ -725,6 +735,51 @@ export default function AdminOrdersDesk() {
                             </p>
                           </div>
                         </div>
+
+                        {/* Ad Campaign Attribution Info */}
+                        {attribution && (
+                          <div className="border border-zinc-900 bg-zinc-950 p-3.5 space-y-2">
+                            <h5 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase flex items-center justify-between">
+                              <span>Campaign Attribution</span>
+                              {attributionLabel && (
+                                <span className="text-[8px] font-mono px-1.5 py-0.5 bg-blue-950/80 border border-blue-700 text-blue-300">
+                                  {attributionLabel}
+                                </span>
+                              )}
+                            </h5>
+                            <div className="space-y-1 text-xs text-zinc-300">
+                              {attribution.utm_campaign && (
+                                <p className="text-[11px]">
+                                  <span className="text-zinc-500 font-semibold">Campaign: </span>
+                                  <span className="text-white font-mono">{attribution.utm_campaign}</span>
+                                </p>
+                              )}
+                              {attribution.utm_source && (
+                                <p className="text-[11px]">
+                                  <span className="text-zinc-500 font-semibold">Source: </span>
+                                  <span className="text-zinc-300 font-mono">{attribution.utm_source}</span>
+                                </p>
+                              )}
+                              {attribution.utm_medium && (
+                                <p className="text-[11px]">
+                                  <span className="text-zinc-500 font-semibold">Medium: </span>
+                                  <span className="text-zinc-300 font-mono">{attribution.utm_medium}</span>
+                                </p>
+                              )}
+                              {attribution.utm_content && (
+                                <p className="text-[11px]">
+                                  <span className="text-zinc-500 font-semibold">Ad Content: </span>
+                                  <span className="text-zinc-300 font-mono">{attribution.utm_content}</span>
+                                </p>
+                              )}
+                              {attribution.fbclid && (
+                                <p className="text-[10px] text-blue-400 font-mono break-all pt-1 border-t border-zinc-900/60">
+                                  fbclid: {attribution.fbclid}
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                        )}
 
                         {/* UTR Verification Panel (Only shown if payment_method === 'upi' and payment_status !== 'paid') */}
                         {order.payment_method === "upi" && (
