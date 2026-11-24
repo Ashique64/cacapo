@@ -4,6 +4,7 @@ import { supabase } from "@/lib/supabase";
 import { rateLimit, getClientIp } from "@/lib/rateLimit";
 import { verifyRazorpaySignature } from "@/lib/razorpayUtils";
 import { sendNotificationEmail } from "@/lib/email";
+import { sendPurchaseEvent } from "@/lib/metaCAPI";
 
 export async function POST(request) {
   // Rate limit: 10 verification attempts per IP per 10 minutes
@@ -145,6 +146,32 @@ export async function POST(request) {
       }
     } catch (emailErr) {
       console.warn("[verify-payment] Could not send confirmation email:", emailErr.message);
+    }
+
+    // 5. Fire CAPI Purchase event (server-side, for deduplication with browser pixel)
+    try {
+      if (fullOrder) {
+        const addr = fullOrder.shipping_address || {};
+        const nameParts = (addr.full_name || "").trim().split(" ");
+        await sendPurchaseEvent({
+          orderNumber: fullOrder.order_number,
+          totalAmount: fullOrder.total_amount,
+          currency: "INR",
+          items: fullOrder.order_items || [],
+          userInfo: {
+            email: addr.email || "",
+            phone: addr.phone || "",
+            first_name: nameParts[0] || "",
+            last_name: nameParts.slice(1).join(" ") || "",
+            city: addr.city || "",
+            state: addr.state || "",
+            zip: addr.pincode || "",
+            country: "in",
+          },
+        });
+      }
+    } catch (capiErr) {
+      console.warn("[verify-payment] CAPI event error:", capiErr.message);
     }
 
     return NextResponse.json({ success: true, transaction_id: transactionId });

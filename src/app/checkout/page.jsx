@@ -633,7 +633,7 @@ export default function CheckoutPage() {
             items: [...cartItems]
           });
 
-          // Track Meta Pixel Purchase event for COD
+          // Track Meta Pixel Purchase event for COD (browser-side)
           try {
             trackPurchase({
               orderId: orderNumber,
@@ -647,6 +647,35 @@ export default function CheckoutPage() {
               })),
             });
           } catch (_) {}
+
+          // Fire CAPI Purchase event server-side for COD (deduplicates with browser pixel via orderNumber)
+          fetch("/api/meta/events", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event_name: "Purchase",
+              event_id: orderNumber,
+              event_source_url: "https://cacapoclothing.com/checkout",
+              user_data: {
+                email: finalAddressJson?.email || user?.email || "",
+                phone: finalAddressJson?.phone || "",
+                first_name: (finalAddressJson?.full_name || "").split(" ")[0] || "",
+                last_name: (finalAddressJson?.full_name || "").split(" ").slice(1).join(" ") || "",
+                city: finalAddressJson?.city || "",
+                state: finalAddressJson?.state || "",
+                zip: finalAddressJson?.pincode || "",
+                country: "in",
+              },
+              custom_data: {
+                value: totalAmount / 100,
+                currency: "INR",
+                order_id: orderNumber,
+                num_items: cartItems.reduce((s, i) => s + (i.quantity || 1), 0),
+                content_type: "product",
+                content_ids: cartItems.map((i) => String(i.product_id)).filter(Boolean),
+              },
+            }),
+          }).catch((e) => console.warn("[CAPI COD] Error:", e));
 
           await clearCart(user?.id);
           setStep(2);
