@@ -19,6 +19,7 @@ import {
 import { useCartStore } from "@/store/useCartStore";
 import { useWishlistStore } from "@/store/useWishlistStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { trackViewContent } from "@/lib/metaPixel";
 
 const SIZE_ORDER = {
   "XXS": 1,
@@ -67,6 +68,9 @@ export default function ProductDetailsClient({ product, relatedProducts }) {
     window.scrollTo({ top: 0, left: 0, behavior: "instant" });
     if (window.lenis) {
       window.lenis.scrollTo(0, { immediate: true });
+    }
+    if (product) {
+      trackViewContent(product);
     }
   }, [product?.id]);
 

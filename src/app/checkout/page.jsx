@@ -23,6 +23,7 @@ import {
 import Link from "next/link";
 import { useCartStore } from "@/store/useCartStore";
 import { useAuthStore } from "@/store/useAuthStore";
+import { trackInitiateCheckout, trackPurchase } from "@/lib/metaPixel";
 import { supabase } from "@/lib/supabase";
 import Navbar from "@/components/layout/Header/Navbar";
 import Footer from "@/components/layout/Footer/Footer";
@@ -56,6 +57,23 @@ export default function CheckoutPage() {
       router.push("/login?redirect=/checkout");
     }
   }, [mounted, authLoading, user, router]);
+
+  // Track Meta Pixel InitiateCheckout
+  useEffect(() => {
+    if (mounted && cartItems && cartItems.length > 0) {
+      try {
+        trackInitiateCheckout({
+          items: cartItems.map((i) => ({
+            id: i.product_id,
+            name: i.product?.name || i.name,
+            quantity: i.quantity || 1,
+          })),
+          total: totalAmount / 100,
+          currency: "INR",
+        });
+      } catch (_) {}
+    }
+  }, [mounted, cartItems?.length]);
   
   // Addresses State
   const [addresses, setAddresses] = useState([]);
@@ -615,6 +633,21 @@ export default function CheckoutPage() {
             items: [...cartItems]
           });
 
+          // Track Meta Pixel Purchase event for COD
+          try {
+            trackPurchase({
+              orderId: orderNumber,
+              value: totalAmount / 100,
+              currency: "INR",
+              items: cartItems.map((i) => ({
+                id: i.product_id,
+                name: i.product?.name || i.name,
+                price: (i.variant?.sale_price || i.variant?.price || i.product?.sale_price || i.product?.price || i.price || 0) / 100,
+                quantity: i.quantity || 1,
+              })),
+            });
+          } catch (_) {}
+
           await clearCart(user?.id);
           setStep(2);
           window.scrollTo({ top: 0, behavior: "smooth" });
@@ -689,6 +722,21 @@ export default function CheckoutPage() {
                   shippingAddress: finalAddressJson,
                   items: [...cartItems]
                 });
+
+                // Track Meta Pixel Purchase event for Prepaid
+                try {
+                  trackPurchase({
+                    orderId: orderNumber,
+                    value: totalAmount / 100,
+                    currency: "INR",
+                    items: cartItems.map((i) => ({
+                      id: i.product_id,
+                      name: i.product?.name || i.name,
+                      price: (i.variant?.sale_price || i.variant?.price || i.product?.sale_price || i.product?.price || i.price || 0) / 100,
+                      quantity: i.quantity || 1,
+                    })),
+                  });
+                } catch (_) {}
 
                 await clearCart(user?.id);
                 setStep(2);

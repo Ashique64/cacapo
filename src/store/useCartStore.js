@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { supabase } from "@/lib/supabase";
 import { diffCartItems } from "@/lib/cartSyncUtils";
+import { trackAddToCart } from "@/lib/metaPixel";
 
 // ─── Private helper ────────────────────────────────────────────────────────
 // Gets the existing cart record for a user, or creates one if it doesn't exist.
@@ -165,6 +166,18 @@ export const useCartStore = create(
       },
 
       addItem: async (product, variant = null, quantity = 1, userId = null) => {
+        // Track AddToCart for Meta Ads Pixel
+        try {
+          const rawPrice = variant?.sale_price || variant?.price || product?.sale_price || product?.price || 0;
+          trackAddToCart({
+            id: product.id,
+            name: product.name,
+            price: typeof rawPrice === "number" ? rawPrice / 100 : 0,
+            quantity,
+            currency: "INR",
+          });
+        } catch (_) {}
+
         const currentItems = get().items;
         const variantId = variant?.id ?? null;
 
