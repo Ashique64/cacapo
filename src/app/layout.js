@@ -85,6 +85,11 @@ export const metadata = {
       "Trendy imported fashion — fit-checked, fast-delivered, limited drops. Shop CACAPO now.",
     images: ["/og-image.jpg"],
   },
+  verification: {
+    other: {
+      "facebook-domain-verification": "201c04gi6mxlx1f0rezch5b7nxq6lp",
+    },
+  },
 };
 
 export default function RootLayout({ children }) {

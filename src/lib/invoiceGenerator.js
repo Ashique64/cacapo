@@ -156,8 +156,13 @@ export const USE_COMPOSITION_GST = true;
  * Main function to generate and download Tax Invoice / Bill of Supply PDF for an order.
  * @param {Object} order - Order object from database
  * @param {string} gstNumber - Store GSTIN setting
+ * @param {string} [format="a4"] - "a4" for standard office PDF, or "thermal" / "100x150" for 4"x6" thermal printer
  */
-export async function generateTaxInvoice(order, gstNumber = "") {
+export async function generateTaxInvoice(order, gstNumber = "", format = "a4") {
+  if (format === "thermal" || format === "100x150" || format === "4x6") {
+    return generateTaxInvoiceThermal(order, gstNumber);
+  }
+
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
 
@@ -465,8 +470,13 @@ export async function generateTaxInvoice(order, gstNumber = "") {
 /**
  * Main function to generate and download Packaging Slip PDF for warehouse fulfillment.
  * @param {Object} order - Order object from database
+ * @param {string} [format="a4"] - "a4" for standard office PDF, or "thermal" / "100x150" for 4"x6" thermal printer
  */
-export async function generatePackagingSlip(order) {
+export async function generatePackagingSlip(order, format = "a4") {
+  if (format === "thermal" || format === "100x150" || format === "4x6") {
+    return generatePackagingSlipThermal(order);
+  }
+
   const { default: jsPDF } = await import("jspdf");
   const { default: autoTable } = await import("jspdf-autotable");
 
@@ -624,4 +634,375 @@ export async function generatePackagingSlip(order) {
   doc.text("For returns, exchanges, or support, visit cacapoclothing.com/account or email support@cacapoclothing.com.", 18, finalY + 24);
 
   doc.save(`CACAPO_PackagingSlip_${order.order_number}.pdf`);
+}
+
+/**
+ * Generates and downloads native 100mm x 150mm (4" x 6") thermal packaging slip
+ * specifically formatted for desktop barcode thermal label printers (Honeywell IH-2, TVS, Zebra, TSC).
+ * @param {Object} order - Order object
+ */
+export async function generatePackagingSlipThermal(order) {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
+  // 100mm wide x 150mm high
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: [100, 150]
+  });
+
+  const orderNo = order.order_number || "ORD";
+  const createdDate = new Date(order.created_at || Date.now()).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+  const payMethod = (order.payment_method || "COD").toUpperCase();
+  const payStatus = (order.payment_status || "PENDING").toUpperCase();
+
+  // Header Box
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(13);
+  doc.setTextColor(0, 0, 0);
+  doc.text("PACKAGING SLIP", 5, 8);
+
+  doc.setFontSize(10);
+  doc.text(`#${orderNo}`, 95, 8, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(80, 80, 80);
+  doc.text(`Date: ${createdDate} | Pay: ${payMethod} (${payStatus})`, 5, 12);
+  doc.text("CACAPO Warehouse Dispatch", 95, 12, { align: "right" });
+
+  // Divider Line
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.line(5, 14, 95, 14);
+
+  // Address & Courier Block
+  const shipping = order.shipping_address || {};
+  const customerName = (shipping.full_name || shipping.name || "Customer").toUpperCase();
+  const phone = shipping.phone || "N/A";
+  const addressParts = [
+    shipping.address_line1 || shipping.street,
+    shipping.address_line2,
+    shipping.city,
+    shipping.state ? `${shipping.state}${shipping.pincode ? ' - ' + shipping.pincode : ''}` : shipping.pincode
+  ].filter(Boolean).join(", ");
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(0, 0, 0);
+  doc.text("DELIVER TO:", 5, 18);
+
+  doc.setFontSize(8);
+  doc.text(customerName.slice(0, 32), 5, 22);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.text(`Phone: ${phone}`, 5, 25.5);
+
+  const splitAddr = doc.splitTextToSize(addressParts || "Address on file", 48);
+  doc.text(splitAddr.slice(0, 3), 5, 29);
+
+  // Courier Info on Right
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.text("SHIPMENT DETAILS:", 56, 18);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  const courier = shipping.courier_name || order.courier_name || "Shiprocket Express";
+  const tracking = shipping.tracking_no || order.tracking_number || shipping.awb_code || "Pending";
+  const totalUnits = (order.order_items || []).reduce((sum, it) => sum + (it.quantity || 1), 0);
+
+  doc.text(`Courier: ${courier}`, 56, 22);
+  doc.text(`AWB: ${tracking}`, 56, 25.5);
+  doc.text(`Units: ${totalUnits} item(s)`, 56, 29);
+
+  const addrHeight = Math.min(splitAddr.length, 3) * 3;
+  const tableStartY = Math.max(38, 29 + addrHeight + 3);
+
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.2);
+  doc.line(5, tableStartY - 2, 95, tableStartY - 2);
+
+  // Items Table
+  const tableColumn = ["#", "Product & SKU Details", "Qty", "Check"];
+  const tableRows = (order.order_items || []).map((item, idx) => {
+    let sku = item.variant?.sku || item.sku || item.product?.sku || "";
+    if (!sku && item.product?.name) {
+      const nameCode = item.product.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 4);
+      const sizeStr = item.variant?.size ? `-${item.variant.size}` : "";
+      sku = `CCP-${nameCode}${sizeStr}`;
+    } else if (!sku) {
+      sku = "CCP-ITEM";
+    }
+
+    const pName = item.product?.name || "Apparel Item";
+    const variantDesc = [
+      item.variant?.size ? `Size: ${item.variant.size}` : "",
+      item.variant?.color ? `Color: ${item.variant.color}` : (item.product?.color ? `Color: ${item.product.color}` : "")
+    ].filter(Boolean).join(" • ");
+
+    const descCell = `${pName}\nSKU: ${sku}${variantDesc ? '\n' + variantDesc : ''}`;
+
+    return [
+      idx + 1,
+      descCell,
+      item.quantity || 1,
+      "[   ]"
+    ];
+  });
+
+  autoTable(doc, {
+    startY: tableStartY,
+    head: [tableColumn],
+    body: tableRows,
+    theme: "grid",
+    margin: { left: 5, right: 5 },
+    headStyles: {
+      fillColor: [0, 0, 0],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 7,
+      cellPadding: 1.5
+    },
+    styles: {
+      fontSize: 6.5,
+      cellPadding: 2,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.15,
+      textColor: [0, 0, 0]
+    },
+    columnStyles: {
+      0: { cellWidth: 7, halign: "center" },
+      1: { cellWidth: 62 },
+      2: { cellWidth: 10, halign: "center", fontStyle: "bold" },
+      3: { cellWidth: 11, halign: "center" }
+    }
+  });
+
+  const finalY = doc.lastAutoTable.finalY || 100;
+
+  // Verification & Signoff Box
+  const boxY = Math.min(finalY + 4, 126);
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.rect(5, boxY, 90, 14);
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.text("DISPATCH CHECKLIST & VERIFICATION:", 7, boxY + 4);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.text("[  ] Items Verified    [  ] Correct Size & Color    [  ] Sealed & Packed", 7, boxY + 8);
+  doc.text("Packed By: ____________________     Date: _____/_____/2026", 7, boxY + 11.5);
+
+  // Footer branding
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text("CACAPO • cacapoclothing.com • Support: +91 62386 76820", 50, 145, { align: "center" });
+
+  doc.save(`CACAPO_Thermal_PackingSlip_${orderNo}.pdf`);
+}
+
+/**
+ * Generates and downloads native 100mm x 150mm (4" x 6") thermal Bill of Supply / Tax Invoice
+ * formatted specifically for desktop thermal barcode printers (Honeywell IH-2, TVS, Zebra, TSC).
+ * @param {Object} order - Order object
+ * @param {string} gstNumber - Store GSTIN
+ */
+export async function generateTaxInvoiceThermal(order, gstNumber = "") {
+  const { default: jsPDF } = await import("jspdf");
+  const { default: autoTable } = await import("jspdf-autotable");
+
+  // 100mm wide x 150mm high
+  const doc = new jsPDF({
+    orientation: "portrait",
+    unit: "mm",
+    format: [100, 150]
+  });
+
+  const orderNo = order.order_number || "ORD";
+  const createdDate = new Date(order.created_at || Date.now()).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric"
+  });
+  const payMethod = (order.payment_method || "COD").toUpperCase();
+  const payStatus = (order.payment_status || "PENDING").toUpperCase();
+  const shipping = order.shipping_address || {};
+  const placeOfSupplyStr = getPlaceOfSupply(shipping.state);
+
+  // Header Box
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(12);
+  doc.setTextColor(0, 0, 0);
+  doc.text("CACAPO LLP", 5, 8);
+
+  doc.setFontSize(9);
+  doc.text(USE_COMPOSITION_GST ? "BILL OF SUPPLY" : "TAX INVOICE", 95, 8, { align: "right" });
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6);
+  doc.setTextColor(60, 60, 60);
+  doc.text("Melattur, Malappuram, Kerala - 679326" + (gstNumber ? ` | GSTIN: ${gstNumber}` : ""), 5, 11.5);
+  doc.text("Original for Recipient", 95, 11.5, { align: "right" });
+
+  doc.text("support@cacapoclothing.com | cacapoclothing.com", 5, 14.5);
+  doc.text(`Place of Supply: ${placeOfSupplyStr}`, 95, 14.5, { align: "right" });
+
+  // Divider Line
+  doc.setDrawColor(0, 0, 0);
+  doc.setLineWidth(0.3);
+  doc.line(5, 16.5, 95, 16.5);
+
+  // Invoice & Customer Info
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Invoice No: ${orderNo}`, 5, 20.5);
+  doc.text(`Date: ${createdDate}`, 50, 20.5);
+  doc.text(`Payment: ${payMethod} (${payStatus})`, 95, 20.5, { align: "right" });
+
+  // Bill To / Ship To
+  const customerName = (shipping.full_name || shipping.name || "Customer").toUpperCase();
+  const phone = shipping.phone || "N/A";
+  const addressParts = [
+    shipping.address_line1 || shipping.street,
+    shipping.address_line2,
+    shipping.city,
+    shipping.state ? `${shipping.state}${shipping.pincode ? ' - ' + shipping.pincode : ''}` : shipping.pincode
+  ].filter(Boolean).join(", ");
+
+  doc.text("BILL TO / SHIP TO:", 5, 25);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  doc.text(customerName.slice(0, 36), 5, 28.5);
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.text(`Phone: ${phone}`, 5, 32);
+
+  const splitAddr = doc.splitTextToSize(`Address: ${addressParts || 'N/A'}`, 90);
+  doc.text(splitAddr.slice(0, 2), 5, 35.5);
+
+  const addrHeight = Math.min(splitAddr.length, 2) * 3.5;
+  const tableStartY = Math.max(40, 35.5 + addrHeight + 1.5);
+
+  doc.setDrawColor(200, 200, 200);
+  doc.setLineWidth(0.2);
+  doc.line(5, tableStartY - 1.5, 95, tableStartY - 1.5);
+
+  // Items Table
+  const tableColumn = ["#", "Product Description & SKU", "Qty", "Price", "Total"];
+  const tableRows = (order.order_items || []).map((item, idx) => {
+    const grossPrice = item.price || 0;
+    const qty = item.quantity || 1;
+    const lineTotal = (grossPrice * qty) / 100;
+    
+    let sku = item.variant?.sku || item.sku || item.product?.sku || "";
+    if (!sku && item.product?.name) {
+      const nameCode = item.product.name.split(" ").map(w => w[0]).join("").toUpperCase().slice(0, 4);
+      const sizeStr = item.variant?.size ? `-${item.variant.size}` : "";
+      sku = `CCP-${nameCode}${sizeStr}`;
+    }
+
+    const pName = item.product?.name || "Product Item";
+    const variantStr = item.variant?.size
+      ? `Size: ${item.variant.size}${item.variant?.color ? ' • ' + item.variant.color : ''}`
+      : (item.product?.color ? `Color: ${item.product.color}` : "");
+
+    const descCell = `${pName}\nSKU: ${sku}${variantStr ? ' • ' + variantStr : ''}`;
+
+    return [
+      idx + 1,
+      descCell,
+      qty,
+      (grossPrice / 100).toFixed(2),
+      lineTotal.toFixed(2)
+    ];
+  });
+
+  autoTable(doc, {
+    startY: tableStartY,
+    head: [tableColumn],
+    body: tableRows,
+    theme: "grid",
+    margin: { left: 5, right: 5 },
+    headStyles: {
+      fillColor: [0, 0, 0],
+      textColor: [255, 255, 255],
+      fontStyle: "bold",
+      fontSize: 6.5,
+      cellPadding: 1.5
+    },
+    styles: {
+      fontSize: 6,
+      cellPadding: 1.8,
+      lineColor: [200, 200, 200],
+      lineWidth: 0.15,
+      textColor: [0, 0, 0]
+    },
+    columnStyles: {
+      0: { cellWidth: 7, halign: "center" },
+      1: { cellWidth: 47 },
+      2: { cellWidth: 10, halign: "center" },
+      3: { cellWidth: 13, halign: "right" },
+      4: { cellWidth: 13, halign: "right", fontStyle: "bold" }
+    }
+  });
+
+  const finalY = doc.lastAutoTable.finalY || 95;
+
+  // Summary Card on Right
+  const subtotalRupees = (order.subtotal || (order.total_amount - (order.shipping_charge || 0))) / 100;
+  const discountRupees = (order.discount || 0) / 100;
+  const shippingRupees = (order.shipping_charge || 0) / 100;
+  const totalRupees = (order.total_amount || 0) / 100;
+
+  let sumY = finalY + 4;
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
+  doc.setTextColor(60, 60, 60);
+
+  doc.text(`Subtotal: Rs. ${subtotalRupees.toFixed(2)}`, 95, sumY, { align: "right" });
+  if (discountRupees > 0) {
+    sumY += 3.5;
+    doc.text(`Discount: -Rs. ${discountRupees.toFixed(2)}`, 95, sumY, { align: "right" });
+  }
+  sumY += 3.5;
+  doc.text(`Shipping: Rs. ${shippingRupees.toFixed(2)}`, 95, sumY, { align: "right" });
+  
+  sumY += 3.5;
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(6);
+  doc.text("(All prices are inclusive of taxes)", 95, sumY, { align: "right" });
+
+  sumY += 4.5;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text(`Total Amount Paid: Rs. ${totalRupees.toFixed(2)}`, 95, sumY, { align: "right" });
+
+  // Bottom Notice & Return Policy
+  const policyY = Math.max(sumY + 6, 134);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(5.5);
+  doc.setTextColor(90, 90, 90);
+  doc.text("• Return / exchange eligible within 7 days in original packaging with tags intact.", 5, policyY);
+  doc.text("• This is a computer-generated Bill of Supply and does not require a physical signature.", 5, policyY + 3);
+
+  // Footer branding
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(6.5);
+  doc.setTextColor(0, 0, 0);
+  doc.text("CACAPO Clothing • cacapoclothing.com • Melattur, Malappuram", 50, 145, { align: "center" });
+
+  doc.save(`CACAPO_Thermal_Bill_${orderNo}.pdf`);
 }

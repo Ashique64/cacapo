@@ -4,7 +4,12 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/lib/supabase";
 import { getOrderStatusBadgeClass, getPaymentStatusBadgeClass } from "@/lib/badgeUtils";
 import { createShipment, generateLabel } from "@/lib/delivery";
-import { generateTaxInvoice, generatePackagingSlip } from "@/lib/invoiceGenerator";
+import { 
+  generateTaxInvoice, 
+  generatePackagingSlip,
+  generateTaxInvoiceThermal,
+  generatePackagingSlipThermal
+} from "@/lib/invoiceGenerator";
 import AdminPagination from "@/components/ui/AdminPagination";
 import { 
   Search, 
@@ -135,6 +140,26 @@ export default function AdminOrdersDesk() {
     } catch (err) {
       console.error("Failed to generate Packaging Slip:", err);
       showToast("Failed to generate Packaging Slip", "error");
+    }
+  };
+
+  const handleDownloadTaxInvoiceThermal = async (order) => {
+    try {
+      await generateTaxInvoiceThermal(order, gstNumber);
+      showToast("Thermal Bill (100x150mm) downloaded");
+    } catch (err) {
+      console.error("Failed to generate Thermal Bill:", err);
+      showToast("Failed to generate Thermal Bill", "error");
+    }
+  };
+
+  const handleDownloadPackagingSlipThermal = async (order) => {
+    try {
+      await generatePackagingSlipThermal(order);
+      showToast("Thermal Packing Slip (100x150mm) downloaded");
+    } catch (err) {
+      console.error("Failed to generate Thermal Packing Slip:", err);
+      showToast("Failed to generate Thermal Packing Slip", "error");
     }
   };
 
@@ -842,25 +867,66 @@ export default function AdminOrdersDesk() {
                         )}
 
                         {/* Documents & Invoices Card */}
-                        <div className="border border-zinc-900 bg-zinc-950 p-4 space-y-4">
-                          <h5 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase flex items-center gap-2">
-                            <FileText className="w-4 h-4 text-accent" /> Documents & Invoices
-                          </h5>
-                          <div className="grid grid-cols-2 gap-3">
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadPackagingSlip(order)}
-                              className="py-2 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
-                            >
-                              <FileText className="w-3.5 h-3.5" /> Pack Slip
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDownloadTaxInvoice(order)}
-                              className="py-2 border border-zinc-800 hover:border-zinc-700 text-zinc-300 hover:text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
-                            >
-                              <FileText className="w-3.5 h-3.5" /> Tax Invoice
-                            </button>
+                        <div className="border border-zinc-900 bg-zinc-950 p-4 space-y-3.5">
+                          <div className="flex items-center justify-between">
+                            <h5 className="text-[10px] font-bold tracking-widest text-zinc-400 uppercase flex items-center gap-2">
+                              <FileText className="w-4 h-4 text-accent" /> Documents & Invoices
+                            </h5>
+                            <span className="text-[8px] font-mono text-zinc-400 uppercase tracking-widest bg-zinc-900 px-1.5 py-0.5 border border-zinc-800">
+                              Honeywell IH-2 (100×150)
+                            </span>
+                          </div>
+
+                          {/* Thermal 100x150 mm (Honeywell Barcode Printer IH-2) */}
+                          <div className="space-y-1.5">
+                            <div className="flex items-center justify-between">
+                              <span className="text-[8px] font-bold uppercase tracking-widest text-accent flex items-center gap-1.5">
+                                <span className="w-1.5 h-1.5 rounded-full bg-accent inline-block"></span>
+                                Thermal Label (100×150 mm)
+                              </span>
+                              <span className="text-[8px] text-zinc-500 font-mono">4" × 6" Sticker</span>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadPackagingSlipThermal(order)}
+                                className="py-2 border border-accent/40 hover:border-accent text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-accent/10 hover:bg-accent/20 flex items-center justify-center gap-1.5"
+                                title="Print native 100x150mm thermal sticker for Honeywell IH-2"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-accent" /> Thermal Slip
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadTaxInvoiceThermal(order)}
+                                className="py-2 border border-accent/40 hover:border-accent text-white text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-accent/10 hover:bg-accent/20 flex items-center justify-center gap-1.5"
+                                title="Print native 100x150mm thermal bill for Honeywell IH-2"
+                              >
+                                <FileText className="w-3.5 h-3.5 text-accent" /> Thermal Bill
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Standard A4 (Office / Customer Copy) */}
+                          <div className="space-y-1.5 pt-2 border-t border-zinc-900">
+                            <span className="text-[8px] font-bold uppercase tracking-widest text-zinc-500">
+                              Standard Office (A4)
+                            </span>
+                            <div className="grid grid-cols-2 gap-2">
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadPackagingSlip(order)}
+                                className="py-1.5 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
+                              >
+                                <FileText className="w-3 h-3 text-zinc-500" /> A4 Pack Slip
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDownloadTaxInvoice(order)}
+                                className="py-1.5 border border-zinc-800 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200 text-[9px] font-bold tracking-widest uppercase transition-all rounded-none cursor-pointer bg-zinc-900/40 flex items-center justify-center gap-1.5"
+                              >
+                                <FileText className="w-3 h-3 text-zinc-500" /> A4 Invoice
+                              </button>
+                            </div>
                           </div>
                         </div>
 
